@@ -121,7 +121,7 @@ class ParseTokens:
 
     @classmethod
     def tokenize_in_parenthesis(cls, word):
-        if word == "(!)":
+        if word in FMP_exception_list:
             return word
         elif word.startswith("(!)"):
             return ParseTokens.tokenize_FSP(word)

@@ -122773,6 +122773,7 @@ jauping
 jaups
 java
 javas
+javascript
 javel
 javelin
 javelina
