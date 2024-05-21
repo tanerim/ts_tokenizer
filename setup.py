@@ -5,7 +5,7 @@ setup(
     version='0.1.0',
     packages=find_packages(),
     package_data={
-    'my_package': ['data/*.txt'],
+    'ts_tokenizer': ['data/*.txt'],
     },
     install_requires=[
         # Add any dependencies here
@@ -36,4 +36,5 @@ setup(
         'Topic :: Turkish :: Language',
     ],
     python_requires='>=3.9',
+    repository='https://github.com/tanerim/ts_tokenizer'
 )
