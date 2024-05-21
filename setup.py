@@ -23,8 +23,17 @@ setup(
     url='https://github.com/tanerim/ts_tokenizer',
     classifiers=[
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Topic :: Utilities',
+        'Topic :: Text Processing :: Linguistic',
+        'Topic :: NLP :: Linguistic',
+        'Topic :: Computational Linguistics :: Linguistic',
+        'Topic :: Tokenization :: Linguistic',
+        'Topic :: Turkish :: Language',
     ],
-    python_requires='>=3.11',
+    python_requires='>=3.9',
 )
