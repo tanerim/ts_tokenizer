@@ -4,6 +4,9 @@ setup(
     name='ts_tokenizer',
     version='0.1.0',
     packages=find_packages(),
+    package_data={
+    'my_package': ['data/*.txt'],
+    },
     install_requires=[
         # Add any dependencies here
     ],
