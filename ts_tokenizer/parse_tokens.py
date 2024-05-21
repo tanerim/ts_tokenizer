@@ -2,7 +2,7 @@ import re
 import string
 from .data import LocalData
 from .token_preprocess import TokenCheck
-from .punctuation_process import PuncTagCheck, PuncMatcher
+from .punctuation_process import PuncMatcher
 
 
 FMP_exception_list = ["(!)", "...", "!!!"]
@@ -53,7 +53,7 @@ class ParseTokens:
     def tokenize_IMP(cls, word):
         word_list = list(word)
         index = 0
-        if any(smiley in word for smiley in smileys):
+        if any(smiley in word for smiley in LocalData.smileys()):
             return '\n'.join(cls.split_punctuation_and_chars(word))
         else:
             while index < len(word_list):
@@ -86,7 +86,7 @@ class ParseTokens:
         PuncCount = PuncMatcher.punc_count(word)
         index_list = [len(word) - PuncCount]
 
-        if any(smiley in word for smiley in smileys):
+        if any(smiley in word for smiley in LocalData.smileys()):
             return '\n'.join(cls.split_punctuation_and_chars(word))
         else:
             for exception in FMP_exception_list:
