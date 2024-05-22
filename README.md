@@ -22,11 +22,11 @@ fix_chars = CharFix.fix(line)
 print(fix_chars)
 Parça ve bütün ilişkisi her zaman işlevsel değildir.
 ```
-### Fix Lowercase
+### Lowercase
 
 ```python
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
-tr_lowercase = CharFix.fix_tr_lowercase(line)
+tr_lowercase = CharFix.tr_lowercase(line)
 print(tr_lowercase)
 istanbul ve ığdır ''arası'' 1528 km'dir.
 ```
