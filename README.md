@@ -83,12 +83,13 @@ print(TokenPreProcess.token_tagger(word, output='all', output_format='json'))   
 ```
 
 ```python
-line = "Queen 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
+line = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
 
 for word in line.split(" "):
     TokenTag = TokenPreProcess.token_tagger(word, output='all', output_format='list')
     print(TokenTag)
 ['Queen', 'Queen', 'Eng_Word']
+[',', ',', 'Punc']
 ['31.10.1975', '31.10.1975', 'Date']
 ['tarihinde', 'tarihinde', 'Valid_Word']
 ['çıkardıðı', 'çıkardığı', 'Valid_Word']
@@ -102,4 +103,5 @@ for word in line.split(" "):
 ['mÃ¼ziðini', 'müziğini', 'Valid_Word']
 ['deðiåÿtirdi', 'değiştirdi', 'Valid_Word']
 ['.', '.', 'Punc']
+
 ```
