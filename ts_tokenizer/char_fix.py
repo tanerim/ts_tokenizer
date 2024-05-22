@@ -34,7 +34,7 @@ def char_check(word):
 class CharFix:
 
     @staticmethod
-    def fix_tr_lowercase(word):
+    def tr_lowercase(word):
         conversion = {'I': 'ı', 'İ': 'i'}
         for key, value in conversion.items():
             word = word.replace(key, value)
