@@ -28,6 +28,11 @@ REGEX_PATTERNS = {
 }
 
 
+def check_regex(word, pattern_key):
+    pattern = REGEX_PATTERNS[pattern_key]
+    return word if re.match(pattern, word) else None
+
+
 class TokenPreProcess:
 
     @staticmethod
@@ -36,11 +41,6 @@ class TokenPreProcess:
         for key, value in conversion.items():
             word = word.replace(key, value)
         return word.lower()
-
-    @staticmethod
-    def check_regex(word, pattern_key):
-        pattern = REGEX_PATTERNS[pattern_key]
-        return word if re.match(pattern, word) else None
 
     @staticmethod
     def is_smiley(word):
@@ -78,27 +78,27 @@ class TokenPreProcess:
 
     @staticmethod
     def is_mention(word):
-        return TokenPreProcess.check_regex(word, "mention")
+        return check_regex(word, "mention")
 
     @staticmethod
     def is_hashtag(word):
-        return TokenPreProcess.check_regex(word, "hashtag")
+        return check_regex(word, "hashtag")
 
     @staticmethod
     def is_num_char_sequence(word):
-        return TokenPreProcess.check_regex(word, "num_char_sequence")
+        return check_regex(word, "num_char_sequence")
 
     @staticmethod
     def is_in_parenthesis(word):
-        return TokenPreProcess.check_regex(word, "in_parenthesis")
+        return check_regex(word, "in_parenthesis")
 
     @staticmethod
     def is_in_quotes(word):
-        return TokenPreProcess.check_regex(word, "in_quotes")
+        return check_regex(word, "in_quotes")
 
     @staticmethod
     def is_hour(word):
-        return TokenPreProcess.check_regex(word, "hour")
+        return check_regex(word, "hour")
 
     @staticmethod
     def is_date(word):
@@ -106,33 +106,33 @@ class TokenPreProcess:
 
     @staticmethod
     def is_percentage_numbers(word):
-        return TokenPreProcess.check_regex(word, "percentage_numbers")
+        return check_regex(word, "percentage_numbers")
 
     @staticmethod
     def is_percentage_numbers_chars(word):
-        return TokenPreProcess.check_regex(word, "percentage_numbers_chars")
+        return check_regex(word, "percentage_numbers_chars")
 
     @staticmethod
     def is_email(word):
-        return TokenPreProcess.check_regex(word, "email")
+        return check_regex(word, "email")
 
     @staticmethod
     def is_prefix_url(word):
         if any(dne in word for dne in LocalData.domains()):
-            return TokenPreProcess.check_regex(word, "prefix_url")
+            return check_regex(word, "prefix_url")
 
     @staticmethod
     def is_non_prefix_url(word):
         if any(dne in word for dne in LocalData.domains()):
-            return TokenPreProcess.check_regex(word, "Non_Prefix_URL")
+            return check_regex(word, "Non_Prefix_URL")
 
     @staticmethod
     def is_copyright(word):
-        return TokenPreProcess.check_regex(word, "copyright")
+        return check_regex(word, "copyright")
 
     @staticmethod
     def is_registered(word):
-        return TokenPreProcess.check_regex(word, "registered")
+        return check_regex(word, "registered")
 
     @staticmethod
     def is_hyphenated(word):
@@ -191,7 +191,7 @@ class TokenPreProcess:
         if word in exceptions:
             return word, "Punc"
         else:
-            return TokenPreProcess.check_regex(word, "three_or_more")
+            return check_regex(word, "three_or_more")
 
     @staticmethod
     def is_in_lexicon(word):
