@@ -79,7 +79,7 @@ print(TokenCheck.token_tagger(word, output='all', output_format='list'))   # Ret
 
 word = "16:37"
 print(TokenCheck.token_tagger(word, output='all', output_format='json'))   # Returns a JSON string
-> {"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
+{"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
 ```
 
 ```python
