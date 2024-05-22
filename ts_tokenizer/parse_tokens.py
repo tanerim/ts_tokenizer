@@ -1,7 +1,7 @@
 import re
 import string
 from .data import LocalData
-from .token_preprocess import TokenCheck
+from .token_preprocess import TokenPreProcess
 from .punctuation_process import PuncMatcher
 
 
@@ -140,7 +140,7 @@ class ParseTokens:
 
     @classmethod
     def tokenize_hour(cls, word):
-        if TokenCheck.check_regex(word, "hour"):
+        if TokenPreProcess.check_regex(word, "hour"):
             return word
 
     @classmethod

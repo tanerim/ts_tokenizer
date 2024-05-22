@@ -63,3 +63,5 @@ class TokenCheck:
                 return list(result)
             elif output_format == 'json':
                 return json.dumps({"input_token": result[0], "fixed_token": result[1], "tag": result[2]})
+            elif output_format == 'string':
+                return f"{result[0]}\t{result[1]}\t{result[2]}"
