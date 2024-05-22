@@ -18,8 +18,21 @@ REPLACEMENTS_QUOTE = [
     ("'", "'"), ("’", "'"), ("'", "'"), ("’", "'"), ("'", "'"), ("’", "'")
 ]
 
+def replace(word, replacements):
+    try:
+        for old, new in replacements:
+            word = word.replace(old, new)
+        return word
+    except Exception as e:
+        print(f"Error in replacing characters: {e}")
+        return word
+
+def char_check(word):
+    return replace(word, REPLACEMENTS_CHAR)
+
 
 class CharFix:
+
     @staticmethod
     def fix_tr_lowercase(word):
         conversion = {'I': 'ı', 'İ': 'i'}
@@ -27,31 +40,18 @@ class CharFix:
             word = word.replace(key, value)
         return word.lower()
 
-    @staticmethod
-    def replace(word, replacements):
-        try:
-            for old, new in replacements:
-                word = word.replace(old, new)
-            return word
-        except Exception as e:
-            print(f"Error in replacing characters: {e}")
-            return word
-
-    @staticmethod
-    def char_check(word):
-        return CharFix.replace(word, REPLACEMENTS_CHAR)
 
     @staticmethod
     def html_entity_replace(word):
-        return CharFix.replace(word, REPLACEMENTS_HTML)
+        return replace(word, REPLACEMENTS_HTML)
 
     @staticmethod
     def fix_quote(word):
-        return CharFix.replace(word, REPLACEMENTS_QUOTE)
+        return replace(word, REPLACEMENTS_QUOTE)
 
     @staticmethod
-    def char_fix(word):
-        word = CharFix.char_check(word)
+    def fix(word):
+        word = char_check(word)
         word = CharFix.html_entity_replace(word)
         word = CharFix.fix_quote(word)
         return word

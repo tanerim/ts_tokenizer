@@ -162,14 +162,14 @@ class TokenCheck:
     def is_hyphen_in(word):
         if "-" in word and word.count("-") <= 5 and word[0] != "-" and word[-1] != "-":
             if TokenCheck.is_hyphenated(word) is True:
-                return word, CharFix.char_fix(word), "Hyphenated"
+                return word, CharFix.fix(word), "Hyphenated"
             else:
-                return word, CharFix.char_fix(word), "OOV"
+                return word, CharFix.fix(word), "OOV"
         elif "_" in word and word[0] != "_" and word[-1] != "_":
             if TokenCheck.is_underscored(word) is True:
-                return word, CharFix.char_fix(word), "Underscored"
+                return word, CharFix.fix(word), "Underscored"
             else:
-                return word, CharFix.char_fix(word), "OOV"
+                return word, CharFix.fix(word), "OOV"
 
     @staticmethod
     def is_formula(word):
@@ -195,17 +195,17 @@ class TokenCheck:
 
     @staticmethod
     def is_in_lexicon(word):
-        word = CharFix.char_fix(word)
+        word = CharFix.fix(word)
         return word if TokenCheck.fix_tr_lowercase(word) in LocalData.word_list() else None
 
     @staticmethod
     def is_in_exceptions(word):
-        word = CharFix.char_fix(word)
+        word = CharFix.fix(word)
         return word if TokenCheck.fix_tr_lowercase(word) in LocalData.exception_words() else None
 
     @staticmethod
     def is_in_eng_words(word):
-        word = CharFix.char_fix(word)
+        word = CharFix.fix(word)
         return word if TokenCheck.fix_tr_lowercase(word) in LocalData.eng_word_list() else None
 
     @staticmethod

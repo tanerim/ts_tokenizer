@@ -45,7 +45,7 @@ class TokenPreProcess:
         if not isinstance(word, str):
             return None
         for tag, check_method in token_tags.items():
-            if check_method(CharFix.char_fix(word)):
-                return word, CharFix.char_fix(word), tag
+            if check_method(CharFix.fix(word)):
+                return word, CharFix.fix(word), tag
         else:
-            return word, CharFix.char_fix(word), "OOV"
+            return word, CharFix.fix(word), "OOV"

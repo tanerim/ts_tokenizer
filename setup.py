@@ -28,11 +28,6 @@ setup(
         'Programming Language :: Python :: 3.11',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Topic :: Tokenization :: Linguistic',
-        'Topic :: Turkish :: Language',
-        'Topic :: Text Processing :: Linguistic',
-        'Topic :: NLP :: Linguistic',
-        'Topic :: CL :: Linguistic',
     ],
     python_requires='>=3.9',
     repository='https://github.com/tanerim/ts_tokenizer'
