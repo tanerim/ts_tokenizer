@@ -63,8 +63,8 @@ from ts_tokenizer.token_preprocess import TokenPreProcess
 ### Default Usage
 ```python
 word = "''arası''"
-x = TokenPreProcess.token_tagger(word)
-print(x)
+TokenTag = TokenPreProcess.token_tagger(word)
+print(TokenTag)
 > In_Quotes
 ```
 
@@ -82,3 +82,24 @@ print(TokenPreProcess.token_tagger(word, output='all', output_format='json'))   
 > {"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
 ```
 
+```python
+line = "Queen 31.10.1975 tarihinde çıkardığı A Night at the Opera albümüyle dünya müziğini değiåÿtirdi ."
+
+for word in line.split(" "):
+    TokenTag = TokenPreProcess.token_tagger(word, output='all', output_format='list')
+    print(TokenTag)
+['Queen', 'Queen', 'Eng_Word']
+['31.10.1975', '31.10.1975', 'Date']
+['tarihinde', 'tarihinde', 'Valid_Word']
+['çıkardığı', 'çıkardığı', 'Valid_Word']
+['A', 'A', 'OOV']
+['Night', 'Night', 'Eng_Word']
+['at', 'at', 'Valid_Word']
+['the', 'the', 'Eng_Word']
+['Opera', 'Opera', 'Valid_Word']
+['albümüyle', 'albümüyle', 'Valid_Word']
+['dünya', 'dünya', 'Valid_Word']
+['müziğini', 'müziğini', 'Valid_Word']
+['değiåÿtirdi', 'değiştirdi', 'Valid_Word']
+['.', '.', 'Punc']
+```
