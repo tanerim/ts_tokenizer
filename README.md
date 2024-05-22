@@ -81,3 +81,4 @@ word = "16:37"
 print(TokenPreProcess.token_tagger(word, output='all', output_format='json'))   # Returns a JSON string
 > {"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
 ```
+

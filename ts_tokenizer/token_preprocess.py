@@ -1,13 +1,11 @@
+import json
 from .token_check import TokenCheck
 from .char_fix import CharFix
 from .emoticon_check import EmoticonParser
 
-# The order of tag-function in token_checks dictionary is important
-
-
 class TokenPreProcess:
     @staticmethod
-    def token_tagger(word):
+    def token_tagger(token, output='tag', output_format='tuple'):
         token_tags = {
             "Valid_Word": TokenCheck.is_in_lexicon,
             "Exception_Word": TokenCheck.is_in_exceptions,
@@ -41,11 +39,27 @@ class TokenPreProcess:
             "Registered": TokenCheck.is_registered,
             "Three_or_More": TokenCheck.is_three_or_more
         }
-        # Check if given param word is string
-        if not isinstance(word, str):
+
+        # Check if given param word is a string
+        if not isinstance(token, str):
             return None
+
+        fixed_word = CharFix.fix(token)
+
         for tag, check_method in token_tags.items():
-            if check_method(CharFix.fix(word)):
-                return word, CharFix.fix(word), tag
+            if check_method(fixed_word):
+                result = (token, fixed_word, tag)
+                break
         else:
-            return word, CharFix.fix(word), "OOV"
+            result = (token, fixed_word, "OOV")
+
+        if output == 'tag':
+            return result[2]
+
+        if output == 'all':
+            if output_format == 'tuple':
+                return result
+            elif output_format == 'list':
+                return list(result)
+            elif output_format == 'json':
+                return json.dumps({"input_token": result[0], "fixed_token": result[1], "tag": result[2]})
