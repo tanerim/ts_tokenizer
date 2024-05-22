@@ -9,7 +9,7 @@ TS Tokenizer is a Turkish Tokenizer.
 This class has 4 methods. They are useful to fix corrupted texts.
 
 ### CharFix Class
-```python
+
 ```python
 from ts_tokenizer.char_fix import CharFix
 ```
@@ -19,7 +19,7 @@ from ts_tokenizer.char_fix import CharFix
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi ''her zaman'' iåÿlevsel deðildir."
 fixed_chars = CharFix.fix(line)
 print(fixed_chars)
-> Parça ve bütün ilişkisi "her zaman" işlevsel değildir.
+Parça ve bütün ilişkisi "her zaman" işlevsel değildir.
 ```
 
 ### Fix Characters
@@ -28,7 +28,7 @@ print(fixed_chars)
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
 fix_chars = CharFix.fix(line)
 print(fix_chars)
-> Parça ve bütün ilişkisi her zaman işlevsel değildir.
+Parça ve bütün ilişkisi her zaman işlevsel değildir.
 ```
 ### Fix Lowercase
 
@@ -36,7 +36,7 @@ print(fix_chars)
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 tr_lowercase = CharFix.fix_tr_lowercase(line)
 print(tr_lowercase)
-> istanbul ve ığdır ''arası'' 1528 km'dir.
+istanbul ve ığdır ''arası'' 1528 km'dir.
 ```
 ### Fix Quotes
 
@@ -44,11 +44,11 @@ print(tr_lowercase)
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 fix_quotes = CharFix.fix_quote(line)
 print(quotes)
-> İstanbul ve Iğdır "arası" 1528 km'dir.
+İstanbul ve Iğdır "arası" 1528 km'dir.
 ```
 
 
-## TokenPreProcess
+## TokenCheck
 
 This class is used to pass input tokens to the tokenizer for further analysis.
 However, it could be used for various tasks.
@@ -57,28 +57,28 @@ The tags are "Valid_Word", "Exception_Word", "Eng_Word", "Date", "Hour", "In_Par
 ### token_tagger
 
 ```python
-from ts_tokenizer.token_preprocess import TokenPreProcess
+from ts_tokenizer.token_check import TokenCheck
 ```
 
 ### Default Usage
 ```python
 word = "''arası''"
-TokenTag = TokenPreProcess.token_tagger(word)
+TokenTag = TokenCheck.token_tagger(word)
 print(TokenTag)
-> In_Quotes
+In_Quotes
 ```
 
 ```python
 word = "#tstokenizer"
-print(TokenPreProcess.token_tagger(word, output='all', output_format='tuple'))  # Returns a tuple
-> ('#tstokenizer', '#tstokenizer', 'HashTag')
+print(TokenCheck.token_tagger(word, output='all', output_format='tuple'))  # Returns a tuple
+('#tstokenizer', '#tstokenizer', 'HashTag')
 
 word = "#tanerim"
-print(TokenPreProcess.token_tagger(word, output='all', output_format='list'))   # Returns a list
-> ['@tanerim', '@tanerim', 'Mention']
+print(TokenCheck.token_tagger(word, output='all', output_format='list'))   # Returns a list
+['@tanerim', '@tanerim', 'Mention']
 
 word = "16:37"
-print(TokenPreProcess.token_tagger(word, output='all', output_format='json'))   # Returns a JSON string
+print(TokenCheck.token_tagger(word, output='all', output_format='json'))   # Returns a JSON string
 > {"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
 ```
 
@@ -86,7 +86,7 @@ print(TokenPreProcess.token_tagger(word, output='all', output_format='json'))   
 line = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
 
 for word in line.split(" "):
-    TokenTag = TokenPreProcess.token_tagger(word, output='all', output_format='list')
+    TokenTag = TokenCheck.token_tagger(word, output='all', output_format='list')
     print(TokenTag)
 ['Queen', 'Queen', 'Eng_Word']
 [',', ',', 'Punc']
