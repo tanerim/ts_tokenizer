@@ -10,7 +10,12 @@ This method replaces non-UTF characters.
 
 ### CharFix Class
 ```python
+```python
 from ts_tokenizer.char_fix import CharFix
+```
+
+
+```python
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi ''her zaman'' iåÿlevsel deðildir."
 fixed_chars = CharFix.fix(line)
 print(fixed_chars)
@@ -20,8 +25,6 @@ print(fixed_chars)
 ### Fix Characters
 
 ```python
-from ts_tokenizer.char_fix import CharFix
-
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
 fix_chars = CharFix.fix(line)
 print(fix_chars)
