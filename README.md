@@ -43,7 +43,7 @@ print(quotes)
 ## TokenCheck
 
 This class is used to pass input tokens to the tokenizer for further analysis.
-However, it could be used for various tasks.
+However, it could be used for various tasks.<br>
 The tags are "Valid_Word", "Exception_Word", "Eng_Word", "Date", "Hour", "In_Parenthesis", "In_Quotes", "Smiley", "Inner_Char", "Abbr", "Number", "Non_Prefix_URL", "Prefix_URL", "Emoticon", "Mention", "HashTag", "Percentage_Numbers", "Percentage_Number_Chars", "Num_Char_Seq", "Multiple_Smiley", "Punc", "Underscored", "Hyphenated", "Hyphen_In", "Multiple_Emoticon", "Copyright", "Email", "Registered", "Three_or_More"
 
 ### token_tagger
