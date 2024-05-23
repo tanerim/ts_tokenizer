@@ -45,8 +45,6 @@ class TokenCheck:
         if not isinstance(token, str):
             return None
 
-        token_char_fixed = CharFix.fix(token)
-
         # Check for punctuation tags first
         token_char_fixed = CharFix.fix(token)
 
