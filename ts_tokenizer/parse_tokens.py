@@ -55,6 +55,9 @@ class ParseTokens:
         index = 0
         if any(smiley in word for smiley in LocalData.smileys()):
             return '\n'.join(cls.split_punctuation_and_chars(word))
+        if word.startswith("(!)"):
+            return "\n".join(("(!)", word[3:]))
+
         else:
             while index < len(word_list):
                 if word_list[index] in string.punctuation:

@@ -23,21 +23,17 @@ class PuncMatcher:
         initial_punc = match.group('initial')
         final_punc = match.group('final')
 
-        if len(initial_punc) == 1 and not re.match(r'^[%s]+$' % puncs, final_punc):
+        if len(initial_punc) == 1 and not final_punc:
             return "ISP"  # ==> "Initial_Single_Punc"
-
-        elif len(final_punc) == 1 and not re.match(r'^[%s]+$' % puncs, initial_punc):
+        elif len(final_punc) == 1 and not initial_punc:
             return "FSP"  # ==> "Final_Single_Punc"
-
-        elif len(initial_punc) >= 1 and len(final_punc) >= 1:
-            return "MSP"  # ==> Multi_Side_Punc
-
-        elif len(initial_punc) >= 2 and not re.match(r'^[%s]+$' % puncs, final_punc):
+        elif initial_punc and final_punc:
+            return "MSP"  # ==> "Multi_Side_Punc"
+        elif len(initial_punc) >= 2:
             return "IMP"  # ==> "Initial_Multi_Punc"
-
-        elif len(final_punc) >= 2 and not re.match(r'^[%s]+$' % puncs, initial_punc):
+        elif len(final_punc) >= 2:
             return "FMP"  # ==> "Final_Multi_Punc"
-
+        return None
 
     @classmethod
     def inner_punctuation(cls, word):
@@ -47,6 +43,7 @@ class PuncMatcher:
         inner_puncs = re.findall(r'(?<=\w)[^\s\w-]+(?=\w)', word)
         if inner_puncs:  # Check for inner punctuations
             return "Inner_Punc"  # ==> "Inner_Punc"
+        return None
 
 
 class PuncTagCheck:
@@ -57,28 +54,27 @@ class PuncTagCheck:
         punc_loc = PuncMatcher.punc_pos(word)
         complex_punc = PuncMatcher.find_punctuation(word)
         inner_punc = PuncMatcher.inner_punctuation(word)
-        s_word = ""
 
         if complex_punc and inner_punc:
             return "Complex_Punc", word, punc_count, punc_loc
 
-        elif inner_punc:
+        if inner_punc:
             return inner_punc, word, punc_count, punc_loc
 
-        elif complex_punc:
+        if complex_punc:
+            s_word = ""
             if complex_punc == "MSP":
-                s_word = "MSP", word[0], word[1:-1], word[-1]
+                s_word = (word[0], word[1:-1], word[-1])
             elif complex_punc == "ISP":
-                s_word = word[0], word[1:]
+                s_word = (word[0], word[1:])
             elif complex_punc == "FSP":
-                s_word = "FSP", word[0:-1], word[-1]
+                s_word = ("FSP", word[0:-1], word[-1])
             elif complex_punc == "FMP":
                 p_start = punc_loc[0]
-                s_word = word[0:p_start], word[p_start:]
+                s_word = (word[0:p_start], word[p_start:])
             elif complex_punc == "IMP":
                 p_end = punc_loc[-1] + 1
-                s_word = word[0:p_end], word[p_end:]
+                s_word = (word[0:p_end], word[p_end:])
             return complex_punc, word, s_word, punc_count, punc_loc
 
-        else:
-            return word, punc_count, punc_loc,
+        return word, punc_count, punc_loc
