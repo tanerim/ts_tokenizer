@@ -11,20 +11,19 @@ from .emoticon_check import EmoticonParser
 REGEX_PATTERNS = {
     "hashtag": r'^#[^#]{1,143}$',
     "mention": r'^@[^@]{1,143}$',
-    "in_parenthesis": r'^[\(\[\{].*[\)\]\}]$',
-    "in_quotes": r'"[^"]+"|\'[^\']+\'',
-    "percentage_numbers": r'%(\d+)$',
-    "percentage_numbers_chars": r'%(\d+\D+)',
-    "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
-    "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)[^\.]?',
-    # Domain names should be enlarged
-    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\\.[a-zA-Z]{2,3})?(?:\\.['
-                      r'a-zA-Z]{2})?(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\\/=][^\.]*)',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b',
-    "num_char_sequence": r'\d+[\w\s]*',
+    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?',
+    "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)?',
+    "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
+    "percentage_numbers_chars": r'%(\d+\D+)',
+    "percentage_numbers": r'%(\d+)$',
+    "in_quotes": r'"[^"]+"|\'[^\']+\'',
+    "in_parenthesis": r'^[\(\[\{].*[\)\]\}]$',
     "copyright": r'(?:^©[a-zA-Z]+$)|(?:^[a-zA-Z]+©$)',
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
-    "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}'
+    # Domain names should be enlarged
+    "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
+    "num_char_sequence": r'\d+[\w\s]*'
 }
 
 

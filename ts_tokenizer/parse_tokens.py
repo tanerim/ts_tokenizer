@@ -141,15 +141,3 @@ class ParseTokens:
         word = word.replace("-", "")
         return word
 
-    @classmethod
-    def tokenize_hour(cls, word):
-        if TokenPreProcess.check_regex(word, "hour"):
-            return word
-
-    @classmethod
-    def tokenize_date(cls, word):
-        if word[-1] in string.punctuation and word[-2:] != "..":
-            tokenized_date = ''.join((word[0:-1], "\n", word[-1])).lstrip().rstrip()
-            return tokenized_date
-        else:
-            return word

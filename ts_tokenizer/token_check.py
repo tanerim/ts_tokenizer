@@ -1,11 +1,12 @@
 import json
 from .token_preprocess import TokenPreProcess
 from .char_fix import CharFix
+from .punctuation_process import PuncTagCheck, PuncMatcher
 
 
 class TokenCheck:
     @staticmethod
-    def token_tagger(token, output='tag', output_format='tuple'):
+    def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple'):
         token_tags = {
             "Valid_Word": TokenPreProcess.is_in_lexicon,
             "Exception_Word": TokenPreProcess.is_in_exceptions,
@@ -44,14 +45,24 @@ class TokenCheck:
         if not isinstance(token, str):
             return None
 
-        fixed_word = CharFix.fix(token)
+        token_char_fixed = CharFix.fix(token)
 
+        # Check for punctuation tags first
+        token_char_fixed = CharFix.fix(token)
+
+        # First, check the token against the predefined tags
         for tag, check_method in token_tags.items():
-            if check_method(fixed_word):
-                result = (token, fixed_word, tag)
+            if check_method(token_char_fixed):
+                result = (token, token_char_fixed, tag)
                 break
         else:
-            result = (token, fixed_word, "OOV")
+            # Then, check for punctuation tags
+            punc_result = PuncTagCheck.punc_tag_check(token_char_fixed)
+            if punc_result and PuncMatcher.punc_count(token_char_fixed) >= 1:
+                result = (token, token_char_fixed, punc_result[0])
+            else:
+                # If no tag is found, mark it as OOV
+                result = (token, token_char_fixed, "OOV")
 
         if output == 'tag':
             return result[2]
