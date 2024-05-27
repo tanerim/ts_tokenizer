@@ -45,6 +45,15 @@ class PuncMatcher:
             return "Inner_Punc"  # ==> "Inner_Punc"
         return None
 
+    @classmethod
+    def apostrophed(cls, word):
+        match = re.match(PuncPattern, word)
+        if not match:
+            return None
+        elif PuncMatcher.punc_count(word) == 1 and "'" in word:
+            return "apostrophes_in" # ==> "A"
+        return None
+
 
 class PuncTagCheck:
 
@@ -52,8 +61,12 @@ class PuncTagCheck:
     def punc_tag_check(cls, word):
         punc_count = PuncMatcher.punc_count(word)
         punc_loc = PuncMatcher.punc_pos(word)
+        apostrophe = PuncMatcher.apostrophed(word)
         complex_punc = PuncMatcher.find_punctuation(word)
         inner_punc = PuncMatcher.inner_punctuation(word)
+
+        if apostrophe:
+            return "Apostrophe",word, punc_count, punc_loc
 
         if complex_punc and inner_punc:
             return "Complex_Punc", word, punc_count, punc_loc

@@ -16,6 +16,8 @@ class TokenCheck:
             "In_Parenthesis": TokenPreProcess.is_in_parenthesis,
             "In_Quotes": TokenPreProcess.is_in_quotes,
             "Smiley": TokenPreProcess.is_smiley,
+            "Email_Punc": TokenPreProcess.is_email_punc,
+            "Email": TokenPreProcess.is_email,
             "Inner_Char": TokenPreProcess.is_inner_char,
             "Abbr": TokenPreProcess.is_abbr,
             "Number": TokenPreProcess.is_number,
@@ -36,7 +38,6 @@ class TokenCheck:
             # "Mis_Hyphenated": TokenPreProcess.is_mishpyhenated,
             "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
             "Copyright": TokenPreProcess.is_copyright,
-            "Email": TokenPreProcess.is_email,
             "Registered": TokenPreProcess.is_registered,
             "Three_or_More": TokenPreProcess.is_three_or_more
         }

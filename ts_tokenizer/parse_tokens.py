@@ -85,22 +85,27 @@ class ParseTokens:
 
     @classmethod
     def tokenize_FMP(cls, word):
-        word_list = list(word)
-        PuncCount = PuncMatcher.punc_count(word)
-        index_list = [len(word) - PuncCount]
+        punc_count = PuncMatcher.punc_count(word)
+        punc_positions = PuncMatcher.punc_pos(word)
+        first_punc_pos = punc_positions[0]
+        char_part = word[:first_punc_pos]
+        punc_part = word[first_punc_pos:]
 
-        if any(smiley in word for smiley in LocalData.smileys()):
-            return '\n'.join(cls.split_punctuation_and_chars(word))
-        else:
-            for exception in FMP_exception_list:
-                if exception in word:
-                    parts = [p for p in word.split(exception) if p]  # Avoid empty strings
-                    return '\n'.join(parts + [exception] if parts else [exception])
+        if punc_part in LocalData.smileys():
+            return f"{char_part}\n{punc_part}"
+        elif punc_part in FMP_exception_list:
+            return f"{char_part}\n{punc_part}"
+        elif any(punc_part.startswith(exc) for exc in FMP_exception_list):
+            return f"{char_part}\n" + "\n".join(cls.split_punctuation_and_chars(punc_part))
+        elif len(punc_part) == punc_count:
+            return f"{char_part}\n" + "\n".join(punc_part)
 
-            if PuncCount != len(word):  # Check if entire word is not punctuation
-                for index in index_list:
-                    if 0 < index < len(word):  # Avoid inserting newline at start
-                        word_list[index] = '\n' + word_list[index]
+        # If the entire word is not punctuation
+        if PuncMatcher.punc_count(word) != len(word):
+            word_list = list(word)
+            for index in punc_positions:
+                if 0 < index < len(word):  # Avoid inserting newline at start
+                    word_list[index] = '\n' + word_list[index]
 
             return ''.join(word_list).strip()
 
@@ -140,4 +145,3 @@ class ParseTokens:
     def tokenize_mishyphenated(cls, word):
         word = word.replace("-", "")
         return word
-
