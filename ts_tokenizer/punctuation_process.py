@@ -50,8 +50,9 @@ class PuncMatcher:
         match = re.match(PuncPattern, word)
         if not match:
             return None
-        elif PuncMatcher.punc_count(word) == 1 and "'" in word:
-            return "apostrophes_in" # ==> "A"
+        punc_positions = cls.punc_pos(word)
+        if cls.punc_count(word) == 1 and punc_positions and punc_positions[0] != 0 and "'" in word:
+            return "apostrophes_in"
         return None
 
 
