@@ -12,7 +12,8 @@ exception_words = set(line.strip() for line in open(os.path.join(data_dir, 'exce
 eng_words = set(line.strip() for line in open(os.path.join(data_dir, 'eng_word_list.txt')))
 domains = set(line.strip() for line in open(os.path.join(data_dir, 'domains.txt')))
 
-class LocalData():
+
+class LocalData:
     @staticmethod
     def emoticons():
         return emoticons
