@@ -1,5 +1,6 @@
 import re
 import string
+from typing import Union
 
 puncs = re.escape(string.punctuation)
 PuncPattern = r'^(?P<initial>[%s]*)(?P<word>.*?)(?P<final>[%s]*)$' % (puncs, puncs)
@@ -7,15 +8,15 @@ PuncPattern = r'^(?P<initial>[%s]*)(?P<word>.*?)(?P<final>[%s]*)$' % (puncs, pun
 class PuncMatcher:
 
     @classmethod
-    def punc_count(cls, word):
+    def punc_count(cls, word:str) -> int:
         return sum(1 for char in word if char in string.punctuation)
 
     @classmethod
-    def punc_pos(cls, word):
+    def punc_pos(cls, word:str) -> list:
         return [i for i, char in enumerate(word) if char in string.punctuation]
 
     @classmethod
-    def find_punctuation(cls, word):
+    def find_punctuation(cls, word:str) -> Union[bool, str]:
         match = re.match(PuncPattern, word)
         if not match:
             return None
@@ -23,12 +24,12 @@ class PuncMatcher:
         initial_punc = match.group('initial')
         final_punc = match.group('final')
 
-        if len(initial_punc) == 1 and not final_punc:
+        if initial_punc and final_punc:
+            return "MSP"  # ==> "Multi_Side_Punc"
+        elif len(initial_punc) == 1 and not final_punc:
             return "ISP"  # ==> "Initial_Single_Punc"
         elif len(final_punc) == 1 and not initial_punc:
             return "FSP"  # ==> "Final_Single_Punc"
-        elif initial_punc and final_punc:
-            return "MSP"  # ==> "Multi_Side_Punc"
         elif len(initial_punc) >= 2:
             return "IMP"  # ==> "Initial_Multi_Punc"
         elif len(final_punc) >= 2:
@@ -36,17 +37,17 @@ class PuncMatcher:
         return None
 
     @classmethod
-    def inner_punctuation(cls, word):
+    def inner_punctuation(cls, word: str) -> Union[bool, str]:
         match = re.match(PuncPattern, word)
         if not match:
-            return None
+            return False  # No match found, return False
         inner_puncs = re.findall(r'(?<=\w)[^\s\w-]+(?=\w)', word)
         if inner_puncs:  # Check for inner punctuations
-            return "Inner_Punc"  # ==> "Inner_Punc"
-        return None
+            return "Inner_Punc"  # Return a string describing the type of punctuation
+        return False  # No inner punctuations found, return False
 
     @classmethod
-    def apostrophed(cls, word):
+    def apostrophed(cls, word: str) -> Union[bool, str]:
         match = re.match(PuncPattern, word)
         if not match:
             return None
@@ -59,7 +60,7 @@ class PuncMatcher:
 class PuncTagCheck:
 
     @classmethod
-    def punc_tag_check(cls, word):
+    def punc_tag_check(cls, word: str) -> list:
         punc_count = PuncMatcher.punc_count(word)
         punc_loc = PuncMatcher.punc_pos(word)
         apostrophe = PuncMatcher.apostrophed(word)
