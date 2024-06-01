@@ -24,7 +24,8 @@ REPLACEMENTS_QUOTE = [
     ("\\u201c", "'"), ("\\u201d", "'")
 ]
 
-def replace(word, replacements):
+
+def replace(word: str, replacements: list) -> str:
     try:
         for old, new in replacements:
             word = word.replace(old, new)
@@ -33,30 +34,30 @@ def replace(word, replacements):
         print(f"Error in replacing characters: {e}")
         return word
 
-def char_check(word):
+
+def char_check(word: str) -> str:
     return replace(word, REPLACEMENTS_CHAR)
 
 
 class CharFix:
 
     @staticmethod
-    def tr_lowercase(word):
+    def tr_lowercase(word: str) -> str:
         conversion = {'I': 'ı', 'İ': 'i'}
         for key, value in conversion.items():
             word = word.replace(key, value)
         return word.lower()
 
-
     @staticmethod
-    def html_entity_replace(word):
+    def html_entity_replace(word: str) -> str:
         return replace(word, REPLACEMENTS_HTML)
 
     @staticmethod
-    def fix_quote(word):
+    def fix_quote(word: str) -> str:
         return replace(word, REPLACEMENTS_QUOTE)
 
     @staticmethod
-    def fix(word):
+    def fix(word: str) -> str:
         word = char_check(word)
         word = CharFix.html_entity_replace(word)
         word = CharFix.fix_quote(word)
