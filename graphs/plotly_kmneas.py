@@ -70,31 +70,45 @@ def find_optimal_clusters(data):
     plt.show()
 
 
-def perform_clustering(data, n_clusters):
+def perform_clustering(data, tokens, n_clusters):
     """Cluster the data and return labels, centroids, and word-cluster mapping."""
     kmeans = KMeans(n_clusters=n_clusters)
     kmeans.fit(data)
     labels = kmeans.labels_
     centroids = kmeans.cluster_centers_
 
-    word_cluster_map = dict(zip(range(len(data)), labels))
+    word_cluster_map = dict(zip(tokens, labels))
 
     return labels, centroids, word_cluster_map
 
 
-def plot_cluster_heatmap(labels, features, title="Cluster Heatmap"):
+def plot_cluster_heatmap(labels, features, cluster_names, title="Cluster Heatmap"):
     """Creates a heatmap showing the distribution of features across clusters."""
     # Create a DataFrame with labels and features
     df = pd.DataFrame(features)
     df['Cluster'] = labels
+
+    # Map cluster numbers to names
+    df['Cluster'] = df['Cluster'].map(cluster_names)
+
     # Calculate the means of features for each cluster
     cluster_means = df.groupby('Cluster').mean()
+
+    # Define feature index names for better readability
+    feature_index_names = [
+        'Length', 'Digit Count', 'Punc Count', 'First Punc Pos', 'Last Punc Pos',
+        'Parenthesis Count', 'Digit Proportion', 'Punc Proportion',
+        'Starts with Digit', 'Ends with Digit', 'Consecutive Punc', 'Consecutive Digits'
+    ]
+
     # Plot the heatmap
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(cluster_means, annot=True, fmt=".2f", cmap="YlGnBu")
+    plt.figure(figsize=(18, 8))
+    sns.heatmap(cluster_means, annot=True, fmt=".2f", cmap="YlGnBu", xticklabels=feature_index_names, yticklabels=[cluster_names[i] for i in range(len(cluster_names))])
     plt.title(title)
     plt.ylabel('Cluster')
     plt.xlabel('Feature Index')
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
     plt.show()
 
 
@@ -105,14 +119,34 @@ def main():
 
     words = read_file(sys.argv[1])
     features = extract_features(words)
-    # labels, centers = perform_clustering(features, n_clusters=12)  # Adjust the number of clusters as needed
-    labels, centers, word_cluster_map = perform_clustering(features, n_clusters=12)
-    find_optimal_clusters(features)
-    # plot_cluster_heatmap(labels, features)
-    # Print word-cluster associations
 
-    for word_index, cluster_label in word_cluster_map.items():
-        print(f"{word_index} \t {words[word_index]} \t {cluster_label}")
+    # Define cluster names
+    cluster_names = {
+        0: 'Cluster A',
+        1: 'Cluster B',
+        2: 'Cluster C',
+        3: 'Cluster D',
+        4: 'Cluster E',
+        5: 'Cluster F',
+        6: 'Cluster G',
+        7: 'Cluster H',
+        8: 'Cluster I',
+        9: 'Cluster J',
+        10: 'Cluster K',
+        11: 'Cluster L'
+    }
+
+    labels, centers, word_cluster_map = perform_clustering(features, words, n_clusters=12)
+    find_optimal_clusters(features)
+    # Write words and their clusters to a TSV file
+    with open('word_clusters.tsv', 'w') as f:
+        f.write("Word\tCluster\n")
+        for word, cluster_label in word_cluster_map.items():
+            f.write(f"{word}\t{cluster_names[cluster_label]}\n")
+
+    print("Cluster assignments have been written to word_clusters.tsv")
+    plot_cluster_heatmap(labels, features, cluster_names)
+
 
 
 if __name__ == "__main__":
