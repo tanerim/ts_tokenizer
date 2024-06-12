@@ -108,10 +108,11 @@ def main():
     # labels, centers = perform_clustering(features, n_clusters=12)  # Adjust the number of clusters as needed
     labels, centers, word_cluster_map = perform_clustering(features, n_clusters=12)
     find_optimal_clusters(features)
-    plot_cluster_heatmap(labels, features)
+    # plot_cluster_heatmap(labels, features)
     # Print word-cluster associations
+
     for word_index, cluster_label in word_cluster_map.items():
-        print(f"Number of Strings In Cluster: {words[word_index]} - Cluster ID: {cluster_label}")
+        print(f"{word_index} \t {words[word_index]} \t {cluster_label}")
 
 
 if __name__ == "__main__":
