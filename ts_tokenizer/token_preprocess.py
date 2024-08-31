@@ -89,12 +89,12 @@ class TokenPreProcess:
         return check_regex(word, "num_char_sequence")
 
     @staticmethod
-    def is_in_parenthesis(word):
-        return check_regex(word, "in_parenthesis")
-
-    @staticmethod
     def is_in_quotes(word):
         return check_regex(word, "in_quotes")
+
+    @staticmethod
+    def is_in_parenthesis(word):
+        return check_regex(word, "in_parenthesis")
 
     @staticmethod
     def is_hour(word):

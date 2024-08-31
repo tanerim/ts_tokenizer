@@ -1,16 +1,16 @@
 import argparse
 import json
+import string
 from ts_tokenizer.token_check import TokenCheck
 from ts_tokenizer.parse_tokens import ParseTokens
+from ts_tokenizer.emoticon_check import EmoticonParser
+from ts_tokenizer.inner_punc import InnerPuncParser
+from ts_tokenizer.punctuation_process import PuncTagCheck
+import re
+import multiprocessing
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
-
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output", choices=["tokenized", "lines", "tagged", "details"],
-                        default="tokenized", help="specify how to print the items")
-    parser.add_argument("filename", help="the name of the file to process")
-    parser.add_argument("--color", "-c", action="store_true", help="enable colored output")
-    return parser.parse_args()
 
 tokenization_functions = {
     "Initial_Quote": ParseTokens.tokenize_initial_quote,
@@ -22,26 +22,85 @@ tokenization_functions = {
     "In_Parenthesis": ParseTokens.tokenize_in_parenthesis,
     "In_Quotes": ParseTokens.tokenize_in_quotes,
     "Complex_Punc": ParseTokens.tokenize_complex_punc,
-    #"Multiple_Emoticon": EmoticonParser.emoticon_tokenize,
-    #"Multiple_Smiley": SmileyParser.smiley_tokenize,
+    # "Multiple_Emoticon": EmoticonParser.emoticon_tokenize,
+    # "Multiple_Smiley": SmileyParser.smiley_tokenize,
     "Mis_Hyphenated": ParseTokens.tokenize_mishyphenated,
-    #"Inner_Punc": InnerPuncParser.tokenize_Inner_Punc,
+    # "Inner_Punc": InnerPuncParser.tokenize_Inner_Punc,
 }
 
 
+def tokenized(in_word, fixed_in_cand, tag):
+    pre_token = tagged(in_word, fixed_in_cand, tag)
+    tag = pre_token[2]
+    if tag in tokenization_functions:
+        return tokenization_functions[tag](fixed_in_cand)
+    elif tag == "OOV":
+        if fixed_in_cand and (fixed_in_cand[0] in string.punctuation or fixed_in_cand[-1] in string.punctuation):
+            if tag in tokenization_functions and tag != "Inner_Punc":
+                return tokenization_functions[tag](fixed_in_cand)
+            return InnerPuncParser.tokenize_Inner_Punc(fixed_in_cand)
+        elif EmoticonParser.emoticon_count(fixed_in_cand) >= 2 and tag != "Inner_Punc":
+            tokenized_emoticon = EmoticonParser.emoticon_tokenize(fixed_in_cand)
+            return tokenization_functions.get(tokenized_emoticon, fixed_in_cand)
+        else:
+            return fixed_in_cand
+    else:
+        return fixed_in_cand
+
+
+def details(in_word, fixed_in_cand, tag):
+    if tag == "OOV" and not any(c in string.punctuation for c in in_word if c != "-"):
+        pre_token = PuncTagCheck.punc_tag_check(fixed_in_cand)
+        return in_word, fixed_in_cand, pre_token
+    elif tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
+        pre_token = PuncTagCheck.punc_tag_check(fixed_in_cand)
+        return in_word, fixed_in_cand, pre_token
+    elif tag == "OOV" and EmoticonParser.emoticon_count(in_word) >= 2:
+        return in_word, fixed_in_cand, "Multiple_Emoticon"
+    elif tag == "OOV":
+        return in_word, fixed_in_cand, tag
+    else:
+        return in_word, fixed_in_cand, tag
+
+
+def tagged(in_word, fixed_in_cand, tag):
+    if tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
+        return in_word, fixed_in_cand, PuncTagCheck.punc_tag_check(fixed_in_cand)[0]
+    elif tag == "OOV" and EmoticonParser.emoticon_count(fixed_in_cand) >= 2:
+        return in_word, fixed_in_cand, tag
+    else:
+        return in_word, fixed_in_cand, tag
+
+
+def process_tokens(args, word):
+    result = TokenCheck.token_tagger(word, "all")
+    in_word, fixed_in_cand, tag = result
+    if args.output == "tagged":
+        return tagged(in_word, fixed_in_cand, tag)
+    elif args.output == "details":
+        return details(in_word, fixed_in_cand, tag)
+    elif args.output == "tokenized":
+        return tokenized(in_word, fixed_in_cand, tag)
+
 
 class TSTokenizer:
-    def __init__(self):
-        pass
+
+    @staticmethod
+    def parse_arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--output", choices=["tokenized", "lines", "tagged", "details"],
+                            default="tokenized", help="Specify the output format")
+        parser.add_argument("filename", help="Name of the file to process")
+        parser.add_argument("--color", "-c", action="store_true", help="Enable colored output")
+        return parser.parse_args()
 
     @staticmethod
     def tokenize(text, return_format='tokenized'):
-        tokens = text.split()  # Basic whitespace tokenization; replace with a more complex logic if needed
+        tokens = text.split()
         processed_tokens = []
 
         for token in tokens:
             tag = TokenCheck.token_tagger(token, output='all')
-            #tag = TokenPreProcess.token_tagger(fixed_token, output='all')
             processed_tokens.append(tag)
 
         if return_format == 'tokenized':
@@ -57,28 +116,30 @@ class TSTokenizer:
                 'tag': token[2]
             } for token in processed_tokens], ensure_ascii=False)
 
+    @staticmethod
+    def process_line(line, return_format):
+        return TSTokenizer.tokenize(line, return_format)
 
-def process_line(line, return_format):
-    return TSTokenizer.tokenize(line, return_format)
+    @staticmethod
+    def main():
+        args = TSTokenizer.parse_arguments()
+        num_workers = multiprocessing.cpu_count() - 1
 
+        with open(args.filename, encoding='utf-8') as in_file:
+            lines = in_file.readlines()
+            total_lines = len(lines)
+            pbar = tqdm(total=total_lines, desc="Processing File")
 
-def main():
-    args = parse_arguments()
-
-    with open(args.filename, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-        for line in lines:
-
-            results = process_line(line, args.output)
-
-            output = '\n'.join(results)
-
-    if args.color:
-        # Optional: Add code for colored output if needed
-        pass
-
-    print(output)
-
-
-if __name__ == "__main__":
-    main()
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                for line in lines:
+                    pbar.update(1)
+                    if re.match(r'^\s*(<|</).*>\s*$', line):
+                        continue  # Skip lines matching the regex
+                    words = line.split()
+                    results = list(executor.map(lambda w: process_tokens(args, w), words))
+                    for token in results:
+                        if args.output == "tagged":
+                            print("\t".join(token))
+                        else:
+                            print(token)
+            pbar.close()
