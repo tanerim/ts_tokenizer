@@ -2,6 +2,12 @@
 
 TS Tokenizer is a Turkish Tokenizer.
 
+
+# Installation
+```bash
+pip install ts-tokenizer
+```
+
 # CLI notes
 
 Basic usage. It prints tokenized output
