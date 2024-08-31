@@ -5,6 +5,7 @@ from .char_fix import CharFix
 from .date_check import DateCheck
 from .smiley_check import SmileyParser
 from .emoticon_check import EmoticonParser
+from .punctuation_process import PuncMatcher
 
 
 # Create a dict of RegExps
@@ -78,11 +79,15 @@ class TokenPreProcess:
 
     @staticmethod
     def is_mention(word):
-        return check_regex(word, "mention")
+        p_count = PuncMatcher.punc_count(word)
+        if p_count == 1:
+            return check_regex(word, "mention")
 
     @staticmethod
     def is_hashtag(word):
-        return check_regex(word, "hashtag")
+        p_count = PuncMatcher.punc_count(word)
+        if p_count == 1:
+            return check_regex(word, "hashtag")
 
     @staticmethod
     def is_num_char_sequence(word):
@@ -90,11 +95,15 @@ class TokenPreProcess:
 
     @staticmethod
     def is_in_quotes(word):
-        return check_regex(word, "in_quotes")
+        p_count = PuncMatcher.punc_count(word)
+        if p_count <= 2:
+            return check_regex(word, "in_quotes")
 
     @staticmethod
     def is_in_parenthesis(word):
-        return check_regex(word, "in_parenthesis")
+        p_count = PuncMatcher.punc_count(word)
+        if p_count <= 2:
+            return check_regex(word, "in_parenthesis")
 
     @staticmethod
     def is_hour(word):
@@ -106,7 +115,9 @@ class TokenPreProcess:
 
     @staticmethod
     def is_percentage_numbers(word):
-        return check_regex(word, "percentage_numbers")
+        p_count = PuncMatcher.punc_count(word)
+        if p_count == 1:
+            return check_regex(word, "percentage_numbers")
 
     @staticmethod
     def is_percentage_numbers_chars(word):

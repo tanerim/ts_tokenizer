@@ -1,3 +1,4 @@
+import sys
 import argparse
 import json
 import string
@@ -6,6 +7,7 @@ from ts_tokenizer.parse_tokens import ParseTokens
 from ts_tokenizer.emoticon_check import EmoticonParser
 from ts_tokenizer.inner_punc import InnerPuncParser
 from ts_tokenizer.punctuation_process import PuncTagCheck
+from ts_tokenizer.token_preprocess import TokenPreProcess
 import re
 import multiprocessing
 from tqdm import tqdm
@@ -13,11 +15,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 tokenization_functions = {
     "Initial_Quote": ParseTokens.tokenize_initial_quote,
-    "ISP": ParseTokens.tokenize_ISP,
-    "FSP": ParseTokens.tokenize_FSP,
-    "MSP": ParseTokens.tokenize_MSP,
-    "FMP": ParseTokens.tokenize_FMP,
-    "IMP": ParseTokens.tokenize_IMP,
+    "ISP": ParseTokens.tokenize_isp,
+    "FSP": ParseTokens.tokenize_fsp,
+    "MSP": ParseTokens.tokenize_msp,
+    "FMP": ParseTokens.tokenize_fmp,
+    "IMP": ParseTokens.tokenize_imp,
     "In_Parenthesis": ParseTokens.tokenize_in_parenthesis,
     "In_Quotes": ParseTokens.tokenize_in_quotes,
     "Complex_Punc": ParseTokens.tokenize_complex_punc,
@@ -31,6 +33,16 @@ tokenization_functions = {
 def tokenized(in_word, fixed_in_cand, tag):
     pre_token = tagged(in_word, fixed_in_cand, tag)
     tag = pre_token[2]
+
+    # Check lexicon, exceptions, and English words
+    if TokenPreProcess.is_in_lexicon(fixed_in_cand):
+        return fixed_in_cand
+    elif TokenPreProcess.is_in_exceptions(fixed_in_cand):
+        return fixed_in_cand
+    elif TokenPreProcess.is_in_eng_words(fixed_in_cand):
+        return fixed_in_cand
+
+    # Process based on the tag
     if tag in tokenization_functions:
         return tokenization_functions[tag](fixed_in_cand)
     elif tag == "OOV":
@@ -90,6 +102,7 @@ class TSTokenizer:
         parser.add_argument("-o", "--output", choices=["tokenized", "lines", "tagged", "details"],
                             default="tokenized", help="Specify the output format")
         parser.add_argument("filename", help="Name of the file to process")
+        parser.add_argument("-w", "--word", action="store_true", help="Enable cli input mode")
         parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
         return parser.parse_args()
 
@@ -123,24 +136,30 @@ class TSTokenizer:
     def main():
         args = TSTokenizer.parse_arguments()
         num_workers = multiprocessing.cpu_count() - 1
+        if args.word:
+            word = sys.argv[-1]
+            if re.match(r'^\s*(<|</).*>\s*$', word):
+                print(word)
+            else:
+                print(process_tokens(args, word))
+        else:
+            with open(args.filename, encoding='utf-8') as in_file:
+                lines = in_file.readlines()
+                total_lines = len(lines)
+                pbar = tqdm(total=total_lines, desc="Processing File") if args.verbose else None
+                with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                    for line in lines:
+                        if re.match(r'^\s*(<|</).*>\s*$', line):
+                            continue  # Skip lines matching the regex
+                        words = line.split()
+                        results = list(executor.map(lambda w: process_tokens(args, w), words))
+                        for token in results:
+                            if args.output == "tagged":
+                                print("\t".join(token))
+                            else:
+                                print(token)
+                            if args.verbose:
+                                pbar.update(1)
 
-        with open(args.filename, encoding='utf-8') as in_file:
-            lines = in_file.readlines()
-            total_lines = len(lines)
-            pbar = tqdm(total=total_lines, desc="Processing File") if args.verbose else None
-            with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                for line in lines:
-                    if re.match(r'^\s*(<|</).*>\s*$', line):
-                        continue  # Skip lines matching the regex
-                    words = line.split()
-                    results = list(executor.map(lambda w: process_tokens(args, w), words))
-                    for token in results:
-                        if args.output == "tagged":
-                            print("\t".join(token))
-                        else:
-                            print(token)
-                        if args.verbose:
-                            pbar.update(1)
-
-            if pbar:
-                pbar.close()
+                if pbar:
+                    pbar.close()

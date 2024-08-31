@@ -1,7 +1,6 @@
 import re
 import string
 from .data import LocalData
-from .token_preprocess import TokenPreProcess
 from .punctuation_process import PuncMatcher
 
 
@@ -44,13 +43,13 @@ class ParseTokens:
         return ''.join(word_list).lstrip().rstrip()
 
     @classmethod
-    def tokenize_ISP(cls, word):
+    def tokenize_isp(cls, word):
         if word and word[0] in string.punctuation:
             return word[0] + '\n' + word[1:]
         return word
 
     @classmethod
-    def tokenize_IMP(cls, word):
+    def tokenize_imp(cls, word):
         word_list = list(word)
         index = 0
         if any(smiley in word for smiley in LocalData.smileys()):
@@ -69,13 +68,13 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_FSP(cls, word):
+    def tokenize_fsp(cls, word):
         if word and word[-1] in string.punctuation:
             return word[:-1] + '\n' + word[-1]
         return word
 
     @classmethod
-    def tokenize_MSP(cls, word):
+    def tokenize_msp(cls, word):
         word_list = list(word)
         index_list = [i for i, char in enumerate(word) if char in string.punctuation]
         for index in index_list:
@@ -84,7 +83,7 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_FMP(cls, word):
+    def tokenize_fmp(cls, word):
         punc_count = PuncMatcher.punc_count(word)
         punc_positions = PuncMatcher.punc_pos(word)
         first_punc_pos = punc_positions[0]
@@ -132,7 +131,7 @@ class ParseTokens:
         if word in FMP_exception_list:
             return word
         elif word.startswith("(!)"):
-            return ParseTokens.tokenize_FSP(word)
+            return ParseTokens.tokenize_fsp(word)
         else:
             word_list = list(word)
             index_list = [0, len(word) - 1]
