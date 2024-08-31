@@ -12,12 +12,15 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            # Add command line scripts here
+            'ts-tokenizer=ts_tokenizer.cli:main',
         ],
     },
     author='Taner Sezer',
     author_email='tanersezerr@gmail.com',
-    description='TS Tokenizer is a Turkish Tokenizer.',
+    description='TS Tokenizer is a rule-based tokenizer'
+                'specifically designed for processing Turkish text.'
+                'It provides functionalities to split text into tokens'
+                'following the grammatical and linguistic rules of the Turkish language.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/tanerim/ts_tokenizer',

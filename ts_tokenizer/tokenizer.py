@@ -133,7 +133,7 @@ class TSTokenizer:
         return TSTokenizer.tokenize(line, return_format)
 
     @staticmethod
-    def main():
+    def ts_tokenize():
         args = TSTokenizer.parse_arguments()
         num_workers = multiprocessing.cpu_count() - 1
         if args.word:

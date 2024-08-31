@@ -3,7 +3,7 @@ Tokenizer for Turkish text - Taner Sezer
 tanersezerr@gmail.com
 """
 import sys
-from ts_tokenizer.tokenizer import TSTokenizer
+from tokenizer import TSTokenizer
 
 
 def main():

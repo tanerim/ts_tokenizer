@@ -1,9 +1,12 @@
 # TS Tokenizer
 
-TS Tokenizer is a Turkish Tokenizer.
+ts-tokenizer is a rule-based tokenizer specifically designed for processing Turkish text.
 
+It provides functionalities to split text into tokens following the grammatical and linguistic rules of the Turkish language.
 
 # Installation
+You can install the ts-tokenizer package using pip. Ensure you have Python 3.9 or higher installed on your system.
+
 ```bash
 pip install ts-tokenizer
 ```
