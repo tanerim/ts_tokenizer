@@ -7,13 +7,14 @@ import string
 import argparse
 import multiprocessing
 from tqdm import tqdm
-from utils.parse_tokens import ParseTokens
-from utils.pre_process import TokenPreProcess
-from utils.smiley_process import SmileyParser
-from utils.inner_punc import InnerPuncParser
+from ts_tokenizer.parse_tokens import ParseTokens
+from ts_tokenizer.parse_tokens import TokenPreProcess
+# from utils.smiley_process import SmileyParser
+from ts_tokenizer.inner_punc import InnerPuncParser
+from ts_tokenizer.punctuation_process import PuncTagCheck
+from ts_tokenizer.emoticon_check import EmoticonParser
+
 from concurrent.futures import ThreadPoolExecutor
-from utils.punctuation_process import PuncTagCheck
-from utils.emoticon_process import EmoticonParser
 
 tokenization_functions = {
     "Initial_Quote": ParseTokens.tokenize_initial_quote,
@@ -26,7 +27,7 @@ tokenization_functions = {
     "In_Quotes": ParseTokens.tokenize_in_quotes,
     "Complex_Punc": ParseTokens.tokenize_complex_punc,
     "Multiple_Emoticon": EmoticonParser.emoticon_tokenize,
-    "Multiple_Smiley": SmileyParser.smiley_tokenize,
+    # "Multiple_Smiley": SmileyParser.smiley_tokenize,
     "Mis_Hyphenated": ParseTokens.tokenize_mishyphenated,
     "Inner_Punc": InnerPuncParser.tokenize_Inner_Punc,
 }
