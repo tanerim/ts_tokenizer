@@ -2,6 +2,25 @@
 
 TS Tokenizer is a Turkish Tokenizer.
 
+# CLI notes
+
+```bash
+python main.py [file]
+```
+
+```bash
+python main.py --output [tagged, details, tokenized] [file]
+```
+
+```bash
+python main.py -v [file]
+```
+
+```bash
+python main.py -w [word]
+```
+
+
 ## Classes
 
 ## CharFix
