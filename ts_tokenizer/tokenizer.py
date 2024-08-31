@@ -11,7 +11,6 @@ import multiprocessing
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-
 tokenization_functions = {
     "Initial_Quote": ParseTokens.tokenize_initial_quote,
     "ISP": ParseTokens.tokenize_ISP,
@@ -88,10 +87,10 @@ class TSTokenizer:
     @staticmethod
     def parse_arguments():
         parser = argparse.ArgumentParser()
-        parser.add_argument("--output", choices=["tokenized", "lines", "tagged", "details"],
+        parser.add_argument("-o", "--output", choices=["tokenized", "lines", "tagged", "details"],
                             default="tokenized", help="Specify the output format")
         parser.add_argument("filename", help="Name of the file to process")
-        parser.add_argument("--color", "-c", action="store_true", help="Enable colored output")
+        parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
         return parser.parse_args()
 
     @staticmethod
@@ -128,11 +127,9 @@ class TSTokenizer:
         with open(args.filename, encoding='utf-8') as in_file:
             lines = in_file.readlines()
             total_lines = len(lines)
-            pbar = tqdm(total=total_lines, desc="Processing File")
-
+            pbar = tqdm(total=total_lines, desc="Processing File") if args.verbose else None
             with ThreadPoolExecutor(max_workers=num_workers) as executor:
                 for line in lines:
-                    pbar.update(1)
                     if re.match(r'^\s*(<|</).*>\s*$', line):
                         continue  # Skip lines matching the regex
                     words = line.split()
@@ -142,4 +139,8 @@ class TSTokenizer:
                             print("\t".join(token))
                         else:
                             print(token)
-            pbar.close()
+                        if args.verbose:
+                            pbar.update(1)
+
+            if pbar:
+                pbar.close()
