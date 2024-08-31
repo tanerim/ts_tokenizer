@@ -13,6 +13,7 @@ from ts_tokenizer.parse_tokens import TokenPreProcess
 from ts_tokenizer.inner_punc import InnerPuncParser
 from ts_tokenizer.punctuation_process import PuncTagCheck
 from ts_tokenizer.emoticon_check import EmoticonParser
+from ts_tokenizer.token_check import TokenCheck
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -87,7 +88,7 @@ def tokenized(in_word, fixed_in_cand, tag):
 
 
 def process_tokens(args, word):
-    result = TokenPreProcess.token_check(word)
+    result = TokenCheck.token_tagger(word, "all")
     in_word, fixed_in_cand, tag = result
     if args.output == "tagged":
         return tagged(in_word, fixed_in_cand, tag)
