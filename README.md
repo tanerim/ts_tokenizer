@@ -4,17 +4,28 @@ TS Tokenizer is a Turkish Tokenizer.
 
 # CLI notes
 
+Basic usage. It prints tokenized output
 ```bash
 python main.py [file]
 ```
 
+Enables verbose mode
+```bash
+python main.py -v [file] >> [output_file]
+```
+
+--output
+parameter selects process mode.
+
+tokenized is default option
+
+tagged returns candidate tags for token.
+
+details information about candidate tags
 ```bash
 python main.py --output [tagged, details, tokenized] [file]
 ```
 
-```bash
-python main.py -v [file]
-```
 
 ```bash
 python main.py -w [word]
