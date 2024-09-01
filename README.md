@@ -1,45 +1,31 @@
 # TS Tokenizer
 
-ts-tokenizer is a rule-based tokenizer specifically designed for processing Turkish text.
-
+ts-tokenizer is a rule-based tokenizer specifically designed for processing Turkish text.  
 It provides functionalities to split text into tokens following the grammatical and linguistic rules of the Turkish language.
 
+
 # Installation
+
 You can install the ts-tokenizer package using pip. Ensure you have Python 3.9 or higher installed on your system.
 
-```bash
-pip install ts-tokenizer
-```
+    pip install ts-tokenizer
 
-# CLI notes
+## Command line tool
+Basic usage returns tokenized output of given text file.
 
-Basic usage. It prints tokenized output
-```bash
-python main.py [file]
-```
+    $ ts-tokenizer input.txt
 
-Enables verbose mode
-```bash
-python main.py -v [file] >> [output_file]
-```
-
---output
-parameter selects process mode.
-
-tokenized is default option
-
-tagged returns candidate tags for token.
-
-details information about candidate tags
-```bash
-python main.py --output [tagged, details, tokenized] [file]
-```
-
-
-```bash
-python main.py -w [word]
-```
-
+### Arguments
+    $ ts-tokenizer --help
+    usage: ts-tokenizer [-h] [-o {tokenized,lines,tagged,details}] [-w] [-v] filename
+    positional arguments:
+    filename              Name of the file to process
+    options:
+    -h, --help            show this help message and exit
+    -o {tokenized,lines,tagged,details}, --output {tokenized,lines,tagged,details}
+                        Specify the output format
+    -w, --word            Enable cli input mode
+    -v, --verbose         Enable verbose mode
 
 ## Classes
 
