@@ -28,6 +28,7 @@ class TokenCheck:
             "HashTag": TokenPreProcess.is_hashtag,
             "Percentage_Numbers": TokenPreProcess.is_percentage_numbers,
             "Percentage_Number_Chars": TokenPreProcess.is_percentage_numbers_chars,
+            "Roman_Number": TokenPreProcess.is_roman_number,
             # "Formula": TokenPreProcess.is_formula,
             "Num_Char_Seq": TokenPreProcess.is_num_char_sequence,
             "Multiple_Smiley": TokenPreProcess.is_multiple_smiley,
