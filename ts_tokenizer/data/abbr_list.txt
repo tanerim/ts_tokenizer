@@ -1022,3 +1022,7 @@ ohm
 kPA
 Gbps
 Mbit
+D.
+d.
+Ö.
+ö.

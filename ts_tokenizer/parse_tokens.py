@@ -128,6 +128,7 @@ class ParseTokens:
 
     @classmethod
     def tokenize_in_parenthesis(cls, word):
+        candidates = []
         if word in FMP_exception_list:
             return word
         elif word.startswith("(!)"):
@@ -138,6 +139,7 @@ class ParseTokens:
             for index in index_list:
                 if index < len(word):
                     word_list[index] = '\n' + word_list[index] + '\n'
+                    candidates.append(''.join(word_list[1:-1]).lstrip().rstrip())
             return ''.join(word_list).lstrip().rstrip()
 
     @classmethod
