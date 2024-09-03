@@ -79,7 +79,7 @@ class ParseTokens:
         index_list = [i for i, char in enumerate(word) if char in string.punctuation]
         for index in index_list:
             if 0 <= index < len(word):
-                word_list[index] = '\n' + word_list[index] + '\n'
+                word_list[index] = f"\n{word_list[index]}\n"
         return ''.join(word_list).strip()
 
     @classmethod
