@@ -59,24 +59,9 @@ def tokenized(in_word, fixed_in_cand, tag):
         return fixed_in_cand
 
 
-def details(in_word, fixed_in_cand, tag):
-    if tag == "OOV" and not any(c in string.punctuation for c in in_word if c != "-"):
-        pre_token = PuncTagCheck.punc_tag_check(fixed_in_cand)
-        return in_word, fixed_in_cand, pre_token
-    elif tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
-        pre_token = PuncTagCheck.punc_tag_check(fixed_in_cand)
-        return in_word, fixed_in_cand, pre_token
-    elif tag == "OOV" and EmoticonParser.emoticon_count(in_word) >= 2:
-        return in_word, fixed_in_cand, "Multiple_Emoticon"
-    elif tag == "OOV":
-        return in_word, fixed_in_cand, tag
-    else:
-        return in_word, fixed_in_cand, tag
-
-
-def tagged(in_word, fixed_in_cand, tag):
+def tagged(in_word: object, fixed_in_cand: object, tag: object) -> object:
     if tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
-        return in_word, fixed_in_cand, PuncTagCheck.punc_tag_check(fixed_in_cand)[0]
+        return in_word, fixed_in_cand, PuncTagCheck.punc_tag_check(fixed_in_cand)
     elif tag == "OOV" and EmoticonParser.emoticon_count(fixed_in_cand) >= 2:
         return in_word, fixed_in_cand, tag
     else:
@@ -88,8 +73,6 @@ def process_tokens(args, word):
     in_word, fixed_in_cand, tag = result
     if args.output == "tagged":
         return tagged(in_word, fixed_in_cand, tag)
-    elif args.output == "details":
-        return details(in_word, fixed_in_cand, tag)
     elif args.output == "tokenized":
         return tokenized(in_word, fixed_in_cand, tag)
 
@@ -99,7 +82,7 @@ class TSTokenizer:
     @staticmethod
     def parse_arguments():
         parser = argparse.ArgumentParser()
-        parser.add_argument("-o", "--output", choices=["tokenized", "lines", "tagged", "details"],
+        parser.add_argument("-o", "--output", choices=["tokenized", "lines", "tagged"],
                             default="tokenized", help="Specify the output format")
         parser.add_argument("filename", help="Name of the file to process")
         parser.add_argument("-w", "--word", action="store_true", help="Enable cli input mode")
@@ -116,17 +99,12 @@ class TSTokenizer:
             processed_tokens.append(tag)
 
         if return_format == 'tokenized':
-            return ' '.join([token[1] for token in processed_tokens])
+            return ' '.join([token])
         elif return_format == 'lines':
-            return '\n'.join([token[1] for token in processed_tokens])
+            return '\n'.join([token])
         elif return_format == 'tagged':
-            return ' '.join([f"{token[1]}/{token[2]}" for token in processed_tokens])
-        elif return_format == 'details':
-            return json.dumps([{
-                'original': token[0],
-                'fixed': token[1],
-                'tag': token[2]
-            } for token in processed_tokens], ensure_ascii=False)
+            return ' '.join([f"{token}/{token}" for token in processed_tokens])
+
 
     @staticmethod
     def process_line(line, return_format):

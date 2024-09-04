@@ -1,5 +1,6 @@
 import re
 import string
+import inspect
 from .data import LocalData
 from .char_fix import CharFix
 from .date_check import DateCheck
@@ -15,7 +16,8 @@ REGEX_PATTERNS = {
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
     # "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',
     "email_punc": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']+$',
-    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?+\b(?![.,!?;:])',
+    # "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?+\b(?![.,!?;:])',
+    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
     "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)?',
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
     "percentage_numbers_chars": r'%(\d+\D+)',
@@ -27,13 +29,18 @@ REGEX_PATTERNS = {
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
-    "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'
+    "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
+    "currency_initial": r'^(?P<Currency>[$€£₺]\d+(?:,\d{3})*(?:\.\d{2})?)$',
+    "currency_final": r'^(?P<Currency>\d+(?:,\d{3})*(?:\.\d{2})?[$€£₺])$'
 }
 
 
 def check_regex(word, pattern_key):
     pattern = REGEX_PATTERNS[pattern_key]
-    return word if re.match(pattern, word) else None
+    if pattern:
+        return word if re.match(pattern, word) else None
+    else:
+        return None
 
 
 class TokenPreProcess:
@@ -91,8 +98,15 @@ class TokenPreProcess:
     @staticmethod
     def is_punc(word):
         exception_list = ["(!)", "...", "[...]"]
-        if word not in exception_list:
-            return word if all(char in string.punctuation for char in word) else None
+        # Check for Full-Side Punctuation (FSP) cases
+        if any(word.startswith(exc) and word.endswith(tuple(string.punctuation)) and len(word) > len(exc) for exc in
+               exception_list):
+            return "FSP"
+        # Check for standalone exception (like (!)) returning "Punc"
+        elif word in exception_list:
+            return "Punc"
+        # Otherwise, check if all characters are punctuation
+        return word if all(char in string.punctuation for char in word) else None
 
     @staticmethod
     def is_mention(word):
@@ -157,7 +171,6 @@ class TokenPreProcess:
     @staticmethod
     def is_email(word):
         return check_regex(word, "email")
-
 
     @staticmethod
     def is_prefix_url(word):
@@ -248,15 +261,31 @@ class TokenPreProcess:
                     return word, "Inner_Char"
         return None
 
+    @staticmethod
+    def is_currency_initial(word):
+        return check_regex(word, "currency_initial")
+
+    @staticmethod
+    def is_currency_final(word):
+        return check_regex(word, "currency_final")
+
+
 class TokenProcessor:
 
     @staticmethod
     def run_all(word):
         results = {}
         for method_name in dir(TokenPreProcess):
-            if callable(getattr(TokenPreProcess, method_name)) and method_name.startswith('is_'):
-                method = getattr(TokenPreProcess, method_name)
-                result = method(word)
-                if result:
-                    results[method_name] = result
+            method = getattr(TokenPreProcess, method_name)
+            # Skip special methods and built-in types
+            if callable(method) and not method_name.startswith('__'):
+                try:
+                    # Check if the method requires one argument
+                    if len(inspect.signature(method).parameters) == 1:
+                        result = method(word)
+                        if result:
+                            results[method_name] = result
+                except ValueError:
+                    # Skip methods that don't have signatures (like built-ins)
+                    continue
         return results if results else None

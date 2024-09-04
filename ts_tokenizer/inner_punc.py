@@ -1,7 +1,6 @@
 import re
 import string
 from typing import Union, Optional
-from ts_tokenizer.punctuation_process import PuncMatcher
 
 num_suffix = ["ıncı", "inci", "üncü", "uncu"]
 

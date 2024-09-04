@@ -6,7 +6,7 @@ from .punctuation_process import PuncTagCheck, PuncMatcher
 
 class TokenCheck:
     @staticmethod
-    def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple'):
+    def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple') -> object:
         token_tags = {
             "Valid_Word": TokenPreProcess.is_in_lexicon,
             "Exception_Word": TokenPreProcess.is_in_exceptions,
@@ -16,6 +16,7 @@ class TokenCheck:
             "In_Parenthesis": TokenPreProcess.is_in_parenthesis,
             "In_Quotes": TokenPreProcess.is_in_quotes,
             "Smiley": TokenPreProcess.is_smiley,
+            "Punc": TokenPreProcess.is_punc,
             "Email_Punc": TokenPreProcess.is_email_punc,
             "Email": TokenPreProcess.is_email,
             "Inner_Char": TokenPreProcess.is_inner_char,
@@ -29,18 +30,19 @@ class TokenCheck:
             "Percentage_Numbers": TokenPreProcess.is_percentage_numbers,
             "Percentage_Number_Chars": TokenPreProcess.is_percentage_numbers_chars,
             "Roman_Number": TokenPreProcess.is_roman_number,
-            # "Formula": TokenPreProcess.is_formula,
-            "Num_Char_Seq": TokenPreProcess.is_num_char_sequence,
             "Multiple_Smiley": TokenPreProcess.is_multiple_smiley,
-            "Punc": TokenPreProcess.is_punc,
             "Underscored": TokenPreProcess.is_underscored,
             "Hyphenated": TokenPreProcess.is_hyphenated,
             "Hyphen_In": TokenPreProcess.is_hyphen_in,
-            # "Mis_Hyphenated": TokenPreProcess.is_mishpyhenated,
             "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
             "Copyright": TokenPreProcess.is_copyright,
             "Registered": TokenPreProcess.is_registered,
-            "Three_or_More": TokenPreProcess.is_three_or_more
+            "Three_or_More": TokenPreProcess.is_three_or_more,
+            "Currency_Initial": TokenPreProcess.is_currency_initial,
+            "Currency_Final": TokenPreProcess.is_currency_final,
+            "Num_Char_Seq": TokenPreProcess.is_num_char_sequence,
+            # "Mis_Hyphenated": TokenPreProcess.is_mishpyhenated,
+            # "Formula": TokenPreProcess.is_formula,
         }
 
         # Check if given param word is a string

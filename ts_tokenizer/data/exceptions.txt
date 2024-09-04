@@ -12,7 +12,6 @@ radyo-televizyon
 yasal-idari
 yönetici-çalısan
 yordayıcı-ilişkisel
-Yunanlar-Rumlar
 zaman-mekan-hareket
 Zaman-mekânın
 Z-kuşağı
