@@ -21,6 +21,7 @@ REGEX_PATTERNS = {
     "percentage_numbers_chars": r'%(\d+\D+)',
     "percentage_numbers": r'%(\d+)$',
     "in_quotes": r'"[^"]+"|\'[^\']+\'',
+    "date_range": r'^[\(\[]\d{4}[\-–]\d{4}[\)\]]$',
     "in_parenthesis": r'^[\(\[\{].*[\)\]\}]$',
     "copyright": r'(?:^©[a-zA-Z]+$)|(?:^[a-zA-Z]+©$)',
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
@@ -36,6 +37,21 @@ def check_regex(word, pattern_key):
 
 
 class TokenPreProcess:
+
+    @staticmethod
+    def is_in_lexicon(word):
+        word = CharFix.fix(word)
+        return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.word_list() else None
+
+    @staticmethod
+    def is_in_exceptions(word):
+        word = CharFix.fix(word)
+        return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.exception_words() else None
+
+    @staticmethod
+    def is_in_eng_words(word):
+        word = CharFix.fix(word)
+        return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.eng_word_list() else None
 
     @staticmethod
     def fix_tr_lowercase(word):
@@ -99,6 +115,12 @@ class TokenPreProcess:
         p_count = PuncMatcher.punc_count(word)
         if p_count <= 2:
             return check_regex(word, "in_quotes")
+
+    @staticmethod
+    def is_date_range(word):
+        p_count = PuncMatcher.punc_count(word)
+        if p_count <= 2:
+            return check_regex(word, "date_range")
 
     @staticmethod
     def is_in_parenthesis(word):
@@ -182,10 +204,11 @@ class TokenPreProcess:
     @staticmethod
     def is_hyphen_in(word):
         if "-" in word and word.count("-") <= 5 and word[0] != "-" and word[-1] != "-":
-            if TokenPreProcess.is_hyphenated(word) is True:
-                return word, CharFix.fix(word), "Hyphenated"
-            else:
-                return word, CharFix.fix(word), "OOV"
+            if sum(char.isdigit() for char in word) <= 1:
+                if TokenPreProcess.is_hyphenated(word) is True:
+                    return word, CharFix.fix(word), "Hyphenated"
+                else:
+                    return word, CharFix.fix(word), "OOV"
         elif "_" in word and word[0] != "_" and word[-1] != "_":
             if TokenPreProcess.is_underscored(word) is True:
                 return word, CharFix.fix(word), "Underscored"
@@ -215,21 +238,6 @@ class TokenPreProcess:
             return check_regex(word, "three_or_more")
 
     @staticmethod
-    def is_in_lexicon(word):
-        word = CharFix.fix(word)
-        return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.word_list() else None
-
-    @staticmethod
-    def is_in_exceptions(word):
-        word = CharFix.fix(word)
-        return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.exception_words() else None
-
-    @staticmethod
-    def is_in_eng_words(word):
-        word = CharFix.fix(word)
-        return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.eng_word_list() else None
-
-    @staticmethod
     def is_inner_char(word):
         pattern = r'\([a-zA-ZğüşıöçĞÜŞİÖÇ]\)'
         if "(" in word and ")" in word:
@@ -239,3 +247,16 @@ class TokenPreProcess:
                 if candidate in LocalData.word_list():
                     return word, "Inner_Char"
         return None
+
+class TokenProcessor:
+
+    @staticmethod
+    def run_all(word):
+        results = {}
+        for method_name in dir(TokenPreProcess):
+            if callable(getattr(TokenPreProcess, method_name)) and method_name.startswith('is_'):
+                method = getattr(TokenPreProcess, method_name)
+                result = method(word)
+                if result:
+                    results[method_name] = result
+        return results if results else None
