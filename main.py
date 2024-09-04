@@ -6,6 +6,10 @@ import sys
 from ts_tokenizer.tokenizer import TSTokenizer
 
 
+def extract_tokens(text):
+    tokens = TSTokenizer.tokenize(text)
+    return tokens
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python script.py <args>")

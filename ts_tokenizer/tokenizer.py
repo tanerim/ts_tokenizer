@@ -26,7 +26,7 @@ tokenization_functions = {
     # "Multiple_Emoticon": EmoticonParser.emoticon_tokenize,
     # "Multiple_Smiley": SmileyParser.smiley_tokenize,
     "Mis_Hyphenated": ParseTokens.tokenize_mishyphenated,
-    # "Inner_Punc": InnerPuncParser.tokenize_Inner_Punc,
+    "Inner_Punc": ParseTokens.tokenize_inner_punc,
 }
 
 
@@ -49,7 +49,7 @@ def tokenized(in_word, fixed_in_cand, tag):
         if fixed_in_cand and (fixed_in_cand[0] in string.punctuation or fixed_in_cand[-1] in string.punctuation):
             if tag in tokenization_functions and tag != "Inner_Punc":
                 return tokenization_functions[tag](fixed_in_cand)
-            return InnerPuncParser.tokenize_Inner_Punc(fixed_in_cand)
+            return InnerPuncParser.tokenize_inner_punc(fixed_in_cand)
         elif EmoticonParser.emoticon_count(fixed_in_cand) >= 2 and tag != "Inner_Punc":
             tokenized_emoticon = EmoticonParser.emoticon_tokenize(fixed_in_cand)
             return tokenization_functions.get(tokenized_emoticon, fixed_in_cand)
