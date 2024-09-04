@@ -19,14 +19,14 @@ class ParseTokens:
         return True
 
     @classmethod
-    def split_punctuation_and_chars(cls, word:str) -> list:
+    def split_punctuation_and_chars(cls, word: str) -> list:
         patterns = ["...", "(!)", "!!!"] + list(LocalData.smileys())
         pattern_regex = '|'.join(map(re.escape, patterns))
         tokens = re.split('(' + pattern_regex + ')', word)
         return [token for token in tokens if token]
 
     @classmethod
-    def tokenize_initial_quote(cls, word:str) -> list:
+    def tokenize_initial_quote(cls, word: str) -> list:
         word_list = list(word)
         index_list = [0, len(word)]
         for index in index_list:
@@ -35,7 +35,7 @@ class ParseTokens:
         return ''.join(word_list).lstrip().rstrip()
 
     @classmethod
-    def tokenize_in_quotes(cls, word:str) -> list:
+    def tokenize_in_quotes(cls, word: str) -> list:
         word_list = list(word)
         index_list = [0, len(word) - 1]
         for index in index_list:
@@ -44,13 +44,13 @@ class ParseTokens:
         return ''.join(word_list).lstrip().rstrip()
 
     @classmethod
-    def tokenize_isp(cls, word:str) -> str:
+    def tokenize_isp(cls, word: str) -> str:
         if word and word[0] in string.punctuation:
             return word[0] + '\n' + word[1:]
         return word
 
     @classmethod
-    def tokenize_imp(cls, word:str) -> str:
+    def tokenize_imp(cls, word: str) -> str:
         word_list = list(word)
         index = 0
         if any(smiley in word for smiley in LocalData.smileys()):
@@ -69,13 +69,13 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_fsp(cls, word:str) -> str:
+    def tokenize_fsp(cls, word: str) -> str:
         if word and word[-1] in string.punctuation:
             return word[:-1] + '\n' + word[-1]
         return word
 
     @classmethod
-    def tokenize_msp(cls, word:str) -> str:
+    def tokenize_msp(cls, word: str) -> str:
         word_list = list(word)
         index_list = [i for i, char in enumerate(word) if char in string.punctuation]
         for index in index_list:
@@ -84,7 +84,7 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_fmp(cls, word:str) -> str:
+    def tokenize_fmp(cls, word: str) -> str:
         punc_count = PuncMatcher.punc_count(word)
         punc_positions = PuncMatcher.punc_pos(word)
         first_punc_pos = punc_positions[0]
@@ -110,7 +110,7 @@ class ParseTokens:
             return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_complex_punc(cls, word:str) -> str:
+    def tokenize_complex_punc(cls, word: str) -> str:
         # Exception case: one char + dot + one char + dot (e.g., "M.S.")
         if len(word) == 4 and all([word[0].isalpha(), word[1] == '.', word[2].isalpha(), word[3] == '.']):
             return word
@@ -128,7 +128,7 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_in_parenthesis(cls, word:str) -> str:
+    def tokenize_in_parenthesis(cls, word: str) -> str:
         if word in FMP_exception_list:
             return word
         elif word.startswith("(!)"):
@@ -142,7 +142,7 @@ class ParseTokens:
             return ''.join(word_list).lstrip().rstrip()
 
     @classmethod
-    def tokenize_mishyphenated(cls, word:str) -> str:
+    def tokenize_mishyphenated(cls, word: str) -> str:
         word = word.replace("-", "")
         return word
 
