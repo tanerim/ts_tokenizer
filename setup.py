@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name='ts_tokenizer',
-    version='0.1.2',
+    version='0.1.3',
     packages=find_packages(),
     package_data={
     'ts_tokenizer': ['data/*.txt'],
     },
     install_requires=[
-        # Add any dependencies here
+        'tqdm~=4.66.4'
     ],
     entry_points={
         'console_scripts': [
