@@ -17,16 +17,18 @@ Basic usage returns tokenized output of given text file.
     $ ts-tokenizer input.txt
 
 ### Arguments
-    $ ts-tokenizer --help
-    usage: ts-tokenizer [-h] [-o {tokenized,lines,tagged,details}] [-w] [-v] filename
+    $python main.py --help
+    usage: main.py [-h] [-o {tokenized,tagged}] [-w] [-v] filename
+
     positional arguments:
     filename              Name of the file to process
+
     options:
-    -h, --help            show this help message and exit
-    -o {tokenized,lines,tagged,details}, --output {tokenized,lines,tagged,details}
+        -h, --help            show this help message and exit
+        -o {tokenized,lines,tagged}, --output {tokenized,tagged}
                         Specify the output format
-    -w, --word            Enable cli input mode
-    -v, --verbose         Enable verbose mode
+        -w, --word            Enable cli input mode
+        -v, --verbose         Enable verbose mod
 
 ## Classes
 
