@@ -46,24 +46,24 @@ from ts_tokenizer.char_fix import CharFix
 
 ```python
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-fix_chars = CharFix.fix(line)
-print(fix_chars)
+print(CharFix.fix(line))
+
 Parça ve bütün ilişkisi her zaman işlevsel değildir.
 ```
 ### Lowercase
 
 ```python
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
-tr_lowercase = CharFix.tr_lowercase(line)
-print(tr_lowercase)
+print(CharFix.tr_lowercase(line))
+
 istanbul ve ığdır ''arası'' 1528 km'dir.
 ```
 ### Fix Quotes
 
 ```python
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
-fix_quotes = CharFix.fix_quote(line)
-print(quotes)
+print(CharFix.fix_quote(line))
+
 İstanbul ve Iğdır "arası" 1528 km'dir.
 ```
 
@@ -82,13 +82,19 @@ from ts_tokenizer.token_check import TokenCheck
 
 ### Default Usage
 ```python
-word = "''arası''"
-TokenTag = TokenCheck.token_tagger(word)
-print(TokenTag)
-In_Quotes
-```
+word = "ParÃ§a"
+print(TokenCheck.token_tagger(word))
 
-```python
+$ Valid_Word
+
+print(TokenCheck.token_tagger(word, output="all", output_format="tuple"))
+
+$ ('ParÃ§a', 'Parça', 'Valid_Word')
+
+print(TokenCheck.token_tagger(word, output="all", output_format="list"))
+
+$ ['ParÃ§a', 'Parça', 'Valid_Word']
+
 word = "#tstokenizer"
 print(TokenCheck.token_tagger(word, output='all', output_format='tuple'))  # Returns a tuple
 ('#tstokenizer', '#tstokenizer', 'HashTag')
@@ -96,14 +102,6 @@ print(TokenCheck.token_tagger(word, output='all', output_format='tuple'))  # Ret
 word = "#tanerim"
 print(TokenCheck.token_tagger(word, output='all', output_format='list'))   # Returns a list
 ['@tanerim', '@tanerim', 'Mention']
-
-word = "16:37"
-print(TokenCheck.token_tagger(word, output='all', output_format='json'))   # Returns a JSON string
-{"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
-
-word = "16:37"
-print(TokenCheck.token_tagger(word, output='all', output_format='json'))   # Returns a JSON string
-{"input_token": "16:37", "fixed_token": "16:37", "tag": "Hour"}
 
 word = ":):):)"
 print(TokenCheck.token_tagger(word, output='all', output_format='string'))   # Returns a tab-separated string
