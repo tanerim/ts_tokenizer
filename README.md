@@ -39,7 +39,7 @@ For case-insensitive output tr is employed in the sample below:
 
     $ ts-tokenizer input.txt | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -n
 
-Sample below returns number of tags 
+Sample below returns number of tags in given text
 
     $ts-tokenizer -o tagged input.txt | cut -f3 | sort | uniq -c
       1 Hyphen_In
