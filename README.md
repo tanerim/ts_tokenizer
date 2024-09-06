@@ -16,6 +16,22 @@ Basic usage returns tokenized output of given text file.
 
     $ ts-tokenizer input.txt
 
+-o parameter takes two arguments, 'tokenized' and 'tagged'. Tokenized is the default value and it is not obligatory to declare. 
+    $ ts-tokenizer -o tagged input.txt
+
+ts-tokenizer could also be used in a pipeline on bash. Following sample returns calculated
+frequencies for the given file:
+
+    $ ts-tokenizer Test_Text.txt | sort | uniq -c | sort -n
+
+For case-insensitive output tr is employed ih the sample below:
+
+    $ ts-tokenizer Test_Text.txt | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -n
+
+-w parameter reads given word/sentence on bash cli. Note that this parameter get only one word and omits whitespaces.
+
+    $ ts-tokenizer -w "geliyorlar..."
+
 ### Arguments
     $python main.py --help
     usage: main.py [-h] [-o {tokenized,tagged}] [-w] [-v] filename
