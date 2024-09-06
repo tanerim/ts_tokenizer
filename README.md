@@ -16,24 +16,71 @@ Basic usage returns tokenized output of given text file.
 
     $ ts-tokenizer input.txt
 
+## CLI Arguments
+
 -o parameter takes two arguments, 'tokenized' and 'tagged'. Tokenized is the default value and it is not obligatory to declare. 
+    
     $ ts-tokenizer -o tagged input.txt
-
-ts-tokenizer could also be used in a pipeline on bash. Following sample returns calculated
-frequencies for the given file:
-
-    $ ts-tokenizer Test_Text.txt | sort | uniq -c | sort -n
-
-For case-insensitive output tr is employed ih the sample below:
-
-    $ ts-tokenizer Test_Text.txt | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -n
 
 -w parameter reads given word/sentence on bash cli. Note that this parameter get only one word and omits whitespaces.
 
     $ ts-tokenizer -w "geliyorlar..."
 
-### Arguments
-    $python main.py --help
+
+## Using CLI Arguments with pipelines
+
+ts-tokenizer could also be used in a pipeline on bash.
+
+Following sample returns calculated  frequencies for the given file:
+
+    $ ts-tokenizer input.txt | sort | uniq -c | sort -n
+
+For case-insensitive output tr is employed in the sample below:
+
+    $ ts-tokenizer input.txt | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -n
+
+Sample below returns number of tags 
+
+    $ts-tokenizer -o tagged input.txt | cut -f3 | sort | uniq -c
+      1 Hyphen_In
+      1 Inner_Punc
+      2 FMP
+      8 ISP
+      8 Num_Char_Seq
+     12 Number
+     24 Apostrophe
+     25 OOV
+     69 FSP
+    515 Valid_Word
+
+To find a specific tag following command could be used.
+
+    $ ts-tokenizer -o tagged input.txt | cut -f2,3 | grep "Num_Char_Seq"
+    40'ar	Num_Char_Seq
+    2.	Num_Char_Seq
+    24.	Num_Char_Seq
+    Num_Char_Seq
+    16'sı	Num_Char_Seq
+    8.	Num_Char_Seq
+    20'şer	Num_Char_Seq
+    40'ar	Num_Char_Seq
+
+By employing sort and uniq commands frequency of the words with target tag could be found:
+
+    $ ts-tokenizer -o tagged Test_Text.txt | cut -f2,3 | grep "Num_Char_Seq" | sort | uniq -c | sort -n
+      1 16'sı	Num_Char_Seq
+      1 20'şer	Num_Char_Seq
+      1 2.	Num_Char_Seq
+      1 8.	Num_Char_Seq
+      2 24.	Num_Char_Seq
+      2 40'ar	Num_Char_Seq
+
+
+
+--help returns help
+    
+    $ ts-tokenizer --help
+
     usage: main.py [-h] [-o {tokenized,tagged}] [-w] [-v] filename
 
     positional arguments:
