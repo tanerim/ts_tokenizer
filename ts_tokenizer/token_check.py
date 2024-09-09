@@ -32,16 +32,19 @@ class TokenCheck:
             "Roman_Number": TokenPreProcess.is_roman_number,
             "Multiple_Smiley": TokenPreProcess.is_multiple_smiley,
             "Underscored": TokenPreProcess.is_underscored,
-            "Hyphenated": TokenPreProcess.is_hyphenated,
-            "Hyphen_In": TokenPreProcess.is_hyphen_in,
             "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
             "Copyright": TokenPreProcess.is_copyright,
             "Registered": TokenPreProcess.is_registered,
             "Three_or_More": TokenPreProcess.is_three_or_more,
             "Currency_Initial": TokenPreProcess.is_currency_initial,
             "Currency_Final": TokenPreProcess.is_currency_final,
+            "Numeric_Hyphenated": TokenPreProcess.is_hyphen_in,
+            "Alphanumeric_Hyphenated": TokenPreProcess.is_hyphen_in,
+            "Hyphen_In": TokenPreProcess.is_hyphen_in,
+            "Hyphenated": TokenPreProcess.is_hyphenated,
             "Num_Char_Seq": TokenPreProcess.is_num_char_sequence,
-            # "Mis_Hyphenated": TokenPreProcess.is_mishpyhenated,
+            "Mis_Hyphenated": TokenPreProcess.is_mis_hyphenated,
+
             # "Formula": TokenPreProcess.is_formula,
         }
 

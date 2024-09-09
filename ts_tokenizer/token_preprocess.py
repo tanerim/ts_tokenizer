@@ -192,41 +192,60 @@ class TokenPreProcess:
 
     @staticmethod
     def is_hyphenated(word):
+        # Check for hyphenated words where both parts exist in the word list
         if ("-" in word and word.count("-") == 1 and word[0] != "-" and word[-1] != "-"
                 and not any(c in string.punctuation for c in word if c != "-")):
             parts = word.split("-")
-            if TokenPreProcess.fix_tr_lowercase(parts[0]) in LocalData.word_list() and TokenPreProcess.fix_tr_lowercase(parts[1]) in LocalData.word_list():
-                return word
+            if all(TokenPreProcess.fix_tr_lowercase(part) in LocalData.word_list() for part in parts):
+                return word  # Valid hyphenated word
 
     @staticmethod
-    def is_mishpyhenated(word):
+    def is_mis_hyphenated(word):
+        # Check for incorrectly hyphenated words, i.e., neither part is a valid word in the word list
         izafe = ["ı", "i", "ü", "u"]
         if ("-" in word and word.count("-") == 1 and word[0] != "-" and word[-1] != "-"
                 and not any(c in string.punctuation for c in word if c != "-")):
             parts = word.split("-")
-            if TokenPreProcess.fix_tr_lowercase(parts[0]) not in LocalData.word_list() and TokenPreProcess.fix_tr_lowercase(parts[1]) not in LocalData.word_list() and TokenPreProcess.fix_tr_lowercase(parts[1]) not in izafe:
-                return word
-
-    @staticmethod
-    def is_underscored(word):
-        if "_" in word and word.count("_") == 1 and word[0] != "_" and word[-1] != "_":
-            parts = word.split("_")
-            if TokenPreProcess.fix_tr_lowercase(parts[0]) in LocalData.word_list() and TokenPreProcess.fix_tr_lowercase(parts[1]) in LocalData.word_list():
-                return word
+            # Neither part is in word_list and second part is not in izafe
+            if all(TokenPreProcess.fix_tr_lowercase(part) not in LocalData.word_list() for part in parts) \
+                    and TokenPreProcess.fix_tr_lowercase(parts[1]) not in izafe:
+                return word  # Mis-hyphenated
 
     @staticmethod
     def is_hyphen_in(word):
-        if "-" in word and word.count("-") <= 5 and word[0] != "-" and word[-1] != "-":
-            if sum(char.isdigit() for char in word) <= 1:
-                if TokenPreProcess.is_hyphenated(word) is True:
+        # Handle words containing hyphens only
+        if "-" in word and word[0] != "-" and word[-1] != "-":
+            # Split by hyphen
+            parts = word.split("-")
+            # Check if all parts are digits (e.g., '123-456-789')
+            if all(part.isdigit() for part in parts):
+                return word, CharFix.fix(word), "Numeric_Hyphenated"
+            # Case for alphanumeric patterns (e.g., 'bolgeleri-6643339')
+            elif any(part.isdigit() and part.isalpha() for part in parts):
+                return word, CharFix.fix(word), "Alphanumeric_Hyphenated"
+            # Check if all parts are alphabetic
+            elif all(part.isalpha() for part in parts):
+                if TokenPreProcess.is_hyphenated(word):  # Valid hyphenated word
                     return word, CharFix.fix(word), "Hyphenated"
                 else:
-                    return word, CharFix.fix(word), "OOV"
-        elif "_" in word and word[0] != "_" and word[-1] != "_":
-            if TokenPreProcess.is_underscored(word) is True:
+                    return word, CharFix.fix(word), "OOV"  # Out-of-vocabulary case
+        # No match
+        return None
+
+    @staticmethod
+    def is_underscored(word):
+        # Handle words containing underscores only
+        if "_" in word and 1 <= word.count("_") <= 1 and word[0] != "_" and word[-1] != "_":
+            parts = word.split("_")
+            if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit():  # Case for 'bolgeleri_6643339'
+                return word, CharFix.fix(word), "Alphanumeric_Underscored"
+            elif all(TokenPreProcess.fix_tr_lowercase(part) in LocalData.word_list() for part in parts):
                 return word, CharFix.fix(word), "Underscored"
             else:
-                return word, CharFix.fix(word), "OOV"
+                return word, CharFix.fix(word), "OOV"  # Out-of-vocabulary case
+
+        # No match
+        return None
 
     @staticmethod
     def is_formula(word):
