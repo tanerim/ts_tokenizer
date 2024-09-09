@@ -7,7 +7,7 @@ class DateValidator:
 
     @classmethod
     def is_valid_date_dd_mm_yyyy(cls, date_str: str) -> bool:
-        match = re.match(r"\b(0?[1-9]|[1-2][0-9]|3[0-1])([-/.:])(0?[1-9]|1[0-2])\2(\d{2,4})\b", date_str)
+        match = re.match(r"^(0?[1-9]|[1-2][0-9]|3[0-1])([-/.:])(0?[1-9]|1[0-2])\2(\d{2,4})$", date_str)
         if not match:
             return False
         day, _, month, year = match.groups()
@@ -16,7 +16,7 @@ class DateValidator:
 
     @classmethod
     def is_valid_date_mm_dd_yyyy(cls, date_str: str) -> bool:
-        match = re.match(r"\b(0?[1-9]|1[0-2])([-/.:])(0?[1-9]|[1-2][0-9]|3[0-1])\2(\d{2,4})\b", date_str)
+        match = re.match(r"^(0?[1-9]|1[0-2])([-/.:])(0?[1-9]|[1-2][0-9]|3[0-1])\2(\d{2,4})$", date_str)
         if not match:
             return False
         month, _, day, year = match.groups()
@@ -42,4 +42,8 @@ class DateValidator:
 class DateCheck:
     @staticmethod
     def is_date(date_str: str) -> bool:
-        return DateValidator.is_valid_date_mm_dd_yyyy(date_str) or DateValidator.is_valid_date_dd_mm_yyyy(date_str)
+        # Check if the entire string is a date
+        return (
+                DateValidator.is_valid_date_mm_dd_yyyy(date_str.strip()) or
+                DateValidator.is_valid_date_dd_mm_yyyy(date_str.strip())
+        )

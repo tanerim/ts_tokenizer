@@ -184,3 +184,12 @@ class ParseTokens:
             start = index + 1
         result += word[start:]
         return result.strip().replace("\n\n", "\n")
+
+    @classmethod
+    def tokenize_date(cls, word: str) -> list:
+        if word[0] in string.punctuation:
+            return "\n"([word[0], word[1:]])  # Split first punctuation and rest of the word
+        elif word[-1] in string.punctuation:
+            return "\n".join([word[:-1], word[-1]])  # Split rest of the word and last punctuation
+        return word  # Return word as is if no surrounding punctuation
+

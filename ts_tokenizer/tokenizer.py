@@ -27,6 +27,7 @@ tokenization_functions = {
     # "Multiple_Smiley": SmileyParser.smiley_tokenize,
     "Mis_Hyphenated": ParseTokens.tokenize_mishyphenated,
     "Inner_Punc": ParseTokens.tokenize_inner_punc,
+    "Date": ParseTokens.tokenize_date,
 }
 
 

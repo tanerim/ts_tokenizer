@@ -133,7 +133,7 @@ class TokenPreProcess:
     @staticmethod
     def is_date_range(word):
         p_count = PuncMatcher.punc_count(word)
-        if p_count <= 2:
+        if p_count <= 1:
             return check_regex(word, "date_range")
 
     @staticmethod
