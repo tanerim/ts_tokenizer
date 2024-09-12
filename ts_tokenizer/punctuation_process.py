@@ -3,6 +3,10 @@ import string
 from typing import Union, Optional
 
 puncs = re.escape(string.punctuation)
+extra_puncs = ["–"]
+for p in extra_puncs:
+    puncs = puncs + p
+
 PuncPattern = r'^(?P<initial>[%s]*)(?P<word>.*?)(?P<final>[%s]*)$' % (puncs, puncs)
 
 

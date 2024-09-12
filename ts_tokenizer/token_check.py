@@ -13,6 +13,8 @@ class TokenCheck:
             "Eng_Word": TokenPreProcess.is_in_eng_words,
             "Date": TokenPreProcess.is_date,
             "Hour": TokenPreProcess.is_hour,
+            "Currency_Initial": TokenPreProcess.is_currency_initial,
+            "Currency_Final": TokenPreProcess.is_currency_final,
             "In_Parenthesis": TokenPreProcess.is_in_parenthesis,
             "In_Quotes": TokenPreProcess.is_in_quotes,
             "Smiley": TokenPreProcess.is_smiley,
@@ -35,8 +37,6 @@ class TokenCheck:
             "Copyright": TokenPreProcess.is_copyright,
             "Registered": TokenPreProcess.is_registered,
             "Three_or_More": TokenPreProcess.is_three_or_more,
-            "Currency_Initial": TokenPreProcess.is_currency_initial,
-            "Currency_Final": TokenPreProcess.is_currency_final,
             "Hyphen_In": TokenPreProcess.is_hyphen_in,
             "Numeric_Hyphenated": TokenPreProcess.is_hyphen_in,
             "Alphanumeric_Hyphenated": TokenPreProcess.is_hyphen_in,
@@ -51,7 +51,7 @@ class TokenCheck:
 
         # Check if given param word is a string
         if not isinstance(token, str):
-            return None
+            return "OOV_Non_Char"
 
         # Check for punctuation tags first
         token_char_fixed = CharFix.fix(token)

@@ -30,8 +30,8 @@ REGEX_PATTERNS = {
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    "currency_initial": r'^(?P<Currency>[$€£₺₮]\d+(?:,\d{3})*(?:\.\d{2})?)$',
-    "currency_final": r'^(?P<Currency>\d+(?:,\d{3})*(?:\.\d{2})?[$€£₺])$'
+    "currency_initial": r'^(?P<Currency>{LocalData.currency_symbols()}]\d+(?:,\d{3})*(?:\.\d{2})?)$',
+    "currency_final": r'^(?P<Currency>\d+(?:,\d{3})*(?:\.\d{2})?{LocalData.currency_symbols()})$'
 }
 
 
