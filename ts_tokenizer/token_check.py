@@ -32,7 +32,6 @@ class TokenCheck:
             "Roman_Number": TokenPreProcess.is_roman_number,
             "Multiple_Smiley": TokenPreProcess.is_multiple_smiley,
             "Underscored": TokenPreProcess.is_underscored,
-            "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
             "Copyright": TokenPreProcess.is_copyright,
             "Registered": TokenPreProcess.is_registered,
             "Three_or_More": TokenPreProcess.is_three_or_more,
@@ -44,6 +43,8 @@ class TokenCheck:
             "Hyphenated": TokenPreProcess.is_hyphenated,
             "Num_Char_Seq": TokenPreProcess.is_num_char_sequence,
             "Mis_Hyphenated": TokenPreProcess.is_mis_hyphenated,
+            "Foreign_Word": TokenPreProcess.is_foreign_word,
+            "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
 
             # "Formula": TokenPreProcess.is_formula,
         }
