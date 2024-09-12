@@ -288,6 +288,13 @@ class TokenPreProcess:
     def is_currency_final(word):
         return check_regex(word, "currency_final")
 
+    @staticmethod
+    def is_foreign(word):
+        sum_foreign_char = sum(1 for char in word if not (
+                '\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF') and char not in string.punctuation)
+        if sum_foreign_char >= 1:
+            return word, "Foreign_Word"
+
 
 class TokenProcessor:
 
