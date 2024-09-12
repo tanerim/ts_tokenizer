@@ -30,6 +30,9 @@ class PuncMatcher:
         final_punc = match.group('final')
 
         if initial_punc and final_punc:
+            if len(initial_punc) == 1 and len(final_punc) == 1:
+                return "MSSP"
+        elif initial_punc and final_punc:
             return "MSP"  # Multi_Side_Punc
         elif len(initial_punc) == 1 and not final_punc:
             return "ISP"  # Initial_Single_Punc
@@ -83,7 +86,9 @@ class PuncTagCheck:
 
         if complex_punc:
             s_word = ""
-            if complex_punc == "MSP":
+            if complex_punc == "MSSP":
+                s_word = (word[0], word[1:-1], word[-1])
+            elif complex_punc == "MSP":
                 s_word = (word[0], word[1:-1], word[-1])
             elif complex_punc == "ISP":
                 s_word = (word[0], word[1:])
