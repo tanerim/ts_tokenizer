@@ -5,6 +5,8 @@ from .punctuation_process import PuncTagCheck, PuncMatcher
 
 
 class TokenCheck:
+    # The order of token_tags list directly changes tho output
+    # Please modify it carefully
     @staticmethod
     def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple') -> object:
         token_tags = {
