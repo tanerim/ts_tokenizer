@@ -17,6 +17,7 @@ tokenization_functions = {
     "Initial_Quote": ParseTokens.tokenize_initial_quote,
     "ISP": ParseTokens.tokenize_isp,
     "FSP": ParseTokens.tokenize_fsp,
+    "MSSP": ParseTokens.tokenize_mssp,
     "MSP": ParseTokens.tokenize_msp,
     "FMP": ParseTokens.tokenize_fmp,
     "IMP": ParseTokens.tokenize_imp,

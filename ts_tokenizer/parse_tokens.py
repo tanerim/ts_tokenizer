@@ -84,6 +84,17 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
+    def tokenize_mssp(cls, word: str) -> str:
+        tokens = re.findall(r'\w+|[^\w\s]', word)
+        initial = "".join(tokens[0])
+        final = "".join(tokens[1:])
+        if final in LocalData.word_list() or LocalData.eng_word_list() or LocalData.exception_words() or LocalData.abbrs():
+
+            return "\n".join([initial, final])
+        else:
+            return '\n'.join(tokens).lstrip().rstrip()
+
+    @classmethod
     def tokenize_fmp(cls, word: str) -> str:
         punc_count = PuncMatcher.punc_count(word)
         punc_positions = PuncMatcher.punc_pos(word)
@@ -186,9 +197,9 @@ class ParseTokens:
         return result.strip().replace("\n\n", "\n")
 
     @classmethod
-    def tokenize_date(cls, word: str) -> list:
+    def tokenize_date(cls, word: str) -> str:
         if word[0] in string.punctuation:
-            return "\n"([word[0], word[1:]])  # Split first punctuation and rest of the word
+            return "\n".join([word[0], word[1:]])  # Split first punctuation and rest of the word
         elif word[-1] in string.punctuation:
             return "\n".join([word[:-1], word[-1]])  # Split rest of the word and last punctuation
         return word  # Return word as is if no surrounding punctuation
