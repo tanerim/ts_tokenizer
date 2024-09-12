@@ -30,7 +30,7 @@ REGEX_PATTERNS = {
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    "currency_initial": r'^(?P<Currency>[$€£₺]\d+(?:,\d{3})*(?:\.\d{2})?)$',
+    "currency_initial": r'^(?P<Currency>[$€£₺₮]\d+(?:,\d{3})*(?:\.\d{2})?)$',
     "currency_final": r'^(?P<Currency>\d+(?:,\d{3})*(?:\.\d{2})?[$€£₺])$'
 }
 
@@ -289,24 +289,15 @@ class TokenPreProcess:
         return check_regex(word, "currency_final")
 
     @staticmethod
-    def is_foreign(word):
-        sum_foreign_char = sum(1 for char in word if not (
-                '\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF') and char not in string.punctuation)
-        if sum_foreign_char >= 1:
-            return word, "Foreign_Word"
-
-    @staticmethod
     def is_foreign_word(word):
-        sum_foreign_char = sum(1 for char in word if not (
-                '\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF') and char not in string.punctuation)
-        if sum_foreign_char >= 1:
-            return word, "Foreign_Word"
+        allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
 
-    @staticmethod
-    def is_foreign_word(word):
-        sum_foreign_char = sum(1 for char in word if not (
-                '\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF') and char not in string.punctuation)
-        if sum_foreign_char >= 1:
+        # Count characters that are not part of the Turkish alphabet and are not punctuation
+        sum_foreign_char = sum(1 for char in word if char not in allowed_chars and char not in string.punctuation)
+
+        # sum_foreign_char = sum(1 for char in word if not ('\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF'))
+        sum_punc = PuncMatcher.punc_count(word)
+        if sum_foreign_char >= 1 and sum_punc == 0:
             return word, "Foreign_Word"
 
 
