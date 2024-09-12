@@ -81,6 +81,9 @@ def process_tokens(args, word):
 
 class TSTokenizer:
 
+    def __init__(self):
+        pass
+
     @staticmethod
     def parse_arguments():
         parser = argparse.ArgumentParser()
@@ -100,12 +103,12 @@ class TSTokenizer:
             tag = TokenCheck.token_tagger(token, output='all')
             processed_tokens.append(tag)
 
-        if return_format == 'tokenized':
-            return ' '.join([token])
-        elif return_format == 'lines':
-            return '\n'.join([token])
-        elif return_format == 'tagged':
-            return ' '.join([f"{token}/{token}" for token in processed_tokens])
+            if return_format == 'tokenized':
+                return ' '.join([token])
+            elif return_format == 'lines':
+                return '\n'.join([token])
+            elif return_format == 'tagged':
+                return ' '.join([f"{token}/{token}" for token in processed_tokens])
 
 
     @staticmethod

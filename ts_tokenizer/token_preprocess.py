@@ -1,6 +1,7 @@
 import re
 import string
 import inspect
+import unicodedata
 from .data import LocalData
 from .char_fix import CharFix
 from .date_check import DateCheck
@@ -290,15 +291,16 @@ class TokenPreProcess:
 
     @staticmethod
     def is_foreign_word(word):
+        u_word = unicodedata.normalize('NFC', word)
         allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
 
         # Count characters that are not part of the Turkish alphabet and are not punctuation
-        sum_foreign_char = sum(1 for char in word if char not in allowed_chars and char not in string.punctuation)
+        sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in string.punctuation)
 
         # sum_foreign_char = sum(1 for char in word if not ('\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF'))
-        sum_punc = PuncMatcher.punc_count(word)
+        sum_punc = PuncMatcher.punc_count(u_word)
         if sum_foreign_char >= 1 and sum_punc == 0:
-            return word, "Foreign_Word"
+            return u_word, "Foreign_Word"
 
 
 class TokenProcessor:
