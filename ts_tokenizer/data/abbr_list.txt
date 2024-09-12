@@ -19,6 +19,7 @@ gr
 kg
 mg
 °C
+C°
 °F
 l
 ml
