@@ -33,12 +33,6 @@ currencies = [
     "₲",    # Paraguayan Guarani
     "₴",    # Ukrainian Hryvnia
     "₸",    # Kazakhstani Tenge
-    "Kč",   # Czech Koruna
-    "zł",   # Polish Zloty
-    "Ft",   # Hungarian Forint
-    "lei",  # Romanian Leu
-    "ден",  # Macedonian Denar
-    "лв",   # Bulgarian Lev
     "៛",    # Cambodian Riel
     "₮",    # Mongolian Tugrik
 ]

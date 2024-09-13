@@ -29,6 +29,7 @@ tokenization_functions = {
     "Mis_Hyphenated": ParseTokens.tokenize_mishyphenated,
     "Inner_Punc": ParseTokens.tokenize_inner_punc,
     "Date": ParseTokens.tokenize_date,
+    "One_Char_Fixed": ParseTokens.tokenize_one_char_fixed
 }
 
 
@@ -116,9 +117,10 @@ class TSTokenizer:
         return TSTokenizer.tokenize(line, return_format)
 
     @staticmethod
-    def ts_tokenize():
+    def ts_tokenize(batch_size=10):
         args = TSTokenizer.parse_arguments()
         num_workers = multiprocessing.cpu_count() - 1
+
         if args.word:
             word = sys.argv[-1]
             if re.match(r'^\s*(<|</).*>\s*$', word):
@@ -126,23 +128,44 @@ class TSTokenizer:
             else:
                 print(process_tokens(args, word))
         else:
+            # Open the file and read lines
             with open(args.filename, encoding='utf-8') as in_file:
                 lines = in_file.readlines()
                 total_lines = len(lines)
+
                 pbar = tqdm(total=total_lines, desc="Processing File") if args.verbose else None
+
+                # Initialize ThreadPoolExecutor with num_workers
                 with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                    for line in lines:
-                        if re.match(r'^\s*(<|</).*>\s*$', line):
-                            continue  # Skip lines matching the regex
-                        words = line.split()
-                        results = list(executor.map(lambda w: process_tokens(args, w), words))
-                        for token in results:
+                    # Process lines in batches
+                    for i in range(0, total_lines, batch_size):
+                        batch_lines = lines[i:i + batch_size]
+
+                        # Store the results
+                        all_results = []
+
+                        # For each line in the batch
+                        for line in batch_lines:
+                            if re.match(r'^\s*(<|</).*>\s*$', line):
+                                continue  # Skip lines matching the regex
+
+                            # Split words in the line
+                            words = line.split()
+                            # Process each word using ThreadPoolExecutor in parallel
+                            results = list(executor.map(lambda w: process_tokens(args, w), words))
+                            all_results.extend(results)
+
+                        # Output the results of the batch
+                        for token in all_results:
                             if args.output == "tagged":
                                 print("\t".join(token))
                             else:
                                 print(token)
+
+                            # Update progress bar if verbose
                             if args.verbose:
                                 pbar.update(1)
 
-                if pbar:
-                    pbar.close()
+            # Close the progress bar if verbose
+            if pbar:
+                pbar.close()

@@ -159,6 +159,7 @@ class ParseTokens:
 
     @classmethod
     def tokenize_inner_punc(cls, word: str) -> str:
+        word = CharFix.fix(word)
         # Define exceptions
         exceptions = ["...", "(!)"]
         # If the word contains exactly one apostrophe not at the start or end
@@ -204,3 +205,9 @@ class ParseTokens:
             return "\n".join([word[:-1], word[-1]])  # Split rest of the word and last punctuation
         return word  # Return word as is if no surrounding punctuation
 
+    @classmethod
+    def tokenize_one_char_fixed(cls, word: str) -> str:
+        extra_chars = ["¬", "-"]
+        for extra in extra_chars:
+            fixed_word = word.replace(extra, "")
+            return fixed_word

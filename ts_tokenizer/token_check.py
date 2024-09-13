@@ -13,10 +13,10 @@ class TokenCheck:
     @staticmethod
     def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple') -> object:
         token_tags = {
-            "One_Char_Fixed": TokenPreProcess.is_one_char_fixable,
             "Valid_Word": TokenPreProcess.is_in_lexicon,
             "Exception_Word": TokenPreProcess.is_in_exceptions,
             "Eng_Word": TokenPreProcess.is_in_eng_words,
+            "Abbr": TokenPreProcess.is_abbr,
             "Date": TokenPreProcess.is_date,
             "Hour": TokenPreProcess.is_hour,
             "Currency_Initial": TokenPreProcess.is_currency_initial,
@@ -28,7 +28,6 @@ class TokenCheck:
             "Email_Punc": TokenPreProcess.is_email_punc,
             "Email": TokenPreProcess.is_email,
             "Inner_Char": TokenPreProcess.is_inner_char,
-            "Abbr": TokenPreProcess.is_abbr,
             "Number": TokenPreProcess.is_number,
             "Non_Prefix_URL": TokenPreProcess.is_non_prefix_url,
             "Prefix_URL": TokenPreProcess.is_prefix_url,
@@ -43,6 +42,7 @@ class TokenCheck:
             "Copyright": TokenPreProcess.is_copyright,
             "Registered": TokenPreProcess.is_registered,
             "Three_or_More": TokenPreProcess.is_three_or_more,
+            "One_Char_Fixed": TokenPreProcess.is_one_char_fixable,
             "Hyphen_In": TokenPreProcess.is_hyphen_in,
             "Numeric_Hyphenated": TokenPreProcess.is_hyphen_in,
             "Alphanumeric_Hyphenated": TokenPreProcess.is_hyphen_in,
@@ -61,9 +61,15 @@ class TokenCheck:
         # First fix Char Problems
         token_char_fixed = CharFix.fix(token)
 
+
         # Then, check the token against the predefined tags
         for tag, check_method in token_tags.items():
-            if check_method(token_char_fixed):
+            check_result = check_method(token_char_fixed)  # Apply the check method to the token
+            if isinstance(check_result, tuple):  # Check if the result is a tuple
+                token_char_fixed = check_result[0]  # Update the token with the fixed word
+                result = (token, token_char_fixed, tag)
+                break
+            elif check_result:  # If the result is truthy but not a tuple
                 result = (token, token_char_fixed, tag)
                 break
         else:

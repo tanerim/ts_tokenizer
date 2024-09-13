@@ -1,9 +1,12 @@
 import re
 import string
 from typing import Union, Optional
+from .char_fix import CharFix
+
 
 puncs = re.escape(string.punctuation)
-extra_puncs = ["–"]
+
+extra_puncs = ["–", "'"]
 for p in extra_puncs:
     puncs = puncs + p
 
@@ -49,19 +52,22 @@ class PuncMatcher:
         match = re.match(PuncPattern, word)
         if not match:
             return False
-        inner_puncs = re.findall(r'(?<=\w)[^\s\w-]+(?=\w)', word)
-        if inner_puncs:
-            return "Inner_Punc"
-        return False
+        else:
+            inner_puncs = re.findall(r'(?<=\w)[^\s\w-]+(?=\w)', word)
+            if inner_puncs and len(inner_puncs) == 1:
+                print(inner_puncs)
+                return "Inner_Single_Punc"
+            else:
+                print(inner_puncs)
+                return "Inner_Multi_Punc"
 
     @classmethod
     def apostrophed(cls, word: str) -> Optional[Union[bool, str]]:
-        match = re.match(PuncPattern, word)
-        if not match:
-            return None
-        punc_positions = cls.punc_pos(word)
-        if cls.punc_count(word) == 1 and punc_positions and punc_positions[0] != 0 and "'" in word:
-            return "apostrophes_in"
+        match = re.match(r"\b\w+'[a-zA-Z]+\b", word)
+        if match:
+            punc_positions = cls.punc_pos(word)
+            if cls.punc_count(word) == 1 and punc_positions and "'" in word:
+                return "apostrophes_in"
         return None
 
 
@@ -69,6 +75,7 @@ class PuncTagCheck:
 
     @classmethod
     def punc_tag_check(cls, word: str) -> tuple:
+        word = CharFix.fix(word)
         punc_count = PuncMatcher.punc_count(word)
         punc_loc = PuncMatcher.punc_pos(word)
         apostrophe = PuncMatcher.apostrophed(word)
