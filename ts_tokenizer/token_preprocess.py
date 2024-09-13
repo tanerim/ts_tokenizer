@@ -221,19 +221,16 @@ class TokenPreProcess:
         if "-" in word and word[0] != "-" and word[-1] != "-":
             # Split by hyphen
             parts = word.split("-")
-            # Check if all parts are digits (e.g., '123-456-789')
             if all(part.isdigit() for part in parts):
                 return word, CharFix.fix(word), "Numeric_Hyphenated"
-            # Case for alphanumeric patterns (e.g., 'bolgeleri-6643339')
             elif any(part.isdigit() and part.isalpha() for part in parts):
                 return word, CharFix.fix(word), "Alphanumeric_Hyphenated"
             # Check if all parts are alphabetic
             elif all(part.isalpha() for part in parts):
-                if TokenPreProcess.is_hyphenated(word):  # Valid hyphenated word
+                if TokenPreProcess.is_hyphenated(word):
                     return word, CharFix.fix(word), "Hyphenated"
                 else:
-                    return word, CharFix.fix(word), "OOV"  # Out-of-vocabulary case
-        # No match
+                    return word, CharFix.fix(word), "OOV"
         return None
 
     @staticmethod
@@ -241,14 +238,13 @@ class TokenPreProcess:
         # Handle words containing underscores only
         if "_" in word and 1 <= word.count("_") <= 1 and word[0] != "_" and word[-1] != "_":
             parts = word.split("_")
-            if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit():  # Case for 'bolgeleri_6643339'
+            if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit():
                 return word, CharFix.fix(word), "Alphanumeric_Underscored"
             elif all(TokenPreProcess.fix_tr_lowercase(part) in LocalData.word_list() for part in parts):
                 return word, CharFix.fix(word), "Underscored"
             else:
-                return word, CharFix.fix(word), "OOV"  # Out-of-vocabulary case
+                return word, CharFix.fix(word), "OOV"
 
-        # No match
         return None
 
     @staticmethod
@@ -301,8 +297,8 @@ class TokenPreProcess:
         sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in string.punctuation)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
-        hypen_check = TokenPreProcess.is_hyphen_in(word)
-        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hypen_check:
+        hyphen_check = TokenPreProcess.is_hyphen_in(word)
+        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check:
             return u_word, "Foreign_Word"
         
     @staticmethod
@@ -314,7 +310,6 @@ class TokenPreProcess:
                 if TokenPreProcess.is_in_lexicon(fixed_word):
                     return fixed_word, "One_Char_Fixed"
         return None
-
 
 
 class TokenProcessor:

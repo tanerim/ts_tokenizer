@@ -35,16 +35,18 @@ class PuncMatcher:
         if initial_punc and final_punc:
             if len(initial_punc) == 1 and len(final_punc) == 1:
                 return "MSSP"
-        elif initial_punc and final_punc:
-            return "MSP"  # Multi_Side_Punc
-        elif len(initial_punc) == 1 and not final_punc:
-            return "ISP"  # Initial_Single_Punc
-        elif len(final_punc) == 1 and not initial_punc:
-            return "FSP"  # Final_Single_Punc
-        elif len(initial_punc) >= 2:
-            return "IMP"  # Initial_Multi_Punc
-        elif len(final_punc) >= 2:
-            return "FMP"  # Final_Multi_Punc
+            else:
+                return "MSP"
+        elif initial_punc:
+            if len(initial_punc) == 1:
+                return "ISP"  # Initial_Single_Punc
+            else:
+                return "IMP"  # Initial_Multi_Punc
+        elif final_punc:
+            if len(final_punc) == 1:
+                return "FSP"  # Final_Single_Punc
+            else:
+                return "FMP"  # Final_Multi_Punc
         return None
 
     @classmethod
@@ -54,11 +56,10 @@ class PuncMatcher:
             return False
         else:
             inner_puncs = re.findall(r'(?<=\w)[^\s\w-]+(?=\w)', word)
-            if inner_puncs and len(inner_puncs) == 1:
-                print(inner_puncs)
+            punc_positions = PuncMatcher.punc_pos(word)
+            if inner_puncs and len(inner_puncs) == 1 :
                 return "Inner_Single_Punc"
             else:
-                print(inner_puncs)
                 return "Inner_Multi_Punc"
 
     @classmethod
@@ -85,8 +86,8 @@ class PuncTagCheck:
         if apostrophe:
             return "Apostrophe", word, punc_count, punc_loc
 
-        if complex_punc and inner_punc:
-            return "Complex_Punc", word, punc_count, punc_loc
+        #if complex_punc and inner_punc:
+        #    return "Complex_Punc", word, punc_count, punc_loc
 
         if inner_punc:
             return inner_punc, word, punc_count, punc_loc
