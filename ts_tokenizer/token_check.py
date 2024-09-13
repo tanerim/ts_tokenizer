@@ -7,9 +7,13 @@ from .punctuation_process import PuncTagCheck, PuncMatcher
 class TokenCheck:
     # The order of token_tags list directly changes tho output
     # Please modify it carefully
+    def __init__(self):
+        pass
+
     @staticmethod
     def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple') -> object:
         token_tags = {
+            "One_Char_Fixed": TokenPreProcess.is_one_char_fixable,
             "Valid_Word": TokenPreProcess.is_in_lexicon,
             "Exception_Word": TokenPreProcess.is_in_exceptions,
             "Eng_Word": TokenPreProcess.is_in_eng_words,
@@ -47,7 +51,6 @@ class TokenCheck:
             "Mis_Hyphenated": TokenPreProcess.is_mis_hyphenated,
             "Foreign_Word": TokenPreProcess.is_foreign_word,
             "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
-
             # "Formula": TokenPreProcess.is_formula,
         }
 
@@ -55,10 +58,10 @@ class TokenCheck:
         if not isinstance(token, str):
             return "OOV_Non_Char"
 
-        # Check for punctuation tags first
+        # First fix Char Problems
         token_char_fixed = CharFix.fix(token)
 
-        # First, check the token against the predefined tags
+        # Then, check the token against the predefined tags
         for tag, check_method in token_tags.items():
             if check_method(token_char_fixed):
                 result = (token, token_char_fixed, tag)

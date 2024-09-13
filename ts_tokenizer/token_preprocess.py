@@ -46,6 +46,9 @@ def check_regex(word, pattern_key):
 
 class TokenPreProcess:
 
+    def __init__(self):
+        pass
+
     @staticmethod
     def is_in_lexicon(word):
         word = CharFix.fix(word)
@@ -296,14 +299,26 @@ class TokenPreProcess:
 
         # Count characters that are not part of the Turkish alphabet and are not punctuation
         sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in string.punctuation)
-
-        # sum_foreign_char = sum(1 for char in word if not ('\u0020' <= char <= '\u007F' or '\u00A0' <= char <= '\u00FF'))
         sum_punc = PuncMatcher.punc_count(u_word)
-        if sum_foreign_char >= 1 and sum_punc == 0:
+        has_digit = any(char.isdigit() for char in u_word)
+        hypen_check = TokenPreProcess.is_hyphen_in(word)
+        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hypen_check:
             return u_word, "Foreign_Word"
+        
+    @staticmethod
+    def is_one_char_fixable(word):
+        extra_chars = ["¬", "-"]
+        for extra in extra_chars:
+            fixed_word = word.replace(extra, " ")
+            if TokenPreProcess.is_in_lexicon(fixed_word):
+                return fixed_word, "One_Char_Fixed"
+
 
 
 class TokenProcessor:
+
+    def __init__(self):
+        pass
 
     @staticmethod
     def run_all(word):
