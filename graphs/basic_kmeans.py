@@ -6,16 +6,15 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import string
 import seaborn as sns
-import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
-# Enable interactive mode
-# plt.ioff()
 
-pd.set_option('display.max_rows', None)
-# Assume you have a list of strings
+# Read input strings (assumed to be one word per line)
 strings = open(sys.argv[1]).read().split("\n")
-puncs= string.punctuation
+puncs = string.punctuation
+
 # Function to extract features from strings
 def extract_features(strings):
     features = []
@@ -64,96 +63,87 @@ def extract_features(strings):
                     elif char in '{}':
                         punc_types['braces'] += 1
 
-        # Combine all features into a single list
-        # feature_vector = [length, num_count, punct_count, initial_punc, final_punc, between_punc] + list(punc_types.values())
-        feature_vector = [length, num_count, punct_count, initial_punc, final_punc, between_punc]
+        # Combine all features into a single list (including punctuation types)
+        feature_vector = [
+            length, num_count, punct_count, initial_punc, final_punc, between_punc
+        ] + list(punc_types.values())
         features.append(feature_vector)
 
     return np.array(features)
 
 # Extract features
 features = extract_features(strings)
-# feature_names = [
-#    "length", "num_count", "punct_count", "initial_punc", "final_punc", "between_punc",
-#    "period", "comma", "semicolon", "colon", "exclamation", "question", "parentheses", "brackets", "braces"
-# ]
-feature_names = ["length", "num_count", "punct_count", "initial_punc", "final_punc", "between_punc"]
+
+# Define feature names (adding punctuation type names)
+feature_names = [
+    "length", "num_count", "punct_count", "initial_punc", "final_punc", "between_punc",
+    "period", "comma", "semicolon", "colon", "exclamation", "question", "parentheses", "brackets", "braces"
+]
+
+# Create a DataFrame for easier visualization
 df = pd.DataFrame(features, columns=feature_names)
-# print(df.to_csv(sep="\t", index=False))
-# Set up the matplotlib figure
-plt.figure(figsize=(10, 8))
 
-# Draw the heatmap with the mask and correct aspect ratio
-sns.heatmap(df, annot=True, fmt="d", cmap='coolwarm', linewidths=.5, xticklabels=feature_names, yticklabels=feature_names)
-
-# Add labels and title, if needed
-plt.title('Feature Heatmap')
-plt.ylabel('Index of Entry')
-plt.xlabel('Feature Type')
-
-# Show plot
+# Visualize the distribution of each feature
+plt.figure(figsize=(10, 6))
+sns.histplot(data=df, kde=True)
+plt.title('Feature Distributions')
 plt.show()
 
-
-# Standardize features
+# Standardize features for clustering
 scaler = StandardScaler()
 features_scaled = scaler.fit_transform(features)
 
-# Set the number of clusters (at most the number of samples)
-# n_clusters = min(len(strings), 7)
-n_clusters = 7
+# Visualize heatmap of features
+plt.figure(figsize=(10, 8))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm', linewidths=.5, xticklabels=feature_names, yticklabels=feature_names)
+plt.title('Feature Correlation Heatmap')
+plt.show()
 
-# Perform K-means clustering
+# Elbow Method for optimal clusters
+distortions = []
+K = range(1, 10)
+for k in K:
+    kmeans = KMeans(n_clusters=k)
+    kmeans.fit(features_scaled)
+    distortions.append(kmeans.inertia_)
+
+plt.figure(figsize=(8, 5))
+plt.plot(K, distortions, 'bx-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Distortion')
+plt.title('Elbow Method showing the optimal k')
+plt.show()
+
+# Perform KMeans with optimal clusters (adjust this based on Elbow Method result)
+n_clusters = 7
 kmeans = KMeans(n_clusters=n_clusters)
 kmeans.fit(features_scaled)
 
 # Get cluster labels
 labels = kmeans.labels_
 
+# Print some strings from each cluster
 for i in range(n_clusters):
     cluster_strings = [strings[j] for j in range(len(strings)) if labels[j] == i]
     print(f"Cluster {i}:")
     print("Sample strings:", cluster_strings[:5])  # print first 5 samples from each cluster
 
-cluster_names = {
-    0: "Minimal_Punctuation",
-    1: "High_Punctuation",
-    2: "Mixed_Features",
-    3: "Numeric_Strings",
-    4: "Short_Texts",
-    5: "Long_Texts"
-}
+# Visualize the silhouette score
+silhouette_avg = silhouette_score(features_scaled, labels)
+print(f"Silhouette Score: {silhouette_avg}")
 
-# Print cluster labels for each string
-# for string, label in zip(strings, labels):
-#      print(f"{cluster_names[label]}\t{string}")
+# Visualizing clusters with PCA (2D Projection)
+pca = PCA(n_components=2)
+pca_result = pca.fit_transform(features_scaled)
+plt.figure(figsize=(10, 7))
+plt.scatter(pca_result[:, 0], pca_result[:, 1], c=labels, cmap='tab10')
+plt.title('PCA of Clusters')
+plt.show()
 
-# Elbow Method
-#wcss = []
-#for i in range(1, 11):
-#    kmeans = KMeans(n_clusters=i, random_state=42)
-#    kmeans.fit(features_scaled)
-#    wcss.append(kmeans.inertia_)
-
-#plt.figure(figsize=(10, 5))
-#plt.plot(range(1, 11), wcss, marker='o')
-#plt.title('Elbow Method')
-#plt.xlabel('Number of clusters')
-#plt.ylabel('WCSS')
-#plt.savefig('elbow_method.png')
-#plt.show()
-
-# # Silhouette Method
-# silhouette_scores = []
-# for i in range(2, 11):
-#     kmeans = KMeans(n_clusters=i, random_state=42)
-#     kmeans.fit(features_scaled)
-#     score = silhouette_score(features_scaled, kmeans.labels_)
-#     silhouette_scores.append(score)
-#
-# plt.figure(figsize=(10, 5))
-# plt.plot(range(2, 11), silhouette_scores, marker='o')
-# plt.title('Silhouette Method')
-# plt.xlabel('Number of clusters')
-# plt.ylabel('Silhouette Score')
-# plt.show()
+# Visualizing clusters with t-SNE (2D Projection)
+tsne = TSNE(n_components=2)
+tsne_result = tsne.fit_transform(features_scaled)
+plt.figure(figsize=(10, 7))
+plt.scatter(tsne_result[:, 0], tsne_result[:, 1], c=labels, cmap='tab10')
+plt.title('t-SNE of Clusters')
+plt.show()

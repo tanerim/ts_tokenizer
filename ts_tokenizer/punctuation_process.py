@@ -51,16 +51,22 @@ class PuncMatcher:
 
     @classmethod
     def inner_punctuation(cls, word: str) -> Optional[Union[bool, str]]:
-        match = re.match(PuncPattern, word)
-        if not match:
-            return False
-        else:
-            inner_puncs = re.findall(r'(?<=\w)[^\s\w-]+(?=\w)', word)
-            punc_positions = PuncMatcher.punc_pos(word)
-            if inner_puncs and len(inner_puncs) == 1 :
-                return "Inner_Single_Punc"
-            else:
-                return "Inner_Multi_Punc"
+        # Count the punctuations in the word
+        punc_count = PuncMatcher.punc_count(word)
+
+        # Check if the word has no punctuation at the start and end, but punctuation inside
+        if punc_count == 1 and word[0] not in string.punctuation and word[-1] not in string.punctuation:
+            return "Inner_Single_Punc"
+
+        # Check if there are multiple punctuations inside the word and no punctuation at the start or end
+        elif punc_count >= 2:
+            # Check if there are punctuations within the middle of the word
+            inner_punctuation = any(char in string.punctuation for char in word[1:-1])
+            if inner_punctuation:
+                return "Inner_Multiple_Punc"
+
+        return None
+
 
     @classmethod
     def apostrophed(cls, word: str) -> Optional[Union[bool, str]]:
@@ -79,18 +85,12 @@ class PuncTagCheck:
         word = CharFix.fix(word)
         punc_count = PuncMatcher.punc_count(word)
         punc_loc = PuncMatcher.punc_pos(word)
+        inner_punc = PuncMatcher.inner_punctuation(word)
         apostrophe = PuncMatcher.apostrophed(word)
         complex_punc = PuncMatcher.find_punctuation(word)
-        inner_punc = PuncMatcher.inner_punctuation(word)
 
         if apostrophe:
             return "Apostrophe", word, punc_count, punc_loc
-
-        #if complex_punc and inner_punc:
-        #    return "Complex_Punc", word, punc_count, punc_loc
-
-        if inner_punc:
-            return inner_punc, word, punc_count, punc_loc
 
         if complex_punc:
             s_word = ""
@@ -109,5 +109,8 @@ class PuncTagCheck:
                 p_end = punc_loc[-1] + 1
                 s_word = (word[0:p_end], word[p_end:])
             return complex_punc, word, s_word, punc_count, punc_loc
+
+        if inner_punc:
+            return inner_punc, word, punc_count, punc_loc
 
         return word, punc_count, punc_loc

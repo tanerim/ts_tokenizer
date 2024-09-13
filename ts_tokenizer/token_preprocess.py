@@ -75,12 +75,27 @@ class TokenPreProcess:
     def is_smiley(word):
         return word if word in LocalData.smileys() else None
 
+
     @staticmethod
     def is_multiple_smiley(word):
+        # Detect multiple smiley sequences
         if SmileyParser.consecutive_smiley(word) is True:
-            if not str(word[0]).isalpha() and not str(word[1]).isalpha():
-                if SmileyParser.smiley_count(word) >= 2:
-                    return word
+            # Ensure the word doesn't start with alphanumeric characters
+            if not str(word[0:-1]).isdigit() or not str(word[0:-1]).isalnum():
+                return "Multiple_Smiley"  # Initial_Multiple_Punc
+        return None
+
+
+    @staticmethod
+    def is_multiple_smiley_in(word):
+        # Detect multiple smiley sequences
+        if SmileyParser.consecutive_smiley(word) is True:
+            # Ensure the word doesn't start with alphanumeric characters
+            #if not str(word[0]).isdigit() or not str(word[-1]).isdigit():
+            if any(char.isalnum() for char in word):
+                return "Multiple_Smiley_In"  # Initial_Multiple_Punc
+        return None
+
 
     @staticmethod
     def is_emoticon(word):
