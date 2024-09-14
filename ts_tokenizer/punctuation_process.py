@@ -34,9 +34,9 @@ class PuncMatcher:
 
         if initial_punc and final_punc:
             if len(initial_punc) == 1 and len(final_punc) == 1:
-                return "MSSP"
+                return "MSSP" # Multi-Side Single Punctuation
             else:
-                return "MSP"
+                return "MSP" # Multi-Side Punctuation
         elif initial_punc:
             if len(initial_punc) == 1:
                 return "ISP"  # Initial_Single_Punc
