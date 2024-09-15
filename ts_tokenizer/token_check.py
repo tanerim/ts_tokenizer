@@ -50,7 +50,7 @@ class TokenCheck:
             "Hyphenated": TokenPreProcess.is_hyphenated,
             "Num_Char_Seq": TokenPreProcess.is_num_char_sequence,
             "Mis_Hyphenated": TokenPreProcess.is_mis_hyphenated,
-            "Foreign_Word": TokenPreProcess.is_foreign_word,
+            "Non_Latin": TokenPreProcess.is_non_latin,
             "Multiple_Emoticon": TokenPreProcess.is_multiple_emoticon,
             # "Formula": TokenPreProcess.is_formula,
         }

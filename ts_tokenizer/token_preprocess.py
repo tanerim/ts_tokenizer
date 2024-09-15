@@ -304,7 +304,7 @@ class TokenPreProcess:
         return check_regex(word, "currency_final")
 
     @staticmethod
-    def is_foreign_word(word):
+    def is_non_latin(word):
         u_word = unicodedata.normalize('NFC', word)
         allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
 
@@ -314,7 +314,7 @@ class TokenPreProcess:
         has_digit = any(char.isdigit() for char in u_word)
         hyphen_check = TokenPreProcess.is_hyphen_in(word)
         if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check:
-            return u_word, "Foreign_Word"
+            return u_word, "is_non_latin"
         
     @staticmethod
     def is_one_char_fixable(word):
