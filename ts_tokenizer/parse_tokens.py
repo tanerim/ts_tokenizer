@@ -9,6 +9,10 @@ FMP_exception_list = ["(!)", "...", "!!!"]
 
 
 class ParseTokens:
+
+    @staticmethod
+    def tokenize_xml(cls, word: str) -> str:
+        return word
     @classmethod
     def are_consecutive_chars(cls, chars: str) -> bool:
         if len(chars) <= 1:

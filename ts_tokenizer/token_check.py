@@ -13,6 +13,7 @@ class TokenCheck:
     @staticmethod
     def token_tagger(token: str, output: str = 'tag', output_format: str = 'tuple') -> object:
         token_tags = {
+            "XML_Tag": TokenPreProcess.is_xml,
             "Valid_Word": TokenPreProcess.is_in_lexicon,
             "Exception_Word": TokenPreProcess.is_in_exceptions,
             "Eng_Word": TokenPreProcess.is_in_eng_words,

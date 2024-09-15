@@ -12,6 +12,7 @@ from .punctuation_process import PuncMatcher
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
+    "xml_tag": r'^<[^>]+?>\s*$',
     "hashtag": r'^#[^#]{1,143}$',
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
@@ -48,6 +49,10 @@ class TokenPreProcess:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def is_xml(word):
+        return check_regex(word, "xml_tag")
 
     @staticmethod
     def is_in_lexicon(word):
