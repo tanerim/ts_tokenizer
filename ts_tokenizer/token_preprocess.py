@@ -224,6 +224,41 @@ class TokenPreProcess:
                 return word  # Valid hyphenated word
 
     @staticmethod
+    def is_hyphen_in(word):
+        # Handle words containing hyphens only
+        if "-" in word and word[0] != "-" and word[-1] != "-":
+            # Split by hyphen
+            parts = word.split("-")
+            if word.count("-") == 1:
+                # if all(part.isalpha() for part in parts):
+                if TokenPreProcess.is_hyphenated(word):
+                    return word, CharFix.fix(word), "Hyphenated"
+
+                elif TokenPreProcess.is_date(parts[0]) and TokenPreProcess.is_date(parts[1]):
+                    return word, CharFix.fix(word), "Date_Range"
+
+                # Check if all parts are numeric (e.g., "1881-1938")
+                elif all(part.isdigit() for part in parts):
+                    # Custom check for year ranges
+                    if len(parts[0]) == 4 and len(parts[1]) == 4:
+                        return word, CharFix.fix(word), "Year_Range"
+                    else:
+                        return word, CharFix.fix(word), "Numeric_Hyphenated"
+
+
+                elif any(part.isdigit() and part.isalpha() for part in parts):
+                    return word, CharFix.fix(word), "Alphanumeric_Hyphenated"
+
+                # Handle cases where some parts are alphabetic and others alphanumeric
+                elif any(part.isalpha() for part in parts) and any(part.isdigit() for part in parts):
+                    return word, CharFix.fix(word), "Mixed_Alphanumeric_Hyphenated"
+
+            if word.count("-") >= 2:
+                return word, CharFix.fix(word), "Multi_Hyphens"
+
+        return None
+
+    @staticmethod
     def is_mis_hyphenated(word):
         # Check for incorrectly hyphenated words, i.e., neither part is a valid word in the word list
         izafe = ["ı", "i", "ü", "u"]
@@ -235,23 +270,6 @@ class TokenPreProcess:
                     and TokenPreProcess.fix_tr_lowercase(parts[1]) not in izafe:
                 return word  # Mis-hyphenated
 
-    @staticmethod
-    def is_hyphen_in(word):
-        # Handle words containing hyphens only
-        if "-" in word and word[0] != "-" and word[-1] != "-":
-            # Split by hyphen
-            parts = word.split("-")
-            if all(part.isdigit() for part in parts):
-                return word, CharFix.fix(word), "Numeric_Hyphenated"
-            elif any(part.isdigit() and part.isalpha() for part in parts):
-                return word, CharFix.fix(word), "Alphanumeric_Hyphenated"
-            # Check if all parts are alphabetic
-            elif all(part.isalpha() for part in parts):
-                if TokenPreProcess.is_hyphenated(word):
-                    return word, CharFix.fix(word), "Hyphenated"
-                else:
-                    return word, CharFix.fix(word), "OOV"
-        return None
 
     @staticmethod
     def is_underscored(word):
