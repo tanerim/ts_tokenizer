@@ -7,7 +7,7 @@ from .char_fix import CharFix
 from .date_check import DateCheck
 from .smiley_check import SmileyParser
 from .emoticon_check import EmoticonParser
-from .punctuation_process import PuncMatcher
+from .punctuation_process import PuncMatcher, Hyphen
 
 
 # Create a dict of RegExps
@@ -16,9 +16,7 @@ REGEX_PATTERNS = {
     "hashtag": r'^#[^#]{1,143}$',
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
-    # "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+',
     "email_punc": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']+$',
-    # "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?+\b(?![.,!?;:])',
     "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
     "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)?',
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
@@ -32,7 +30,7 @@ REGEX_PATTERNS = {
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    "currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(?:,\d{3})*(?:\.\d{2})?$',  # Matches $100, €200
+    "currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(?:,\d{3})*(?:\.\d{2})?$',
     "currency_final": rf'^\d+(?:,\d{3})*(?:\.\d{2})?[{LocalData.currency_symbols()}]$'
 }
 
@@ -214,62 +212,6 @@ class TokenPreProcess:
     def is_registered(word):
         return check_regex(word, "registered")
 
-    @staticmethod
-    def is_hyphenated(word):
-        # Check for hyphenated words where both parts exist in the word list
-        if ("-" in word and word.count("-") == 1 and word[0] != "-" and word[-1] != "-"
-                and not any(c in string.punctuation for c in word if c != "-")):
-            parts = word.split("-")
-            if all(TokenPreProcess.fix_tr_lowercase(part) in LocalData.word_list() for part in parts):
-                return word  # Valid hyphenated word
-
-    @staticmethod
-    def is_hyphen_in(word):
-        # Handle words containing hyphens only
-        if "-" in word and word[0] != "-" and word[-1] != "-":
-            # Split by hyphen
-            parts = word.split("-")
-            if word.count("-") == 1:
-                # if all(part.isalpha() for part in parts):
-                if TokenPreProcess.is_hyphenated(word):
-                    return word, CharFix.fix(word), "Hyphenated"
-
-                elif TokenPreProcess.is_date(parts[0]) and TokenPreProcess.is_date(parts[1]):
-                    return word, CharFix.fix(word), "Date_Range"
-
-                # Check if all parts are numeric (e.g., "1881-1938")
-                elif all(part.isdigit() for part in parts):
-                    # Custom check for year ranges
-                    if len(parts[0]) == 4 and len(parts[1]) == 4:
-                        return word, CharFix.fix(word), "Year_Range"
-                    else:
-                        return word, CharFix.fix(word), "Numeric_Hyphenated"
-
-
-                elif any(part.isdigit() and part.isalpha() for part in parts):
-                    return word, CharFix.fix(word), "Alphanumeric_Hyphenated"
-
-                # Handle cases where some parts are alphabetic and others alphanumeric
-                elif any(part.isalpha() for part in parts) and any(part.isdigit() for part in parts):
-                    return word, CharFix.fix(word), "Mixed_Alphanumeric_Hyphenated"
-
-            if word.count("-") >= 2:
-                return word, CharFix.fix(word), "Multi_Hyphens"
-
-        return None
-
-    @staticmethod
-    def is_mis_hyphenated(word):
-        # Check for incorrectly hyphenated words, i.e., neither part is a valid word in the word list
-        izafe = ["ı", "i", "ü", "u"]
-        if ("-" in word and word.count("-") == 1 and word[0] != "-" and word[-1] != "-"
-                and not any(c in string.punctuation for c in word if c != "-")):
-            parts = word.split("-")
-            # Neither part is in word_list and second part is not in izafe
-            if all(TokenPreProcess.fix_tr_lowercase(part) not in LocalData.word_list() for part in parts) \
-                    and TokenPreProcess.fix_tr_lowercase(parts[1]) not in izafe:
-                return word  # Mis-hyphenated
-
 
     @staticmethod
     def is_underscored(word):
@@ -335,7 +277,7 @@ class TokenPreProcess:
         sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in string.punctuation)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
-        hyphen_check = TokenPreProcess.is_hyphen_in(word)
+        hyphen_check =  Hyphen.hyphen_in(word)
         if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check:
             return u_word, "is_non_latin"
         
