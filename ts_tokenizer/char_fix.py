@@ -18,12 +18,13 @@ REPLACEMENTS_CHAR = [
     # Fix Unicoed Chars
     ("і", "i"),
     # Fix Dashes - Need a better solution
-    ("–", "-")
+    ("-", "-"), ("–", "-"), ("⁄", "/"), ("-", "-")
 ]
 
 # Tuples for html entities replacement
+# Non-Breaking space &nbsp; is handled by removing.
 REPLACEMENTS_HTML = [
-    ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&nbsp;", " "), ("&Uuml;", "Ü"),
+    ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&nbsp;", ""), ("&Uuml;", "Ü"),
     ("&uuml;", "ü"), ("&Ouml;", "Ö"), ("&ouml;", "ö"), ("&Ccedil;", "Ç"), ("&ccedil;", "ç"),
     ("&Iuml;", "İ"), ("&iuml;", "i"), ("&ETH;", "Ğ"), ("&eth;", "ğ"), ("&THORN;", "Ş"), ("&thorn;", "ş"),
     ("&Auml;", "Ä"), ("&auml;", "ä"), ("&szlig;", "ß"), ("&rsquo;", "'"), ("&lsquo;", "‘"), ("&ndash;", "-")

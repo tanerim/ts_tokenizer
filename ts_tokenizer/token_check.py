@@ -72,6 +72,8 @@ class TokenCheck:
         else:
             # Then, check for punctuation tags
             punc_result = PuncTagCheck.punc_tag_check(token_char_fixed)
+            if punc_result and PuncMatcher.punc_count(token_char_fixed) ==1 and "-" in token_char_fixed:
+                result = (token, token_char_fixed, "OOV")
             if punc_result and PuncMatcher.punc_count(token_char_fixed) >= 1:
                 result = (token, token_char_fixed, punc_result[0])
             else:

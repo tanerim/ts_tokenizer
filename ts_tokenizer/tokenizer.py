@@ -53,6 +53,8 @@ def tokenized(in_word, fixed_in_cand, tag):
 
 # Handles the tagging logic for tokens
 def tagged(in_word, fixed_in_cand, tag):
+    if tag == "OOV" and "-" in in_word:
+        return in_word, fixed_in_cand, Hyphen.hyphen_in(fixed_in_cand)
     if tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
         return in_word, fixed_in_cand, PuncTagCheck.punc_tag_check(fixed_in_cand)
     elif tag == "OOV" and EmoticonParser.emoticon_count(fixed_in_cand) >= 2:

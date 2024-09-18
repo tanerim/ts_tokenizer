@@ -7,7 +7,7 @@ from .char_fix import CharFix
 from .date_check import DateCheck
 from .smiley_check import SmileyParser
 from .emoticon_check import EmoticonParser
-from .punctuation_process import PuncMatcher, Hyphen
+from .punctuation_process import PuncMatcher
 
 
 # Create a dict of RegExps
@@ -23,6 +23,7 @@ REGEX_PATTERNS = {
     "percentage_numbers_chars": r'%(\d+\D+)',
     "percentage_numbers": r'%(\d+)$',
     "in_quotes": r'"[^"]+"|\'[^\']+\'',
+    "single_hyphen": r'^(?!-)[\w]+-[\w]+(?!-)$',
     "date_range": r'^[\(\[]\d{4}[\-–]\d{4}[\)\]]$',
     "in_parenthesis": r'^[\(\[\{].*[\)\]\}]$',
     "copyright": r'(?:^©[a-zA-Z]+$)|(?:^[a-zA-Z]+©$)',
@@ -277,7 +278,7 @@ class TokenPreProcess:
         sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in string.punctuation)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
-        hyphen_check =  Hyphen.hyphen_in(word)
+        hyphen_check =  PuncMatcher.hyphen_in(word)
         if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check:
             return u_word, "is_non_latin"
         
