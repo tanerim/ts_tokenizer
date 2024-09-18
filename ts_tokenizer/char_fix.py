@@ -18,7 +18,10 @@ REPLACEMENTS_CHAR = [
     # Fix Unicoed Chars
     ("і", "i"),
     # Fix Dashes - Need a better solution
-    ("-", "-"), ("–", "-"), ("⁄", "/"), ("-", "-")
+    ("-", "-"), ("–", "-"), ("⁄", "/"), ("-", "-"),
+    # punctuation_process.py line 178 - fails if not replaced
+    # needs a better solution
+    ("°°", "°")
 ]
 
 # Tuples for html entities replacement
