@@ -8,7 +8,7 @@ from .date_check import DateCheck
 
 puncs = re.escape(string.punctuation)
 
-extra_puncs = ["–", "'", "°"]
+extra_puncs = ["–", "'", "°", "—"]
 for p in extra_puncs:
     puncs = puncs + p
 

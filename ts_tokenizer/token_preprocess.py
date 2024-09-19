@@ -9,6 +9,10 @@ from .smiley_check import SmileyParser
 from .emoticon_check import EmoticonParser
 from .punctuation_process import PuncMatcher
 
+puncs = re.escape(string.punctuation)
+extra_puncs = ["–", "'", "°", "—"]
+for p in extra_puncs:
+    puncs = puncs + p
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
@@ -31,8 +35,10 @@ REGEX_PATTERNS = {
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    "currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(?:,\d{3})*(?:\.\d{2})?$',
-    "currency_final": rf'^\d+(?:,\d{3})*(?:\.\d{2})?[{LocalData.currency_symbols()}]$'
+    #"currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(\d{3})*(?:\.\d{2})?$',
+    #"currency_final": rf'^\d{1,3}(?:([,.])\d{3})*(?:\1\d{2})?[{LocalData.currency_symbols()}]$',
+    "currency": rf'([{LocalData.currency_symbols()}]?\d{1,3}(?:[.,]\d{3})*([.,]\d+)?[{LocalData.currency_symbols()}]?)$'
+
 }
 
 
@@ -48,6 +54,13 @@ class TokenPreProcess:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def fix_tr_lowercase(word):
+        conversion = {'I': 'ı', 'İ': 'i'}
+        for key, value in conversion.items():
+            word = word.replace(key, value)
+        return word.lower()
 
     @staticmethod
     def is_xml(word):
@@ -68,12 +81,6 @@ class TokenPreProcess:
         word = CharFix.fix(word)
         return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.eng_word_list() else None
 
-    @staticmethod
-    def fix_tr_lowercase(word):
-        conversion = {'I': 'ı', 'İ': 'i'}
-        for key, value in conversion.items():
-            word = word.replace(key, value)
-        return word.lower()
 
     @staticmethod
     def is_smiley(word):
@@ -121,15 +128,16 @@ class TokenPreProcess:
     @staticmethod
     def is_punc(word):
         exception_list = ["(!)", "...", "[...]"]
+        if TokenPreProcess.is_currency(word):
+            return "Currency"
         # Check for Full-Side Punctuation (FSP) cases
-        if any(word.startswith(exc) and word.endswith(tuple(string.punctuation)) and len(word) > len(exc) for exc in
-               exception_list):
+        if any(word.startswith(exc) and word.endswith(tuple(puncs)) and len(word) > len(exc) for exc in exception_list):
             return "FSP"
         # Check for standalone exception (like (!)) returning "Punc"
         elif word in exception_list:
             return "Punc"
         # Otherwise, check if all characters are punctuation
-        return word if all(char in string.punctuation for char in word) else None
+        return word if all(char in puncs for char in word) else None
 
     @staticmethod
     def is_mention(word):
@@ -262,12 +270,9 @@ class TokenPreProcess:
         return None
 
     @staticmethod
-    def is_currency_initial(word):
-        return check_regex(word, "currency_initial")
+    def is_currency(word):
+        return check_regex(word, "currency")
 
-    @staticmethod
-    def is_currency_final(word):
-        return check_regex(word, "currency_final")
 
     @staticmethod
     def is_non_latin(word):
@@ -275,7 +280,7 @@ class TokenPreProcess:
         allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
 
         # Count characters that are not part of the Turkish alphabet and are not punctuation
-        sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in string.punctuation)
+        sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in puncs)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
         hyphen_check =  PuncMatcher.hyphen_in(word)
