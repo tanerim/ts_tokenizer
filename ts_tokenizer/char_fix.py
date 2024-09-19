@@ -46,20 +46,21 @@ REPLACEMENTS_CONTROL_CHAR = [
     ("\u200d", ""), ("\u200e", ""), ("\u200f", "")
  ]
 
-def batch_replace(word: str, replacements: list) -> str:
-    # Updated .replace() with re.sub()
-    try:
-        replacements_dict = dict(replacements)
-        pattern = re.compile("|".join(map(re.escape, replacements_dict.keys())))
-        return pattern.sub(lambda match: replacements_dict[match.group(0)], word)
-    except Exception as e:
-        print(f"Error in replacing characters: {e}")
-        return word
 
-def char_check(word: str) -> str:
-    return batch_replace(word, REPLACEMENTS_CHAR)
 
 class CharFix:
+    _compiled_pattern_char = re.compile("|".join(map(re.escape, dict(REPLACEMENTS_CHAR).keys())))
+    _compiled_pattern_control = re.compile("|".join(map(re.escape, dict(REPLACEMENTS_CONTROL_CHAR).keys())))
+    _compiled_pattern_html = re.compile("|".join(map(re.escape, dict(REPLACEMENTS_HTML).keys())))
+    _compiled_pattern_quote = re.compile("|".join(map(re.escape, dict(REPLACEMENTS_QUOTE).keys())))
+
+    @staticmethod
+    def batch_replace(word: str, compiled_pattern, replacements: dict) -> str:
+        return compiled_pattern.sub(lambda match: replacements[match.group(0)], word)
+
+    @staticmethod
+    def char_check(word: str) -> str:
+        return CharFix.batch_replace(word, CharFix._compiled_pattern_char, dict(REPLACEMENTS_CHAR))
 
     @staticmethod
     def tr_lowercase(word: str) -> str:
@@ -70,20 +71,21 @@ class CharFix:
 
     @staticmethod
     def remove_unicode_controls(word: str) -> str:
-        return batch_replace(word, REPLACEMENTS_CONTROL_CHAR)
+        return CharFix.batch_replace(word, CharFix._compiled_pattern_control, dict(REPLACEMENTS_CONTROL_CHAR))
 
     @staticmethod
     def html_entity_replace(word: str) -> str:
-        return batch_replace(word, REPLACEMENTS_HTML)
+        return CharFix.batch_replace(word, CharFix._compiled_pattern_html, dict(REPLACEMENTS_HTML))
 
     @staticmethod
     def fix_quote(word: str) -> str:
-        return batch_replace(word, REPLACEMENTS_QUOTE)
+        return CharFix.batch_replace(word, CharFix._compiled_pattern_quote, dict(REPLACEMENTS_QUOTE))
+
 
     @staticmethod
     def fix(word: str) -> str:
         word = unicodedata.normalize('NFKC', word)  # Normalize Unicode
-        word = char_check(word)  # Apply character fixes
+        word = CharFix.char_check(word)  # Apply character fixes
         word = CharFix.remove_unicode_controls(word)  # Remove control characters
         word = CharFix.html_entity_replace(word)  # Replace HTML entities
         word = CharFix.fix_quote(word)  # Fix quotes
