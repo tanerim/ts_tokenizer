@@ -37,8 +37,8 @@ REGEX_PATTERNS = {
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
     #"currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(\d{3})*(?:\.\d{2})?$',
     #"currency_final": rf'^\d{1,3}(?:([,.])\d{3})*(?:\1\d{2})?[{LocalData.currency_symbols()}]$',
-    "currency": rf'([{LocalData.currency_symbols()}]?\d{1,3}(?:[.,]\d{3})*([.,]\d+)?[{LocalData.currency_symbols()}]?)$'
-
+    #"currency": rf'([{LocalData.currency_symbols()}]?\d{1,3}(?:[.,]\d{3})*([.,]\d+)?[{LocalData.currency_symbols()}]?)$',
+    "currency": rf"([{LocalData.currency_symbols()}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?)'.format(symbols=re.escape(''.join(LocalData.currency_symbols())))",
 }
 
 
