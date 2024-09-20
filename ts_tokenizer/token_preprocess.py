@@ -284,7 +284,8 @@ class TokenPreProcess:
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
         hyphen_check =  PuncMatcher.hyphen_in(word)
-        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check:
+        multiple_emoticon = TokenPreProcess.is_multiple_emoticon(word)
+        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon:
             return u_word, "is_non_latin"
         
     @staticmethod

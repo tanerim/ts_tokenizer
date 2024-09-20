@@ -10,7 +10,7 @@ from ts_tokenizer.token_check import TokenCheck
 from ts_tokenizer.parse_tokens import ParseTokens
 from ts_tokenizer.emoticon_check import EmoticonParser
 from ts_tokenizer.inner_punc import InnerPuncParser
-from ts_tokenizer.punctuation_process import PuncTagCheck
+from ts_tokenizer.punctuation_process import PuncTagCheck, PuncMatcher
 from ts_tokenizer.token_preprocess import TokenPreProcess
 
 # Tokenization functions for different cases
@@ -54,7 +54,7 @@ def tokenized(in_word, fixed_in_cand, tag):
 # Handles the tagging logic for tokens
 def tagged(in_word, fixed_in_cand, tag):
     if tag == "OOV" and "-" in in_word:
-        return in_word, fixed_in_cand, Hyphen.hyphen_in(fixed_in_cand)
+        return in_word, fixed_in_cand, PuncMatcher.hyphen_in(fixed_in_cand)
     if tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
         return in_word, fixed_in_cand, PuncTagCheck.punc_tag_check(fixed_in_cand)
     elif tag == "OOV" and EmoticonParser.emoticon_count(fixed_in_cand) >= 2:

@@ -1,9 +1,11 @@
-from token_preprocess import TokenPreProcess
+from .token_check import TokenCheck
+
 def recursive_token_tagger(token):
     tagged_tokens = []
-    if TokenPreProcess.is_in_parenthesis(token):
-        print(token)
-        recursive_process = "Parse token"
-        return recursive_process, tagged_tokens
+    tag = TokenCheck.token_tagger(token)
+    if tag is not None:
+        if tag == "MSSP":
+            tagged_tokens.append(token)
+            return tagged_tokens
 
 print(recursive_token_tagger("(2024)"))
