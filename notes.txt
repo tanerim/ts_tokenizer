@@ -1,5 +1,13 @@
-2.1.
-->
-10.8V/11.1V
-8°
-55%
+Input Text
+   ↓
+Character Fixing
+   - Handles corrupted text, fixes Turkish-specific characters (e.g., 'Ã' to 'ç')
+   ↓
+Token Identification
+   - Recognizes and classifies tokens (Valid Words, Numbers, URLs, Hashtags, etc.)
+   ↓
+Token Tagging (Optional)
+   - Assigns tags to tokens (e.g., 'Valid_Word', 'Number', 'HashTag')
+   ↓
+Output (Tokenized or Tagged)
+   - Text can be output as a simple tokenized list or with tags indicating token types
