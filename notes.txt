@@ -1,3 +1,70 @@
+Tags:
+
+# From Lexicon
+Valid_Word
+Eng_Word
+Exception_Word
+Abbr
+
+# Punctuation
+ISP
+FSP
+IMP
+MSP
+FMP
+MSSP
+Punc
+Inner_Single_Punc
+In_Parenthesis
+Single_Hyphenated
+Inner_Multiple_Punc
+Hyphenated
+Multi_Hyphenated
+Numeric_Hyphenated
+Hyphen_Final
+Hyphen_Initial
+In_Quotes
+Apostrophe
+Underscored
+Inner_Char
+Three_or_More
+
+# Date & Time & Number
+Number
+Roman_Number
+Percentage_Numbers
+Percentage_Number_Chars
+Currency_Initial
+Currency_Final
+Hour
+Date
+Date_Range
+Year_Range
+
+# Emoticon & Smiley
+Smiley
+Multiple_Smiley_In
+Emoticon
+Multiple_Emoticon
+
+# Social_Media & Internet
+Non_Prefix_URL
+Prefix_URL
+HashTag
+Mention
+Email
+
+# Misc
+XML_Tag
+Registered
+
+# OOV
+OOV
+Non_Latin
+
+
+Process Flow
+
 Input Text
    ↓
 Character Fixing
@@ -11,3 +78,5 @@ Token Tagging (Optional)
    ↓
 Output (Tokenized or Tagged)
    - Text can be output as a simple tokenized list or with tags indicating token types
+
+
