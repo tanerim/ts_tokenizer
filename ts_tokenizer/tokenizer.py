@@ -5,7 +5,6 @@ import re
 import multiprocessing
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
-
 from ts_tokenizer.token_check import TokenCheck
 from ts_tokenizer.parse_tokens import ParseTokens
 from ts_tokenizer.emoticon_check import EmoticonParser
@@ -119,28 +118,26 @@ class TSTokenizer:
         else:
             with open(args.filename, encoding='utf-8') as in_file:
                 lines = in_file.readlines()
-                total_lines = len(lines)
 
-                pbar = tqdm(total=total_lines, desc="Processing File") if args.verbose else None
+                pbar = tqdm(total=len(lines), desc="Processing File") if args.verbose else None
 
                 with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                    for i in range(0, total_lines, batch_size):
-                        batch_lines = lines[i:i + batch_size]
-                        all_results = []
+                    for line in lines:
+                        if re.match(r'^\s*(<|</).*>\s*$', line):  # Skip lines with XML-like tags
+                            continue
 
-                        for line in batch_lines:
-                            if re.match(r'^\s*(<|</).*>\s*$', line):  # Skip lines with XML-like tags
-                                continue
-
+                        if args.output == "lines":
+                            sentence_tokens = process_tokens(args, line.strip())
+                            print(sentence_tokens.replace("\n", " "))
+                        else:
                             words = line.split()
                             results = list(executor.map(lambda w: process_tokens(args, w), words))
-                            all_results.extend(results)
 
-                        for token in all_results:
-                            if args.output == "tagged":
-                                print("\t".join(token))
-                            else:
-                                print(token)
+                            for token in results:
+                                if args.output == "tagged":
+                                    print("\t".join(token))
+                                else:
+                                    print(token)
 
                             if args.verbose:
                                 pbar.update(1)
@@ -150,3 +147,4 @@ class TSTokenizer:
 
 if __name__ == "__main__":
     TSTokenizer.ts_tokenize()
+
