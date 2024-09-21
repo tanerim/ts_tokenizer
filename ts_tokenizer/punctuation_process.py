@@ -52,7 +52,7 @@ class PuncMatcher:
             else:
                 return "IMP"  # Initial_Multi_Punc
         elif final_punc:
-            if len(final_punc) == 1:
+            if len(final_punc) == 1 and PuncMatcher.punc_count(word) == 1:
                 return "FSP"  # Final_Single_Punc
             else:
                 return "FMP"  # Final_Multi_Punc
@@ -84,6 +84,8 @@ class PuncMatcher:
         elif "°" in word:
             if word.count("°") == 1 and word[-1] == "°":
                 return "Celcius"
+            elif word.count("°") == 2 and word[-1] == "°":
+                return "Celcius_Range"
             else:
                 return "Coordinate"
 
