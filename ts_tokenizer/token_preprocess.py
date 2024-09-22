@@ -1,6 +1,5 @@
 import re
 import string
-import inspect
 import unicodedata
 from .data import LocalData
 from .char_fix import CharFix
@@ -35,19 +34,15 @@ REGEX_PATTERNS = {
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    #"currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(\d{3})*(?:\.\d{2})?$',
-    #"currency_final": rf'^\d{1,3}(?:([,.])\d{3})*(?:\1\d{2})?[{LocalData.currency_symbols()}]$',
-    #"currency": rf'([{LocalData.currency_symbols()}]?\d{1,3}(?:[.,]\d{3})*([.,]\d+)?[{LocalData.currency_symbols()}]?)$',
+    # "currency_initial": rf'^[{LocalData.currency_symbols()}]\d+(\d{3})*(?:\.\d{2})?$',
+    # "currency_final": rf'^\d{1,3}(?:([,.])\d{3})*(?:\1\d{2})?[{LocalData.currency_symbols()}]$',
+    # "currency": rf'([{LocalData.currency_symbols()}]?\d{1,3}(?:[.,]\d{3})*([.,]\d+)?[{LocalData.currency_symbols()}]?)$',
     "currency": rf"([{LocalData.currency_symbols()}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?)'.format(symbols=re.escape(''.join(LocalData.currency_symbols())))",
 }
 
 
-def check_regex(word, pattern_key):
-    pattern = REGEX_PATTERNS[pattern_key]
-    if pattern:
-        return word if re.match(pattern, word) else None
-    else:
-        return None
+def check_regex(word, pattern):
+    return True if re.search(pattern, word) else False
 
 
 class TokenPreProcess:
@@ -81,11 +76,9 @@ class TokenPreProcess:
         word = CharFix.fix(word)
         return word if TokenPreProcess.fix_tr_lowercase(word) in LocalData.eng_word_list() else None
 
-
     @staticmethod
     def is_smiley(word):
         return word if word in LocalData.smileys() else None
-
 
     @staticmethod
     def is_multiple_smiley(word):
@@ -96,17 +89,15 @@ class TokenPreProcess:
                 return "Multiple_Smiley"  # Initial_Multiple_Punc
         return None
 
-
     @staticmethod
     def is_multiple_smiley_in(word):
         # Detect multiple smiley sequences
         if SmileyParser.consecutive_smiley(word) is True:
             # Ensure the word doesn't start with alphanumeric characters
-            #if not str(word[0]).isdigit() or not str(word[-1]).isdigit():
+            # if not str(word[0]).isdigit() or not str(word[-1]).isdigit():
             if any(char.isalnum() for char in word):
                 return "Multiple_Smiley_In"  # Initial_Multiple_Punc
         return None
-
 
     @staticmethod
     def is_emoticon(word):
@@ -221,7 +212,6 @@ class TokenPreProcess:
     def is_registered(word):
         return check_regex(word, "registered")
 
-
     @staticmethod
     def is_underscored(word):
         # Handle words containing underscores only
@@ -273,7 +263,6 @@ class TokenPreProcess:
     def is_currency(word):
         return check_regex(word, "currency")
 
-
     @staticmethod
     def is_non_latin(word):
         u_word = unicodedata.normalize('NFC', word)
@@ -283,7 +272,7 @@ class TokenPreProcess:
         sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in puncs)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
-        hyphen_check =  PuncMatcher.hyphen_in(word)
+        hyphen_check = PuncMatcher.hyphen_in(word)
         multiple_emoticon = TokenPreProcess.is_multiple_emoticon(word)
         if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon:
             return u_word, "is_non_latin"
@@ -300,7 +289,6 @@ class TokenPreProcess:
 
 
 class TokenProcessor:
-
     def __init__(self):
         pass
 
@@ -309,15 +297,11 @@ class TokenProcessor:
         results = {}
         for method_name in dir(TokenPreProcess):
             method = getattr(TokenPreProcess, method_name)
-            # Skip special methods and built-in types
             if callable(method) and not method_name.startswith('__'):
                 try:
-                    # Check if the method requires one argument
-                    if len(inspect.signature(method).parameters) == 1:
-                        result = method(word)
-                        if result:
-                            results[method_name] = result
+                    result = method(word)
+                    if result:
+                        results[method_name] = result
                 except ValueError:
-                    # Skip methods that don't have signatures (like built-ins)
                     continue
         return results if results else None

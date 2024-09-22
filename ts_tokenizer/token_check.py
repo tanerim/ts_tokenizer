@@ -57,7 +57,6 @@ class TokenCheck:
         # First fix Char Problems
         token_char_fixed = CharFix.fix(token)
 
-
         # Then, check the token against the predefined tags
         for tag, check_method in token_tags.items():
             check_result = check_method(token_char_fixed)  # Apply the check method to the token
@@ -71,7 +70,7 @@ class TokenCheck:
         else:
             # Then, check for punctuation tags
             punc_result = PuncTagCheck.punc_tag_check(token_char_fixed)
-            if punc_result and PuncMatcher.punc_count(token_char_fixed) ==1 and "-" in token_char_fixed:
+            if punc_result and PuncMatcher.punc_count(token_char_fixed) == 1 and "-" in token_char_fixed:
                 result = (token, token_char_fixed, "OOV")
             if punc_result and PuncMatcher.punc_count(token_char_fixed) >= 1:
                 result = (token, token_char_fixed, punc_result[0])

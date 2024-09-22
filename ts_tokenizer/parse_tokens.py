@@ -2,7 +2,7 @@ import re
 import string
 from .data import LocalData
 from .punctuation_process import PuncMatcher
-from typing import Union, Optional
+from .char_fix import CharFix
 
 
 FMP_exception_list = ["(!)", "...", "!!!"]
@@ -10,17 +10,9 @@ FMP_exception_list = ["(!)", "...", "!!!"]
 
 class ParseTokens:
 
-    @staticmethod
-    def tokenize_xml(cls, word: str) -> str:
-        return word
     @classmethod
-    def are_consecutive_chars(cls, chars: str) -> bool:
-        if len(chars) <= 1:
-            return True
-        for i in range(1, len(chars)):
-            if chars[i] != chars[i - 1] + 1:
-                return False
-        return True
+    def tokenize_xml(cls, word: str) -> str:
+        return "".join(word)
 
     @classmethod
     def split_punctuation_and_chars(cls, word: str) -> list:
@@ -30,7 +22,7 @@ class ParseTokens:
         return [token for token in tokens if token]
 
     @classmethod
-    def tokenize_initial_quote(cls, word: str) -> list:
+    def tokenize_initial_quote(cls, word: str) -> str:
         word_list = list(word)
         index_list = [0, len(word)]
         for index in index_list:
@@ -39,7 +31,7 @@ class ParseTokens:
         return ''.join(word_list).lstrip().rstrip()
 
     @classmethod
-    def tokenize_in_quotes(cls, word: str) -> list:
+    def tokenize_in_quotes(cls, word: str) -> str:
         word_list = list(word)
         index_list = [0, len(word) - 1]
         for index in index_list:

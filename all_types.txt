@@ -1,5 +1,3 @@
-<text = id="001" year="2024">
-</text>
 yeni
 eski
 e-posta
@@ -37,3 +35,5 @@ http://tscorpus.com
 gel-git
 gel-hebelep
 1881-1938
+<text id="001" year="2024">
+</text>

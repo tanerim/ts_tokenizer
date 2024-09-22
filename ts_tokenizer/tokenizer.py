@@ -1,14 +1,12 @@
 import sys
 import argparse
 import string
-import re
 import multiprocessing
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 from ts_tokenizer.token_check import TokenCheck
 from ts_tokenizer.parse_tokens import ParseTokens
 from ts_tokenizer.emoticon_check import EmoticonParser
-from ts_tokenizer.inner_punc import InnerPuncParser
 from ts_tokenizer.punctuation_process import PuncTagCheck, PuncMatcher
 from ts_tokenizer.token_preprocess import TokenPreProcess
 
@@ -32,6 +30,8 @@ tokenization_functions = {
 }
 
 # Handles tokenized output and processes based on token tags
+
+
 def tokenized(in_word, fixed_in_cand, tag):
     pre_token = tagged(in_word, fixed_in_cand, tag)
     tag = pre_token[2]
@@ -45,10 +45,11 @@ def tokenized(in_word, fixed_in_cand, tag):
         return tokenization_functions[tag](fixed_in_cand)
     elif tag == "OOV":
         if fixed_in_cand and (fixed_in_cand[0] in string.punctuation or fixed_in_cand[-1] in string.punctuation):
-            return tokenization_functions.get(tag, InnerPuncParser.tokenize_inner_punc)(fixed_in_cand)
+            return tokenization_functions.get(tag, ParseTokens.tokenize_inner_punc)(fixed_in_cand)
         elif EmoticonParser.emoticon_count(fixed_in_cand) >= 2:
             return EmoticonParser.emoticon_tokenize(fixed_in_cand)
     return fixed_in_cand
+
 
 # Handles the tagging logic for tokens
 def tagged(in_word, fixed_in_cand, tag):
@@ -60,6 +61,7 @@ def tagged(in_word, fixed_in_cand, tag):
         return in_word, fixed_in_cand, tag
     return in_word, fixed_in_cand, tag
 
+
 # Main function to process a word and return tagged/tokenized result
 def process_tokens(args, word):
     result = TokenCheck.token_tagger(word, "all")
@@ -70,6 +72,7 @@ def process_tokens(args, word):
         return tokenized(in_word, fixed_in_cand, tag)
     elif args.output == "lines":
         return tokenized(in_word, fixed_in_cand, tag)
+
 
 # Tokenizer class definition
 class TSTokenizer:
@@ -102,13 +105,15 @@ class TSTokenizer:
             return '\n'.join([token[1] for token in processed_tokens])  # returns each token on a new line
         elif return_format == 'tagged':
             return ' '.join([f"{token[0]}/{token[2]}" for token in processed_tokens])  # original/tagged-token
+        elif return_format == 'details':
+            return ' '.join([f"{token[0]}/{token[2]}" for token in processed_tokens])  # detils
 
     @staticmethod
     def process_line(line, return_format):
         return TSTokenizer.tokenize(line, return_format)
 
     @staticmethod
-    def ts_tokenize(batch_size=10):
+    def ts_tokenize():
         args = TSTokenizer.parse_arguments()
         num_workers = multiprocessing.cpu_count() - 1
 
@@ -123,12 +128,15 @@ class TSTokenizer:
 
                 with ThreadPoolExecutor(max_workers=num_workers) as executor:
                     for line in lines:
-                        if re.match(r'^\s*(<|</).*>\s*$', line):  # Skip lines with XML-like tags
-                            continue
-
                         if args.output == "lines":
                             sentence_tokens = process_tokens(args, line.strip())
                             print(sentence_tokens.replace("\n", " "))
+
+                        xml_pattern = r'(<[^<> ]*) ([^<>]*>)'
+                        if xml_pattern in line:
+                            print(line)
+                            pass
+
                         else:
                             words = line.split()
                             results = list(executor.map(lambda w: process_tokens(args, w), words))
@@ -145,6 +153,6 @@ class TSTokenizer:
                 if pbar:
                     pbar.close()
 
+
 if __name__ == "__main__":
     TSTokenizer.ts_tokenize()
-

@@ -1,5 +1,4 @@
 import os
-import re
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(base_dir, 'data')
@@ -14,7 +13,6 @@ exception_words = set(line.strip() for line in open(os.path.join(data_dir, 'exce
 eng_words = set(line.strip() for line in open(os.path.join(data_dir, 'eng_word_list.txt')))
 domains = set(line.strip() for line in open(os.path.join(data_dir, 'domains.txt')))
 currencies = set(line.strip() for line in open(os.path.join(data_dir, 'currency_symbols.txt')))
-
 
 
 class LocalData:
