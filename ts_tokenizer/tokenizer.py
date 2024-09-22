@@ -1,6 +1,7 @@
 import sys
 import argparse
 import string
+import re
 import multiprocessing
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
@@ -128,14 +129,14 @@ class TSTokenizer:
 
                 with ThreadPoolExecutor(max_workers=num_workers) as executor:
                     for line in lines:
-                        if args.output == "lines":
-                            sentence_tokens = process_tokens(args, line.strip())
-                            print(sentence_tokens.replace("\n", " "))
+                        # xml_pattern = r'(<[^<> ]*) ([^<>]*>)'
+                        xml_pattern = r'(<[^<> ]*[^<>]*?>)|(<[^<> ]*)|(/[^<>]*>)'
 
-                        xml_pattern = r'(<[^<> ]*) ([^<>]*>)'
-                        if xml_pattern in line:
-                            print(line)
-                            pass
+                        if re.search(xml_pattern, line):
+                            if args.output == "tagged":
+                                print(" ".join((line, "XML_Tag")).replace("\n", " "))
+                            else:
+                                print(line)
 
                         else:
                             words = line.split()
