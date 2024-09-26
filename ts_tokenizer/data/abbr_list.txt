@@ -23,10 +23,12 @@ C°
 °F
 l
 ml
+lb
 TV
 vb
 vb.
 vs
+vs.
 KDV
 ÖTV
 CD

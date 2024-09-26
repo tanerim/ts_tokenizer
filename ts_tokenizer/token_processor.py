@@ -1,5 +1,8 @@
 import inspect
-from .token_preprocess import TokenPreProcess
+from ts_tokenizer.token_preprocess import TokenPreProcess
+
+
+
 class TokenProcessor:
 
     def __init__(self):
@@ -8,17 +11,21 @@ class TokenProcessor:
     @staticmethod
     def run_all(word):
         results = {}
-        for method_name in dir(TokenPreProcess):
+        methods = [method_name for method_name in dir(TokenPreProcess) if
+                   callable(getattr(TokenPreProcess, method_name)) and not method_name.startswith("__")]
+
+        #print(f"Methods in TokenPreProcess: {methods}")
+
+        for method_name in methods:
             method = getattr(TokenPreProcess, method_name)
-            # Skip special methods and built-in types
             if callable(method) and not method_name.startswith('__'):
                 try:
-                    # Check if the method requires one argument
                     if len(inspect.signature(method).parameters) == 1:
                         result = method(word)
-                        if result:
-                            results[method_name] = result
-                except ValueError:
-                    # Skip methods that don't have signatures (like built-ins)
+                        print(f"Method: {method_name}, Result: {result}")  # Debug: Show results
+                        results[method_name] = result
+                except Exception as e:
+                    print(f"Error in method {method_name}: {e}")
                     continue
         return results if results else None
+

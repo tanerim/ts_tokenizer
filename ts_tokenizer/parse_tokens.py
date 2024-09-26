@@ -3,6 +3,7 @@ import string
 from .data import LocalData
 from .punctuation_process import PuncMatcher
 from .char_fix import CharFix
+from .token_processor import TokenPreProcess
 
 
 FMP_exception_list = ["(!)", "...", "!!!"]
@@ -82,13 +83,42 @@ class ParseTokens:
     @classmethod
     def tokenize_mssp(cls, word: str) -> str:
         tokens = re.findall(r'\w+|[^\w\s]', word)
-        initial = "".join(tokens[0])
-        final = "".join(tokens[1:])
-        if final in LocalData.word_list() or LocalData.eng_word_list() or LocalData.exception_words() or LocalData.abbrs():
 
-            return "\n".join([initial, final])
+        if not tokens:
+            return word
+
+        # First and last tokens
+        initial = tokens[0]
+        inner_token = tokens[1:-1]
+        inner_token = "".join(inner_token)
+        final = "".join(tokens[1:]) if len(tokens) > 1 else ""
+
+        print("Word:", word)
+        print("Initial:", initial)
+        print("Inner_Token:", inner_token)
+        print("Final:", final)
+
+        if TokenPreProcess.is_date_range(initial):
+            print("date range")
         else:
-            return '\n'.join(tokens).lstrip().rstrip()
+            print("olmadı")
+
+
+
+
+        # Check if the final token matches valid word lists
+        if (final and
+                (final in LocalData.word_list() or
+                 final in LocalData.eng_word_list() or
+                 final in LocalData.exception_words() or
+                 final in LocalData.abbrs())):
+            # Check if the inner token is a date range
+            if TokenPreProcess.is_date_range(inner_token):
+                return "\n".join([initial, inner_token, final]).strip()
+            return "\n".join([initial, final]).strip()
+
+        else:
+            return '\n'.join(tokens).strip()
 
     @classmethod
     def tokenize_fmp(cls, word: str) -> str:

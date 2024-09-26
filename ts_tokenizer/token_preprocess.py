@@ -1,6 +1,7 @@
 import re
 import string
 import unicodedata
+import inspect
 from .data import LocalData
 from .char_fix import CharFix
 from .date_check import DateCheck
@@ -293,15 +294,24 @@ class TokenProcessor:
         pass
 
     @staticmethod
-    def run_all(word):
+    def run_all(word, depth=0, max_depth=2):
         results = {}
-        for method_name in dir(TokenPreProcess):
+        methods = [method_name for method_name in dir(TokenPreProcess) if
+                   callable(getattr(TokenPreProcess, method_name)) and not method_name.startswith("__")]
+
+        for method_name in methods:
             method = getattr(TokenPreProcess, method_name)
             if callable(method) and not method_name.startswith('__'):
                 try:
-                    result = method(word)
-                    if result:
+                    if len(inspect.signature(method).parameters) == 1:
+                        result = method(word)
                         results[method_name] = result
-                except ValueError:
+
+                        # Recursive call if the result is valid and we haven't reached max depth
+                        if result and depth < max_depth:
+                            sub_results = TokenProcessor.run_all(result, depth + 1, max_depth)
+                            results[f"{method_name}_recursive"] = sub_results
+
+                except Exception as e:
                     continue
         return results if results else None
