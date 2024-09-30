@@ -1,4 +1,6 @@
-yeni
+iliåÿkisi
+''arası''
+Yeni
 eski
 e-posta
 K-Pop
@@ -23,6 +25,7 @@ A1234
 [hello]
 16:30
 01.01.2018
+01.01.2018-01.01.2018
 %57
 %67'ye
 I
@@ -38,3 +41,17 @@ gel-hebelep
 <text id="001" year="2024">
 </text>
 <gel>
+git!
+git.
+hey(!)
+,gel
+,gel!
+??gel?
+(?gel?)
+gel_gel_git
+gel_git
+gel-git
+heyyy
+100₺
+₺250
+Ali‘nin
