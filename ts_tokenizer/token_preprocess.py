@@ -11,7 +11,7 @@ from .punctuation_process import PuncMatcher
 puncs = re.escape(string.punctuation)
 extra_puncs = ["–", "'", "°", "—"]
 for p in extra_puncs:
-    puncs = puncs + p
+    puncs += p
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
@@ -39,7 +39,7 @@ REGEX_PATTERNS = {
 
 
 def check_regex(word, pattern):
-    return True if re.search(pattern, word) else False
+    return word if re.search(REGEX_PATTERNS[pattern], word) else None
 
 
 class TokenPreProcess:
@@ -48,180 +48,186 @@ class TokenPreProcess:
         pass
 
     # Regex Based Tokens
+    # These functions get the input token, checks against to regexs defined above and
+    # return word, tag as tuple
     @staticmethod
-    def is_xml(word):
-        return check_regex(word, "xml_tag")
+    def is_xml(word: str) -> tuple:
+        result = check_regex(word, "xml_tag")
+        return (result, "XML_Tag") if result else None
 
     @staticmethod
-    def is_mention(word):
+    def is_mention(word: str) -> tuple:
         p_count = PuncMatcher.punc_count(word)
-        if p_count == 1:
-            return check_regex(word, "mention")
+        result = check_regex(word, "mention") if p_count == 1 else None
+        return (result, "Mention") if result else None
 
     @staticmethod
-    def is_hashtag(word):
+    def is_hashtag(word: str) -> tuple:
         p_count = PuncMatcher.punc_count(word)
-        if p_count == 1:
-            return check_regex(word, "hashtag")
+        result = check_regex(word, "hashtag") if p_count == 1 else None
+        return (result, "Hashtag") if result else None
 
     @staticmethod
-    def is_num_char_sequence(word):
-        return check_regex(word, "num_char_sequence")
+    def is_num_char_sequence(word: str) -> tuple:
+        result = check_regex(word, "num_char_sequence")
+        return (result, "Num_Char_Sequence") if result else None
 
     @staticmethod
-    def is_in_quotes(word):
+    def is_in_quotes(word: str) -> tuple:
         p_count = PuncMatcher.punc_count(word)
-        if p_count <= 2:
-            return check_regex(word, "in_quotes")
+        result = check_regex(word, "in_quotes") if p_count <= 2 else None
+        return (result, "In_Quotes") if result else None
 
     @staticmethod
-    def is_date_range(word):
+    def is_in_parenthesis(word: str) -> tuple:
         p_count = PuncMatcher.punc_count(word)
-        if p_count <= 1:
-            return check_regex(word, "date_range")
+        result = check_regex(word, "in_parenthesis") if p_count <= 2 else None
+        return (result, "In_Parenthesis") if result else None
 
     @staticmethod
-    def is_in_parenthesis(word):
+    def is_date_range(word: str) -> tuple:
         p_count = PuncMatcher.punc_count(word)
-        if p_count <= 2:
-            return check_regex(word, "in_parenthesis")
+        result = check_regex(word, "date_range") if p_count <= 1 else None
+        return (result, "Date_Range") if result else None
 
     @staticmethod
-    def is_hour(word):
-        return check_regex(word, "hour")
+    def is_hour(word: str) -> tuple:
+        result = check_regex(word, "hour")
+        return (result, "Hour") if result else None
 
     @staticmethod
     def is_date(word):
-        return DateCheck.is_date(word)
+        result = DateCheck.is_date(word)
+        return (result, "Date") if result else None
 
     @staticmethod
     def is_percentage_numbers(word):
         p_count = PuncMatcher.punc_count(word)
-        if p_count == 1:
-            return check_regex(word, "percentage_numbers")
+        result = check_regex(word, "percentage_numbers") if p_count == 1 else None
+        return (result, "Percentage_Numbers") if result else None
 
     @staticmethod
     def is_percentage_numbers_chars(word):
-        return check_regex(word, "percentage_numbers_chars")
+        result = check_regex(word, "percentage_numbers_chars")
+        return (result, "Percentage_Numbers_Chars") if result else None
 
     @staticmethod
     def is_roman_number(word):
-        return check_regex(word, "roman_number")
+        result = check_regex(word, "roman_number")
+        return (result, "Roman_Number") if result else None
 
     @staticmethod
     def is_email_punc(word):
-        return check_regex(word, "email_punc")
+        result = check_regex(word, "email_punc")
+        return (result, "Email_Punc") if result else None
 
     @staticmethod
     def is_email(word):
-        return check_regex(word, "email")
+        result = check_regex(word, "email")
+        return (result, "Email") if result else None
 
     @staticmethod
     def is_prefix_url(word):
         if any(dne in word for dne in LocalData.domains()):
-            return check_regex(word, "prefix_url")
+            result = check_regex(word, "prefix_url")
+            return (result, "Prefix_URL") if result else None
 
     @staticmethod
     def is_non_prefix_url(word):
         if any(dne in word for dne in LocalData.domains()):
-            return check_regex(word, "Non_Prefix_URL")
+            result = check_regex(word, "Non_Prefix_URL")
+            return (result, "Non_Prefix_URL") if result else None
 
     @staticmethod
     def is_copyright(word):
-        return check_regex(word, "copyright")
+        result = check_regex(word, "copyright")
+        return (result, "Copyright") if result else None
 
     @staticmethod
     def is_registered(word):
-        return check_regex(word, "registered")
+        result = check_regex(word, "registered")
+        return (result, "Registered") if result else None
 
     @staticmethod
     def is_currency(word):
-        return check_regex(word, "currency")
+        result = check_regex(word, "currency")
+        return (result, "Currency") if result else None
 
     # Lexicon Based Tokens
     @staticmethod
     def is_in_lexicon(word):
-        word = CharFix.fix(word)
-        return word if CharFix.tr_lowercase(word) in LocalData.word_list() else None
+        word_fixed = CharFix.fix(word)
+        if CharFix.tr_lowercase(word_fixed) in LocalData.word_list():
+            return word_fixed, "Lexicon"
+        return None
 
     @staticmethod
     def is_abbr(word):
-        return word if word in LocalData.abbrs() else None
+        return (word, "Abbr") if word in LocalData.abbrs() else None
 
     @staticmethod
     def is_in_exceptions(word):
-        word = CharFix.fix(word)
-        return word if CharFix.tr_lowercase(word) in LocalData.exception_words() else None
+        word_fixed = CharFix.fix(word)
+        if CharFix.tr_lowercase(word_fixed) in LocalData.exception_words():
+            return word_fixed, "Exception"
+        return None
 
     @staticmethod
     def is_in_eng_words(word):
-        word = CharFix.fix(word)
-        return word if CharFix.tr_lowercase(word) in LocalData.eng_word_list() else None
+        word_fixed = CharFix.fix(word)
+        if CharFix.tr_lowercase(word_fixed) in LocalData.eng_word_list():
+            return word_fixed, "English_Word"
+        return None
 
     @staticmethod
     def is_smiley(word):
-        return word if word in LocalData.smileys() else None
+        return (word, "Smiley") if word in LocalData.smileys() else None
 
     @staticmethod
     def is_emoticon(word):
-        return word if word in LocalData.emoticons() else None
-
+        return (word, "Emoticon") if word in LocalData.emoticons() else None
 
     # Multi-Unit Tokens
     @staticmethod
     def is_multiple_smiley(word):
-        # Detect multiple smiley sequences
-        if SmileyParser.consecutive_smiley(word) is True:
-            # Ensure the word doesn't start with alphanumeric characters
-            if not str(word[0:-1]).isdigit() or not str(word[0:-1]).isalnum():
-                return "Multiple_Smiley"  # Initial_Multiple_Punc
+        if SmileyParser.consecutive_smiley(word) and not str(word[0:-1]).isalnum():
+            return word, "Multiple_Smiley"
         return None
 
     @staticmethod
     def is_multiple_smiley_in(word):
-        # Detect multiple smiley sequences
-        if SmileyParser.consecutive_smiley(word) is True:
-            # Ensure the word doesn't start with alphanumeric characters
-            # if not str(word[0]).isdigit() or not str(word[-1]).isdigit():
-            if any(char.isalnum() for char in word):
-                return "Multiple_Smiley_In"  # Initial_Multiple_Punc
+        if SmileyParser.consecutive_smiley(word) and any(char.isalnum() for char in word):
+            return word, "Multiple_Smiley_In"
         return None
 
     @staticmethod
     def is_multiple_emoticon(word):
-        if EmoticonParser.emoticon_count(word) >= 2:
-            return word
+        return (word, "Multiple_Emoticon") if EmoticonParser.emoticon_count(word) >= 2 else None
 
     @staticmethod
     def is_number(word):
-        return word if word.isdigit() else None
+        return (word, "Number") if word.isdigit() else None
 
     @staticmethod
     def is_punc(word):
         exception_list = ["(!)", "...", "[...]"]
         if TokenPreProcess.is_currency(word):
-            return "Currency"
-        # Check for Full-Side Punctuation (FSP) cases
+            return word, "Currency"
         if any(word.startswith(exc) and word.endswith(tuple(puncs)) and len(word) > len(exc) for exc in exception_list):
-            return "FSP"
-        # Check for standalone exception (like (!)) returning "Punc"
-        elif word in exception_list:
-            return "Punc"
-        # Otherwise, check if all characters are punctuation
-        return word if all(char in puncs for char in word) else None
+            return word, "FSP"
+        if word in exception_list:
+            return word, "Punc"
+        return (word, "Punc") if all(char in puncs for char in word) else None
 
     @staticmethod
     def is_underscored(word):
-        # Handle words containing underscores only
         if "_" in word and 1 <= word.count("_") <= 1 and word[0] != "_" and word[-1] != "_":
             parts = word.split("_")
             if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit():
-                return word, CharFix.fix(word), "Alphanumeric_Underscored"
+                return word, "Alphanumeric_Underscored"
             elif all(CharFix.tr_lowercase(part) in LocalData.word_list() for part in parts):
-                return word, CharFix.fix(word), "Underscored"
-            else:
-                return word, CharFix.fix(word), "OOV"
-
+                return word, "Underscored"
+            return word, "OOV"
         return None
 
     @staticmethod
@@ -229,8 +235,8 @@ class TokenPreProcess:
         exceptions = ["...", "!!!"]
         if word in exceptions:
             return word, "Punc"
-        else:
-            return check_regex(word, "three_or_more")
+        result = check_regex(word, "three_or_more")
+        return (result, "Three_Or_More") if result else None
 
     @staticmethod
     def is_inner_char(word):
@@ -247,16 +253,15 @@ class TokenPreProcess:
     def is_non_latin(word):
         u_word = unicodedata.normalize('NFC', word)
         allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
-
-        # Count characters that are not part of the Turkish alphabet and are not punctuation
         sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in puncs)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
         hyphen_check = PuncMatcher.hyphen_in(word)
         multiple_emoticon = TokenPreProcess.is_multiple_emoticon(word)
         if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon:
-            return u_word, "is_non_latin"
-        
+            return u_word, "Non_Latin"
+        return None
+
     @staticmethod
     def is_one_char_fixable(word):
         extra_chars = ["¬", "¬"]
