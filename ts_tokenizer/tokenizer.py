@@ -37,19 +37,27 @@ def tokenized(in_word, fixed_in_cand, tag):
     pre_token = tagged(in_word, fixed_in_cand, tag)
     tag = pre_token[2]
 
-    # Lexicon, exceptions, and English word checks
-    if TokenPreProcess.is_in_lexicon(fixed_in_cand) or TokenPreProcess.is_in_exceptions(fixed_in_cand) or TokenPreProcess.is_in_eng_words(fixed_in_cand):
-        return fixed_in_cand
-
-    # Process token based on tag
     if tag in tokenization_functions:
-        return tokenization_functions[tag](fixed_in_cand)
+        # If MSSP or other similar tags, handle splitting and recursive tagging
+        token_parts = tokenization_functions[tag](fixed_in_cand)
+        detailed_tags = []
+        for part in token_parts:
+            if isinstance(part, str):
+                # If it's a string (like punctuation), just tag it as Punc or other relevant tag
+                detailed_tags.append((part, part, 'Punc'))
+            else:
+                # Otherwise, re-run the token_tagger on the inner part
+                detailed_tags.append(part)
+        return detailed_tags
+
     elif tag == "OOV":
         if fixed_in_cand and (fixed_in_cand[0] in string.punctuation or fixed_in_cand[-1] in string.punctuation):
             return tokenization_functions.get(tag, ParseTokens.tokenize_inner_punc)(fixed_in_cand)
         elif EmoticonParser.emoticon_count(fixed_in_cand) >= 2:
             return EmoticonParser.emoticon_tokenize(fixed_in_cand)
     return fixed_in_cand
+
+
 
 
 # Handles the tagging logic for tokens
@@ -118,6 +126,14 @@ class TSTokenizer:
         args = TSTokenizer.parse_arguments()
         num_workers = multiprocessing.cpu_count() - 1
 
+        def replace_blanks_in_tags(text):
+            # Replace blanks within SGML/HTML/XML-like tags
+            while re.search(r'(<[^<> ]*) ([^<>]*>)', text):
+                text = re.sub(r'(<[^<> ]*) ([^<>]*>)', r'\1\377\2', text)
+            text = text.replace(' ', '\376')
+            text = text.replace('\377', ' ')
+            return text
+
         if args.word:
             word = sys.argv[-1]
             print(process_tokens(args, word))
@@ -129,10 +145,10 @@ class TSTokenizer:
 
                 with ThreadPoolExecutor(max_workers=num_workers) as executor:
                     for line in lines:
-                        # xml_pattern = r'(<[^<> ]*) ([^<>]*>)'
-                        xml_pattern = r'(<[^<> ]*[^<>]*?>)|(<[^<> ]*)|(/[^<>]*>)'
+                        line = replace_blanks_in_tags(line)
+                        xml_pattern = r'<[^<>]+\s*[^<>]*?>'
 
-                        if re.search(xml_pattern, line):
+                        if re.search(xml_pattern, line) and ('"' in line or "'" in line) or "/" in line:
                             if args.output == "tagged":
                                 print(" ".join((line, "XML_Tag")).replace("\n", " "))
                             else:

@@ -14,7 +14,7 @@ REPLACEMENTS_CHAR = [
     ("uº", "uş"), ("ºu", "şu"), ("eº", "eş"), ("ºe", "şe"), ("ıº", "ış"), ("ºı", "şı"),
     ("iº", "iş"), ("ºi", "şi"), ("öº", "öş"), ("ºö", "şö"), ("oº", "oş"), ("ºo", "şo"),
     ("  ̊", "°"),
-    ("Ä°","İ"),
+    ("Ä°", "İ"),
     ("ý", "ı"),
     # Fix Unicoed Chars
     ("і", "i"),
@@ -46,7 +46,6 @@ REPLACEMENTS_CONTROL_CHAR = [
     ("\u200a", ""), ("\u200b", ""), ("\u200c", ""),
     ("\u200d", ""), ("\u200e", ""), ("\u200f", "")
  ]
-
 
 
 class CharFix:
@@ -81,7 +80,6 @@ class CharFix:
     @staticmethod
     def fix_quote(word: str) -> str:
         return CharFix.batch_replace(word, CharFix._compiled_pattern_quote, dict(REPLACEMENTS_QUOTE))
-
 
     @staticmethod
     def fix(word: str) -> str:

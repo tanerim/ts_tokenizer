@@ -80,3 +80,20 @@ Output (Tokenized or Tagged)
    - Text can be output as a simple tokenized list or with tags indicating token types
 
 
+Detailed Process Flow
+
+ Text File Input
+      ↓
+[ Line-by-Line Processing ]
+      ↓
+[ Split into Words/Tokens ]
+      ↓
+[ Token Tagging: Check Type ] → (XML Tag, Emoticon, Abbreviation, etc.)
+      ↓
+[ Token Fixing: CharFix, Punctuation Processing ]
+      ↓
+[ Tokenization Based on Tag ]
+      ↓
+[ Multiprocessing for Large Files ]
+      ↓
+[ Output: tokenized/tagged/lines ]

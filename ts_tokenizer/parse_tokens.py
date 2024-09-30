@@ -3,7 +3,7 @@ import string
 from .data import LocalData
 from .punctuation_process import PuncMatcher
 from .char_fix import CharFix
-from .token_processor import TokenPreProcess
+from .token_check import TokenCheck
 
 
 FMP_exception_list = ["(!)", "...", "!!!"]
@@ -81,44 +81,13 @@ class ParseTokens:
         return ''.join(word_list).strip()
 
     @classmethod
-    def tokenize_mssp(cls, word: str) -> str:
-        tokens = re.findall(r'\w+|[^\w\s]', word)
-
-        if not tokens:
-            return word
-
-        # First and last tokens
-        initial = tokens[0]
-        inner_token = tokens[1:-1]
-        inner_token = "".join(inner_token)
-        final = "".join(tokens[1:]) if len(tokens) > 1 else ""
-
-        print("Word:", word)
-        print("Initial:", initial)
-        print("Inner_Token:", inner_token)
-        print("Final:", final)
-
-        if TokenPreProcess.is_date_range(initial):
-            print("date range")
-        else:
-            print("olmadı")
-
-
-
-
-        # Check if the final token matches valid word lists
-        if (final and
-                (final in LocalData.word_list() or
-                 final in LocalData.eng_word_list() or
-                 final in LocalData.exception_words() or
-                 final in LocalData.abbrs())):
-            # Check if the inner token is a date range
-            if TokenPreProcess.is_date_range(inner_token):
-                return "\n".join([initial, inner_token, final]).strip()
-            return "\n".join([initial, final]).strip()
-
-        else:
-            return '\n'.join(tokens).strip()
+    def tokenize_mssp(cls, word: str) -> list:
+        # Strip first and last characters (they are punctuations) and recursively process the rest
+        if len(word) > 2 and word[0] in string.punctuation and word[-1] in string.punctuation:
+            inner_part = word[1:-1]  # The core token without the outer punctuations
+            # Return the split punctuation with recursive processing for the inner part
+            return [word[0]] + [TokenCheck.token_tagger(inner_part, output='all')] + [word[-1]]
+        return [word]  # Return the word as is if it doesn't match the MSSP pattern
 
     @classmethod
     def tokenize_fmp(cls, word: str) -> str:
