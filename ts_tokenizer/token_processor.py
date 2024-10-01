@@ -59,13 +59,15 @@ check_methods = [
             TokenPreProcess.is_one_char_fixable,
             # TokenPreProcess.is_num_char_sequence
         ]
+
+
 class TokenProcessor:
 
     def __init__(self):
         pass
 
     @staticmethod
-    def process_token(token):
+    def process_token(token: str) -> tuple:
         for check in check_methods:
             result = check(token)
             if result:

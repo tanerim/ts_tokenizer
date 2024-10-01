@@ -1,6 +1,6 @@
 import re
 import string
-from token_processor import TokenProcessor
+from .token_processor import TokenProcessor
 
 puncs = re.escape(string.punctuation)
 
@@ -24,7 +24,18 @@ def find_punctuation(word):
 def isp_recursive(token):
     part_one = token[0]
     part_two = token[1:]
-    print(part_one, TokenProcessor.process_token(part_two))
+    print(part_one, part_two)
 
 
-print(isp_recursive(".yeni"))
+def mssp_recursive(token):
+    tokens = []
+    initial_punc = token[0]
+    tokens.append((initial_punc, "Punc"))
+    final_punc = token[-1]
+    tokens.append((final_punc, "Punc"))
+    token = token[1:-1]
+    tokens.append((TokenProcessor.process_token(token)[0], TokenProcessor.process_token(token)[1]))
+    return tokens
+
+
+print(mssp_recursive(".yeni."))
