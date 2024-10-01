@@ -1,6 +1,6 @@
 import re
 import string
-from .token_processor import TokenProcessor
+from token_processor import TokenProcessor
 
 puncs = re.escape(string.punctuation)
 
