@@ -38,8 +38,10 @@ check_methods = [
 
             # Various Status for Punctuation
             TokenPreProcess.is_apostrophed,
+
+            # These need recursive handling
             TokenPreProcess.is_fsp,
-            TokenPreProcess.is_isp,  # This needs recursive handling
+            TokenPreProcess.is_isp,
             TokenPreProcess.is_mssp,
             TokenPreProcess.is_msp,
             TokenPreProcess.is_midp,
