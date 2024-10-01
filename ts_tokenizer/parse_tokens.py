@@ -3,7 +3,7 @@ import string
 from .data import LocalData
 from .punctuation_process import PuncMatcher
 from .char_fix import CharFix
-from .token_check import TokenCheck
+from .token_processor import TokenProcessor
 
 
 FMP_exception_list = ["(!)", "...", "!!!"]
@@ -86,7 +86,7 @@ class ParseTokens:
         if len(word) > 2 and word[0] in string.punctuation and word[-1] in string.punctuation:
             inner_part = word[1:-1]  # The core token without the outer punctuations
             # Return the split punctuation with recursive processing for the inner part
-            return [word[0]] + [TokenCheck.token_tagger(inner_part, output='all')] + [word[-1]]
+            return [word[0]] + [TokenProcessor.process_token(inner_part, output='all')] + [word[-1]]
         return [word]  # Return the word as is if it doesn't match the MSSP pattern
 
     @classmethod
