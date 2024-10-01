@@ -20,7 +20,6 @@ REGEX_PATTERNS = {
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
     "email_punc": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']+$',
-#    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
     "Non_Prefix_URL": fr'[-a-zA-Z0-9@:%._\\+~#=]{{1,256}}\.({LocalData.domains()})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
     "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)?',
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
@@ -300,7 +299,7 @@ class TokenPreProcess:
                     break
 
             if start_punc_count >= 2 and all(char not in puncs for char in word[start_punc_count:]):
-                return word, "Initial_Multiple_Punctuation"
+                return word, "IMP"
 
     @staticmethod
     @apply_charfix
@@ -314,7 +313,7 @@ class TokenPreProcess:
                     break
 
             if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
-                return word, "Final_Multiple_Punctuation"
+                return word, "FMP"
 
 
     @staticmethod

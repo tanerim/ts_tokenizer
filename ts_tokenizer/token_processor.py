@@ -1,14 +1,10 @@
+import string
+import re
 from ts_tokenizer.token_preprocess import TokenPreProcess
+from ts_tokenizer.tokenizer import process_tokens
+from ts_tokenizer.punctuation_process import PuncMatcher
 
-
-class TokenProcessor:
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def process_token(token):
-        check_methods = [
+check_methods = [
             # First Check for SGML tags |
             TokenPreProcess.is_xml,
 
@@ -28,6 +24,7 @@ class TokenProcessor:
             TokenPreProcess.is_email,
             TokenPreProcess.is_email_punc,
             TokenPreProcess.is_prefix_url,
+            TokenPreProcess.is_non_prefix_url,
             TokenPreProcess.is_multiple_smiley_in,
             TokenPreProcess.is_multiple_smiley,
             TokenPreProcess.is_date_range,
@@ -46,29 +43,37 @@ class TokenProcessor:
             # Various Status for Punctuation
             TokenPreProcess.is_apostrophed,
             TokenPreProcess.is_fsp,
-            TokenPreProcess.is_isp,
+            TokenPreProcess.is_isp,  # This needs recursive handling
             TokenPreProcess.is_mssp,
             TokenPreProcess.is_msp,
             TokenPreProcess.is_midp,
             TokenPreProcess.is_imp,
             TokenPreProcess.fmp,
 
-
+            # Raw Punctuation
+            TokenPreProcess.is_punc,
             TokenPreProcess.is_roman_number,
-
 
             TokenPreProcess.is_multiple_emoticon,
             TokenPreProcess.is_three_or_more,
             TokenPreProcess.is_inner_char,
-            TokenPreProcess.is_punc,
             TokenPreProcess.is_non_latin,
             TokenPreProcess.is_one_char_fixable,
             # TokenPreProcess.is_num_char_sequence
         ]
 
+class TokenProcessor:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def process_token(token):
         for check in check_methods:
             result = check(token)
             if result:
                 return result
 
         return token, "OOV"  # Default return if no checks match
+
+
