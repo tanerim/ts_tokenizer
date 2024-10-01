@@ -15,12 +15,13 @@ for p in extra_puncs:
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
-    "xml_tag": r'^<[^>]+?>\s*$',
+    "xml_tag": r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")+\s*/?>|</\w+\s*>",
     "hashtag": r'^#[^#]{1,143}$',
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
     "email_punc": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']+$',
-    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
+#    "Non_Prefix_URL": r'[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.(?:com|net|org|edu|gov|mil)(?:\.[a-zA-Z]{2,3})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
+    "Non_Prefix_URL": fr'[-a-zA-Z0-9@:%._\\+~#=]{{1,256}}\.({LocalData.domains()})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
     "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)?',
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
     "percentage_numbers_chars": r'%(\d+\D+)',
@@ -56,14 +57,15 @@ def punc_pos(word: str) -> list:
 def apply_charfix(func):
     def wrapper(word, *args, **kwargs):
         fixed_word = CharFix.fix(word)
-        return func(fixed_word, *args, **kwargs)  # Return the result
+        # Pass the fixed word, and also any additional args (like lower_word)
+        return func(fixed_word, *args, **kwargs)
     return wrapper
-
 
 def tr_lowercase(func):
     def wrapper(word, *args, **kwargs):
         turkish_lowercase = CharFix.tr_lowercase(word)
-        return func(turkish_lowercase, *args, **kwargs)  # Return the wrapped function
+        # Pass both original word and lowercase version to the function
+        return func(word, turkish_lowercase, *args, **kwargs)
     return wrapper
 
 
@@ -189,28 +191,30 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_in_lexicon(word: str) -> tuple:
-        if word in LocalData.word_list():
-            return word, "Valid_Word"
-
-    @staticmethod
-    @apply_charfix
-    def is_abbr(word: str) -> tuple:
-        return (word, "Abbr") if word in LocalData.abbrs() else None
+    def is_abbr(word: str, lower_word: str) -> tuple:
+        # Use lower_word for comparison
+        return (word, "Abbr") if lower_word in LocalData.abbrs() else None
 
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_in_exceptions(word: str) -> tuple:
-        if CharFix.tr_lowercase(word) in LocalData.exception_words():
+    def is_in_lexicon(word: str, lower_word: str) -> tuple:
+        if lower_word in LocalData.word_list():
+            return word, "Valid_Word"
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_in_exceptions(word: str, lower_word: str) -> tuple:
+        if lower_word in LocalData.exception_words():
             return word, "Exception"
 
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_in_eng_words(word):
+    def is_in_eng_words(word, lower_word: str):
         word_fixed = CharFix.fix(word)
-        if CharFix.tr_lowercase(word_fixed) in LocalData.eng_word_list():
+        if lower_word in LocalData.eng_word_list():
             return word_fixed, "English_Word"
         return None
 
@@ -245,7 +249,6 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
     def is_fsp(word: str) -> tuple:
         # Check if the word ends with exactly one punctuation mark and has no other punctuation marks
         if len(word) > 1 and word[-1] in puncs and all(char not in puncs for char in word[:-1]):
@@ -253,21 +256,18 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
     def is_isp(word: str) -> tuple:
         if len(word) > 1 and word[0] in puncs and all(char not in puncs for char in word[1:]):
             return word, "ISP"
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
     def is_mssp(word: str) -> tuple:
         if len(word) > 2 and word[0] in puncs and word[-1] in puncs and all(char not in puncs for char in word[1:-1]):
             return word, "MSSP"
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
     def is_msp(word: str) -> tuple:
         if len(word) > 2 and word not in exception_list:
             start_punc_count = 0
@@ -290,7 +290,35 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
+    def is_imp(word: str) -> tuple:
+        if len(word) > 1 and word not in exception_list:
+            start_punc_count = 0
+            for char in word:
+                if char in puncs:
+                    start_punc_count += 1
+                else:
+                    break
+
+            if start_punc_count >= 2 and all(char not in puncs for char in word[start_punc_count:]):
+                return word, "Initial_Multiple_Punctuation"
+
+    @staticmethod
+    @apply_charfix
+    def fmp(word: str) -> tuple:
+        if len(word) > 1 and word not in exception_list:
+            end_punc_count = 0
+            for char in word[::-1]:  # Traverse the word in reverse
+                if char in puncs:
+                    end_punc_count += 1
+                else:
+                    break
+
+            if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
+                return word, "Final_Multiple_Punctuation"
+
+
+    @staticmethod
+    @apply_charfix
     def is_midp(word: str) -> tuple:
         if len(word) > 2:
             if word[0] not in puncs and word[-1] not in puncs:
@@ -299,7 +327,6 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
     def is_apostrophed(word: str) -> tuple:
         result = check_regex(word, "apostrophed")
         if result:
@@ -314,12 +341,16 @@ class TokenPreProcess:
         return (word, "Punc") if all(char in puncs for char in word) else None
 
     @staticmethod
-    def is_underscored(word):
+    @apply_charfix
+    @tr_lowercase
+    def is_underscored(word: str, lower_word: str) -> tuple:
         if "_" in word and 1 <= word.count("_") <= 1 and word[0] != "_" and word[-1] != "_":
             parts = word.split("_")
+            # Check if it is alphanumeric underscored
             if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit():
                 return word, "Alphanumeric_Underscored"
-            elif all(CharFix.tr_lowercase(part) in LocalData.word_list() for part in parts):
+            # Check if all parts exist in the lexicon
+            elif all(lower_word in LocalData.word_list() for part in parts):
                 return word, "Underscored"
             return word, "OOV"
         return None

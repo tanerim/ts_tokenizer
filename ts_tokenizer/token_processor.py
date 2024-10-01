@@ -11,6 +11,7 @@ class TokenProcessor:
         check_methods = [
             # First Check for SGML tags |
             TokenPreProcess.is_xml,
+
             # Lexicon Based Tokens
             TokenPreProcess.is_in_lexicon,
             TokenPreProcess.is_abbr,
@@ -25,8 +26,8 @@ class TokenProcessor:
             TokenPreProcess.is_in_parenthesis,
             TokenPreProcess.is_underscored,
             TokenPreProcess.is_email,
+            TokenPreProcess.is_email_punc,
             TokenPreProcess.is_prefix_url,
-            TokenPreProcess.is_non_prefix_url,
             TokenPreProcess.is_multiple_smiley_in,
             TokenPreProcess.is_multiple_smiley,
             TokenPreProcess.is_date_range,
@@ -39,6 +40,8 @@ class TokenProcessor:
             TokenPreProcess.is_copyright,
             TokenPreProcess.is_registered,
             TokenPreProcess.is_currency,
+            TokenPreProcess.is_percentage_numbers_chars,
+            TokenPreProcess.is_percentage_numbers,
 
             # Various Status for Punctuation
             TokenPreProcess.is_apostrophed,
@@ -47,13 +50,11 @@ class TokenProcessor:
             TokenPreProcess.is_mssp,
             TokenPreProcess.is_msp,
             TokenPreProcess.is_midp,
+            TokenPreProcess.is_imp,
+            TokenPreProcess.fmp,
 
 
-
-            TokenPreProcess.is_percentage_numbers_chars,
-            TokenPreProcess.is_percentage_numbers,
             TokenPreProcess.is_roman_number,
-            TokenPreProcess.is_email_punc,
 
 
             TokenPreProcess.is_multiple_emoticon,
@@ -62,7 +63,7 @@ class TokenProcessor:
             TokenPreProcess.is_punc,
             TokenPreProcess.is_non_latin,
             TokenPreProcess.is_one_char_fixable,
-            #TokenPreProcess.is_num_char_sequence
+            # TokenPreProcess.is_num_char_sequence
         ]
 
         for check in check_methods:
