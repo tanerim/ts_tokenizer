@@ -1,4 +1,4 @@
-from ts_tokenizer.token_preprocess import TokenPreProcess
+from ts_tokenizer.token_handler import TokenPreProcess
 
 check_methods = [
             # First Check for SGML tags |

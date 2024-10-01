@@ -9,7 +9,7 @@ from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.transform import factor_cmap
 from bokeh.palettes import Category20
 from ts_tokenizer.data import LocalData
-from ts_tokenizer.token_preprocess import TokenPreProcess
+from ts_tokenizer.token_handler import TokenPreProcess
 from ts_tokenizer.token_check import TokenCheck
 
 valids = open(sys.argv[2]).read().splitlines()

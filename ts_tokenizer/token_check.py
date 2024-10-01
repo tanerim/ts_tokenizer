@@ -1,6 +1,6 @@
 import json
 import re
-from .token_preprocess import TokenPreProcess
+from .token_handler import TokenPreProcess
 from .char_fix import CharFix
 from .punctuation_process import PuncTagCheck, PuncMatcher
 

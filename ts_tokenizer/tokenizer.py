@@ -9,7 +9,7 @@ from ts_tokenizer.token_check import TokenCheck
 from ts_tokenizer.parse_tokens import ParseTokens
 from ts_tokenizer.emoticon_check import EmoticonParser
 from ts_tokenizer.punctuation_process import PuncTagCheck, PuncMatcher
-from ts_tokenizer.token_preprocess import TokenPreProcess
+from ts_tokenizer.token_handler import TokenPreProcess
 
 # Tokenization functions for different cases
 tokenization_functions = {

@@ -60,6 +60,7 @@ def apply_charfix(func):
         return func(fixed_word, *args, **kwargs)
     return wrapper
 
+
 def tr_lowercase(func):
     def wrapper(word, *args, **kwargs):
         turkish_lowercase = CharFix.tr_lowercase(word)
@@ -315,7 +316,6 @@ class TokenPreProcess:
             if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
                 return word, "FMP"
 
-
     @staticmethod
     @apply_charfix
     def is_midp(word: str) -> tuple:
@@ -352,7 +352,6 @@ class TokenPreProcess:
             elif all(lower_word in LocalData.word_list() for part in parts):
                 return word, "Underscored"
             return word, "OOV"
-        return None
 
     @staticmethod
     @apply_charfix
