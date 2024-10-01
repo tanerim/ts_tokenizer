@@ -67,10 +67,21 @@ class TokenProcessor:
         pass
 
     @staticmethod
-    def process_token(token: str) -> tuple:
+    def format_output(result, output_format):
+        if output_format == 'tuple':
+            return result
+        elif output_format == 'list':
+            return list(result)
+        elif output_format == 'string':
+            return f"{result[0]}\t{result[1]}"
+
+    @staticmethod
+    def process_token(token: str, output_format: str = 'tuple') -> tuple:
         for check in check_methods:
             result = check(token)
             if result:
-                return result
+                return TokenProcessor.format_output(result, output_format)
 
-        return token, "OOV"  # Default return if no checks match
+        # If no checks match, return "OOV" with the requested output format
+        oov_result = (token, "OOV")
+        return TokenProcessor.format_output(oov_result, output_format)
