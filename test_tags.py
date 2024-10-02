@@ -1,5 +1,4 @@
-from ts_tokenizer.token_handler import TokenPreProcess
-from ts_tokenizer.token_processor import TokenProcessor
+from ts_tokenizer.token_handler import TokenPreProcess, TokenProcessor
 import sys
 
 f = open(sys.argv[1]).read().split('\n')

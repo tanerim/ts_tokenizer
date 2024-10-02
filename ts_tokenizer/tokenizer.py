@@ -1,86 +1,13 @@
+"""
+ts-tokenizer
+tanersezerr@gmail.com
+"""
 import sys
 import argparse
-import string
-import re
 import multiprocessing
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
-from ts_tokenizer.token_check import TokenCheck
-from ts_tokenizer.parse_tokens import ParseTokens
-from ts_tokenizer.emoticon_check import EmoticonParser
-from ts_tokenizer.punctuation_process import PuncTagCheck, PuncMatcher
-from ts_tokenizer.token_handler import TokenPreProcess
-
-# Tokenization functions for different cases
-tokenization_functions = {
-    "XML_Tag": ParseTokens.tokenize_xml,
-    "Initial_Quote": ParseTokens.tokenize_initial_quote,
-    "ISP": ParseTokens.tokenize_isp,
-    "FSP": ParseTokens.tokenize_fsp,
-    "MSSP": ParseTokens.tokenize_mssp,
-    "MSP": ParseTokens.tokenize_msp,
-    "FMP": ParseTokens.tokenize_fmp,
-    "IMP": ParseTokens.tokenize_imp,
-    "In_Parenthesis": ParseTokens.tokenize_in_parenthesis,
-    "In_Quotes": ParseTokens.tokenize_in_quotes,
-    "Complex_Punc": ParseTokens.tokenize_complex_punc,
-    "Mis_Hyphenated": ParseTokens.tokenize_mishyphenated,
-    "Inner_Punc": ParseTokens.tokenize_inner_punc,
-    "Date": ParseTokens.tokenize_date,
-    "One_Char_Fixed": ParseTokens.tokenize_one_char_fixed
-}
-
-# Handles tokenized output and processes based on token tags
-
-
-def tokenized(in_word, fixed_in_cand, tag):
-    pre_token = tagged(in_word, fixed_in_cand, tag)
-    tag = pre_token[2]
-
-    if tag in tokenization_functions:
-        # If MSSP or other similar tags, handle splitting and recursive tagging
-        token_parts = tokenization_functions[tag](fixed_in_cand)
-        detailed_tags = []
-        for part in token_parts:
-            if isinstance(part, str):
-                # If it's a string (like punctuation), just tag it as Punc or other relevant tag
-                detailed_tags.append((part, part, 'Punc'))
-            else:
-                # Otherwise, re-run the token_tagger on the inner part
-                detailed_tags.append(part)
-        return detailed_tags
-
-    elif tag == "OOV":
-        if fixed_in_cand and (fixed_in_cand[0] in string.punctuation or fixed_in_cand[-1] in string.punctuation):
-            return tokenization_functions.get(tag, ParseTokens.tokenize_inner_punc)(fixed_in_cand)
-        elif EmoticonParser.emoticon_count(fixed_in_cand) >= 2:
-            return EmoticonParser.emoticon_tokenize(fixed_in_cand)
-    return fixed_in_cand
-
-
-
-
-# Handles the tagging logic for tokens
-def tagged(in_word, fixed_in_cand, tag):
-    if tag == "OOV" and "-" in in_word:
-        return in_word, fixed_in_cand, PuncMatcher.hyphen_in(fixed_in_cand)
-    if tag == "OOV" and any(char in string.punctuation for char in fixed_in_cand):
-        return in_word, fixed_in_cand, PuncTagCheck.punc_tag_check(fixed_in_cand)
-    elif tag == "OOV" and EmoticonParser.emoticon_count(fixed_in_cand) >= 2:
-        return in_word, fixed_in_cand, tag
-    return in_word, fixed_in_cand, tag
-
-
-# Main function to process a word and return tagged/tokenized result
-def process_tokens(args, word):
-    result = TokenCheck.token_tagger(word, "all")
-    in_word, fixed_in_cand, tag = result
-    if args.output == "tagged":
-        return tagged(in_word, fixed_in_cand, tag)
-    elif args.output == "tokenized":
-        return tokenized(in_word, fixed_in_cand, tag)
-    elif args.output == "lines":
-        return tokenized(in_word, fixed_in_cand, tag)
+from concurrent.futures import ProcessPoolExecutor
+from ts_tokenizer.token_handler import TokenProcessor
 
 
 # Tokenizer class definition
@@ -88,84 +15,74 @@ class TSTokenizer:
 
     @staticmethod
     def parse_arguments():
+        """
+        Parses command-line arguments.
+        """
         parser = argparse.ArgumentParser()
-        parser.add_argument("-o", "--output", choices=["tokenized", "lines", "tagged"], default="tokenized", help="Specify the output format")
+        parser.add_argument(
+            "-o", "--output", choices=["tokenized", "lines", "tagged", "tagged_lines"], default="tokenized",
+            help="Specify the output format"
+        )
         parser.add_argument("filename", help="Name of the file to process")
         parser.add_argument("-w", "--word", action="store_true", help="Enable CLI input mode")
         parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
         return parser.parse_args()
 
     @staticmethod
-    def tokenize(text, return_format='tokenized'):
+    def tokenize_line(line, return_format):
         """
-        Tokenizes the input text and returns it in the specified format.
+        Tokenizes a single line and returns it in the specified format.
         """
-        tokens = text.split()
-        processed_tokens = []
+        processed_tokens = [TokenProcessor.process_token(token) for token in line.split()]
 
-        for token in tokens:
-            tag_result = TokenCheck.token_tagger(token, output='all')
-            processed_tokens.append(tag_result)
-
-        # Return the processed tokens based on the return format
         if return_format == 'tokenized':
-            return ' '.join([token[1] for token in processed_tokens])  # tokenized result
-        elif return_format == 'lines':
-            return '\n'.join([token[1] for token in processed_tokens])  # returns each token on a new line
+            return '\n'.join([token[0] for token in processed_tokens])
         elif return_format == 'tagged':
-            return ' '.join([f"{token[0]}/{token[2]}" for token in processed_tokens])  # original/tagged-token
-        elif return_format == 'details':
-            return ' '.join([f"{token[0]}/{token[2]}" for token in processed_tokens])  # detils
-
-    @staticmethod
-    def process_line(line, return_format):
-        return TSTokenizer.tokenize(line, return_format)
+            return '\n'.join([f"{token[0]}\t{token[1]}" for token in processed_tokens])
+        elif return_format == 'lines':
+            return ' '.join([token[0] for token in processed_tokens])
+        elif return_format == 'tagged_lines':
+            return ' '.join([str((token[0], token[1])) for token in processed_tokens])
 
     @staticmethod
     def ts_tokenize():
+        """
+        Main function to tokenize text from a file or command-line input.
+        """
         args = TSTokenizer.parse_arguments()
-        num_workers = multiprocessing.cpu_count() - 1
-
-        def replace_blanks_in_tags(text):
-            # Replace blanks within SGML/HTML/XML-like tags
-            while re.search(r'(<[^<> ]*) ([^<>]*>)', text):
-                text = re.sub(r'(<[^<> ]*) ([^<>]*>)', r'\1\377\2', text)
-            text = text.replace(' ', '\376')
-            text = text.replace('\377', ' ')
-            return text
+        num_workers = max(1, multiprocessing.cpu_count() - 1)  # Ensure at least 1 worker
 
         if args.word:
+            # Process word input from the command-line argument
             word = sys.argv[-1]
-            print(process_tokens(args, word))
+            print(TSTokenizer.tokenize_line(word, args.output))
         else:
+            # Process file input
             with open(args.filename, encoding='utf-8') as in_file:
-                lines = in_file.readlines()
+                if args.verbose:
+                    total_lines = sum(1 for _ in in_file)
+                    in_file.seek(0)
+                    pbar = tqdm(total=total_lines, desc="Processing File")
+                else:
+                    pbar = None
 
-                pbar = tqdm(total=len(lines), desc="Processing File") if args.verbose else None
+                with ProcessPoolExecutor(max_workers=num_workers) as executor:
+                    futures = []
+                    for line in in_file:
+                        line = line.strip()
+                        futures.append(executor.submit(TSTokenizer.tokenize_line, line, args.output))
 
-                with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                    for line in lines:
-                        line = replace_blanks_in_tags(line)
-                        xml_pattern = r'<[^<>]+\s*[^<>]*?>'
+                        if len(futures) >= num_workers:
+                            for future in futures:
+                                print(future.result())
+                                if pbar:
+                                    pbar.update(1)
+                            futures.clear()
 
-                        if re.search(xml_pattern, line) and ('"' in line or "'" in line) or "/" in line:
-                            if args.output == "tagged":
-                                print(" ".join((line, "XML_Tag")).replace("\n", " "))
-                            else:
-                                print(line)
-
-                        else:
-                            words = line.split()
-                            results = list(executor.map(lambda w: process_tokens(args, w), words))
-
-                            for token in results:
-                                if args.output == "tagged":
-                                    print("\t".join(token))
-                                else:
-                                    print(token)
-
-                            if args.verbose:
-                                pbar.update(1)
+                    for future in futures:
+                        print(future.result())
+                        if pbar:
+                            pbar.update(1)
 
                 if pbar:
                     pbar.close()

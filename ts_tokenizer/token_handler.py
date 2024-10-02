@@ -34,7 +34,7 @@ REGEX_PATTERNS = {
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    "apostrophed": r"\b\w+'[a-zA-Z]+\b",
+    "apostrophed": r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b",
     "currency": rf"(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])"
 }
 
@@ -318,20 +318,18 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
+    def is_apostrophed(word: str) -> tuple:
+        result = check_regex(word, "apostrophed")
+        if result:
+            return word, "Apostrophed"
+
+    @staticmethod
+    @apply_charfix
     def is_midp(word: str) -> tuple:
         if len(word) > 2:
             if word[0] not in puncs and word[-1] not in puncs:
                 if any(char in puncs for char in word[1:-1]):
                     return word, "MIDP"
-
-    @staticmethod
-    @apply_charfix
-    def is_apostrophed(word: str) -> tuple:
-        result = check_regex(word, "apostrophed")
-        if result:
-            punc_positions = punc_pos(word)
-            if punc_count(word) == 1 and punc_positions and "'" in word:
-                return word, "Apostrophed"
 
     @staticmethod
     def is_punc(word):
@@ -344,12 +342,12 @@ class TokenPreProcess:
     @tr_lowercase
     def is_underscored(word: str, lower_word: str) -> tuple:
         if "_" in word and 1 <= word.count("_") <= 1 and word[0] != "_" and word[-1] != "_":
-            parts = word.split("_")
+            parts = lower_word.split("_")
             # Check if it is alphanumeric underscored
-            if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit():
+            if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit() or parts[0].isdigit() and parts[1].isalpha():
                 return word, "Alphanumeric_Underscored"
             # Check if all parts exist in the lexicon
-            elif all(lower_word in LocalData.word_list() for part in parts):
+            elif all(part in LocalData.word_list() for part in parts):
                 return word, "Underscored"
             return word, "OOV"
 
@@ -396,6 +394,7 @@ class TokenPreProcess:
                     return fixed_word, "One_Char_Fixed"
         return None
 
+
 check_methods = [
         # First Check for SGML tags |
         TokenPreProcess.is_xml,
@@ -423,6 +422,9 @@ check_methods = [
         TokenPreProcess.is_date,
         TokenPreProcess.is_hour,
 
+        # Various Status for Punctuation
+        TokenPreProcess.is_apostrophed,
+
         # Basic Regex Tokens
         TokenPreProcess.is_mention,
         TokenPreProcess.is_hashtag,
@@ -432,8 +434,6 @@ check_methods = [
         TokenPreProcess.is_percentage_numbers_chars,
         TokenPreProcess.is_percentage_numbers,
 
-        # Various Status for Punctuation
-        TokenPreProcess.is_apostrophed,
 
         # These need recursive handling
         TokenPreProcess.is_fsp,
@@ -455,6 +455,7 @@ check_methods = [
         TokenPreProcess.is_one_char_fixable,
         # TokenPreProcess.is_num_char_sequence
     ]
+
 
 class TokenProcessor:
 

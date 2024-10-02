@@ -1,5 +1,5 @@
 """
-Tokenizer for Turkish text - Taner Sezer
+ts-tokenizer
 tanersezerr@gmail.com
 """
 import sys
