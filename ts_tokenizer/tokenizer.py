@@ -30,30 +30,29 @@ class TSTokenizer:
 
     @staticmethod
     def tokenize_line(line, return_format):
-        """
-        Tokenizes a single line and returns it in the specified format.
-        """
         processed_tokens = [TokenProcessor.process_token(token) for token in line.split()]
-
+        flat_tokens = []
+        for token_list in processed_tokens:
+            if isinstance(token_list, list):
+                flat_tokens.extend(token_list)
+            else:
+                flat_tokens.append(token_list)
+        # Handle output formats
         if return_format == 'tokenized':
-            return '\n'.join([token[0] for token in processed_tokens])
+            return '\n'.join([token[0] for token in flat_tokens])
         elif return_format == 'tagged':
-            return '\n'.join([f"{token[0]}\t{token[1]}" for token in processed_tokens])
+            return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
         elif return_format == 'lines':
-            return ' '.join([token[0] for token in processed_tokens])
+            return [token[0] for token in flat_tokens]
         elif return_format == 'tagged_lines':
-            return ' '.join([str((token[0], token[1])) for token in processed_tokens])
+            return ' '.join([f"({token[0]}\t{token[1]})" for token in flat_tokens])
 
     @staticmethod
     def ts_tokenize():
-        """
-        Main function to tokenize text from a file or command-line input.
-        """
         args = TSTokenizer.parse_arguments()
-        num_workers = max(1, multiprocessing.cpu_count() - 1)  # Ensure at least 1 worker
+        num_workers = max(1, multiprocessing.cpu_count() - 1)
 
         if args.word:
-            # Process word input from the command-line argument
             word = sys.argv[-1]
             print(TSTokenizer.tokenize_line(word, args.output))
         else:
@@ -67,22 +66,27 @@ class TSTokenizer:
                     pbar = None
 
                 with ProcessPoolExecutor(max_workers=num_workers) as executor:
-                    futures = []
+                    batch_size = 100
+                    batch = []
+
                     for line in in_file:
                         line = line.strip()
-                        futures.append(executor.submit(TSTokenizer.tokenize_line, line, args.output))
+                        batch.append(line)
 
-                        if len(futures) >= num_workers:
-                            for future in futures:
-                                print(future.result())
-                                if pbar:
-                                    pbar.update(1)
-                            futures.clear()
+                        if len(batch) >= batch_size:
+                            future = executor.submit(TSTokenizer.tokenize_line, "\n".join(batch), args.output)
+                            print(future.result())
+                            batch = []  # Clear batch after processing
 
-                    for future in futures:
+                        if pbar:
+                            pbar.update(batch_size)
+
+                    # Process remaining lines in the last batch
+                    if batch:
+                        future = executor.submit(TSTokenizer.tokenize_line, "\n".join(batch), args.output)
                         print(future.result())
                         if pbar:
-                            pbar.update(1)
+                            pbar.update(len(batch))
 
                 if pbar:
                     pbar.close()

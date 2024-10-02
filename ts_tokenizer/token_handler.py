@@ -99,17 +99,29 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_in_quotes(word: str) -> tuple:
+    def is_in_quotes(word: str) -> list:
         p_count = PuncMatcher.punc_count(word)
-        result = check_regex(word, "in_quotes") if p_count <= 2 else None
-        return (result, "In_Quotes") if result else None
+        if p_count == 2 and (word[0] in ['"', "'"]) and (word[-1] in ['"', "'"]):
+            initial_quote = word[0]
+            final_quote = word[-1]
+            content = word[1:-1]
+            processed_content = TokenProcessor.process_token(content)
+            if isinstance(processed_content, tuple):
+                processed_content = [processed_content]
+            return [(initial_quote, "Punc")] + processed_content + [(final_quote, "Punc")]
 
     @staticmethod
     @apply_charfix
-    def is_in_parenthesis(word: str) -> tuple:
+    def is_in_parenthesis(word: str) -> list:
         p_count = PuncMatcher.punc_count(word)
-        result = check_regex(word, "in_parenthesis") if p_count <= 2 else None
-        return (result, "In_Parenthesis") if result else None
+        if p_count == 2 and (word[0] in ['(', '[', '{']) and (word[-1] in [')', ']', '}']):
+            initial_parenthesis = word[0]
+            final_parenthesis = word[-1]
+            content = word[1:-1]
+            processed_content = TokenProcessor.process_token(content)
+            if isinstance(processed_content, tuple):
+                processed_content = [processed_content]
+            return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
 
     @staticmethod
     def is_date_range(word: str) -> tuple:
@@ -249,72 +261,111 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_fsp(word: str) -> tuple:
-        # Check if the word ends with exactly one punctuation mark and has no other punctuation marks
+    @tr_lowercase
+    def is_fsp(word: str, lower_word: str) -> list:
         if len(word) > 1 and word[-1] in puncs and all(char not in puncs for char in word[:-1]):
-            return word, "FSP"
+            final_punc = word[-1]
+            remaining_word = word[:-1]
+            processed_word = TokenProcessor.process_token(remaining_word)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+            return processed_word + [(final_punc, "Punc")]
 
     @staticmethod
     @apply_charfix
-    def is_isp(word: str) -> tuple:
+    @tr_lowercase
+    def is_isp(word: str, lower_word: str) -> list:
         if len(word) > 1 and word[0] in puncs and all(char not in puncs for char in word[1:]):
-            return word, "ISP"
+            initial_punc = word[0]
+            remaining_word = word[1:]
+            processed_word = TokenProcessor.process_token(remaining_word)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+
+            return [(initial_punc, "Punc")] + processed_word
 
     @staticmethod
     @apply_charfix
-    def is_mssp(word: str) -> tuple:
+    @tr_lowercase
+    def is_mssp(word: str, lower_word: str) -> list:
         if len(word) > 2 and word[0] in puncs and word[-1] in puncs and all(char not in puncs for char in word[1:-1]):
-            return word, "MSSP"
+            initial_punc = TokenProcessor.process_token(word[0])
+            final_punc = TokenProcessor.process_token(word[-1])
+            remaining_word = lower_word[1:-1]
+            processed_word = TokenProcessor.process_token(remaining_word)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+            return [initial_punc] + processed_word + [final_punc]
 
     @staticmethod
     @apply_charfix
-    def is_msp(word: str) -> tuple:
+    @tr_lowercase
+    def is_msp(word: str, lower_word: str) -> list:
         if len(word) > 2 and word not in exception_list:
+            start_punc_count = 0
+            end_punc_count = 0
+            # Count starting punctuation
+            for char in word:
+                if char in puncs:
+                    start_punc_count += 1
+                else:
+                    break
+            # Count ending punctuation
+            for char in word[::-1]:
+                if char in puncs:
+                    end_punc_count += 1
+                else:
+                    break
+            # Ensure word has both starting and ending punctuations and valid middle part
+            if start_punc_count >= 1 and end_punc_count >= 1 and all(
+                    char not in puncs for char in word[start_punc_count: -end_punc_count]):
+                initial_punc = word[:start_punc_count]
+                final_punc = word[-end_punc_count:]
+                remaining_word = lower_word[start_punc_count: -end_punc_count]
+                if remaining_word == '':
+                    return [(initial_punc, "Punc"), (final_punc, "Punc")]
+                processed_word = TokenProcessor.process_token(remaining_word)
+                if isinstance(processed_word, tuple):
+                    processed_word = [processed_word]
+                return [(initial_punc, "Punc")] + processed_word + [(final_punc, "Punc")]
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_imp(word: str, lower_word: str) -> list:
+        if len(word) > 1 and word not in exception_list:
             start_punc_count = 0
             for char in word:
                 if char in puncs:
                     start_punc_count += 1
                 else:
                     break
+            if start_punc_count >= 2 and all(char not in puncs for char in word[start_punc_count:]):
+                initial_punc = [(word[:start_punc_count], "Punc")]
+                remaining_word = lower_word[start_punc_count:]
+                processed_word = TokenProcessor.process_token(remaining_word)
+                if isinstance(processed_word, tuple):
+                    processed_word = [processed_word]
+                return initial_punc + processed_word
 
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_fmp(word: str, lower_word: str) -> list:
+        if len(word) > 1 and word not in exception_list:
             end_punc_count = 0
             for char in word[::-1]:
                 if char in puncs:
                     end_punc_count += 1
                 else:
                     break
-
-            if start_punc_count >= 1 and end_punc_count >= 1 and all(
-                    char not in puncs for char in word[start_punc_count: -end_punc_count]):
-                return word, "MSP"
-
-    @staticmethod
-    @apply_charfix
-    def is_imp(word: str) -> tuple:
-        if len(word) > 1 and word not in exception_list:
-            start_punc_count = 0
-            for char in word:
-                if char in puncs:
-                    start_punc_count += 1
-                else:
-                    break
-
-            if start_punc_count >= 2 and all(char not in puncs for char in word[start_punc_count:]):
-                return word, "IMP"
-
-    @staticmethod
-    @apply_charfix
-    def fmp(word: str) -> tuple:
-        if len(word) > 1 and word not in exception_list:
-            end_punc_count = 0
-            for char in word[::-1]:  # Traverse the word in reverse
-                if char in puncs:
-                    end_punc_count += 1
-                else:
-                    break
-
             if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
-                return word, "FMP"
+                final_punc = word[-end_punc_count:]
+                remaining_word = lower_word[:-end_punc_count]
+                processed_word = TokenProcessor.process_token(remaining_word)
+                if isinstance(processed_word, tuple):
+                    processed_word = [processed_word]
+                return processed_word + [(final_punc, "Punc")]
 
     @staticmethod
     @apply_charfix
@@ -325,11 +376,22 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_midp(word: str) -> tuple:
+    def is_midp(word: str) -> list:
         if len(word) > 2:
             if word[0] not in puncs and word[-1] not in puncs:
-                if any(char in puncs for char in word[1:-1]):
-                    return word, "MIDP"
+                mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
+                if len(mid_punc_pos) == 1:
+                    mid_punc_idx = mid_punc_pos[0]
+                    initial_part = word[:mid_punc_idx]
+                    mid_punc = word[mid_punc_idx]
+                    remaining_part = word[mid_punc_idx + 1:]
+                    processed_initial = TokenProcessor.process_token(initial_part)
+                    processed_remaining = TokenProcessor.process_token(remaining_part)
+                    if isinstance(processed_initial, tuple):
+                        processed_initial = [processed_initial]
+                    if isinstance(processed_remaining, tuple):
+                        processed_remaining = [processed_remaining]
+                    return processed_initial + [(mid_punc, "Punc")] + processed_remaining
 
     @staticmethod
     def is_punc(word):
@@ -442,7 +504,7 @@ check_methods = [
         TokenPreProcess.is_msp,
         TokenPreProcess.is_midp,
         TokenPreProcess.is_imp,
-        TokenPreProcess.fmp,
+        TokenPreProcess.is_fmp,
 
         # Raw Punctuation
         TokenPreProcess.is_punc,

@@ -1,14 +1,4 @@
-from ts_tokenizer.token_handler import TokenPreProcess, TokenProcessor
-import sys
+from ts_tokenizer.char_fix import CharFix
 
-f = open(sys.argv[1]).read().split('\n')
 
-tokens = []
-for line in f:
-    if TokenPreProcess.is_xml(line):
-        print("\t".join(TokenPreProcess.is_xml(line)))
-        continue
-    for word in line.split(' '):
-        token = TokenProcessor.process_token(word)
-        # print(f"{token[0]}\t{token[1]}")
-        print("\t".join(token))
+print(CharFix.fix("bÃ1/4tÃ1/4n"))
