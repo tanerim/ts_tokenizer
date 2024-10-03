@@ -24,10 +24,10 @@ REGEX_PATTERNS = {
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
     "percentage_numbers_chars": r'%(\d+\D+)',
     "percentage_numbers": r'%(\d+)$',
-    "in_quotes": r'"[^"]+"|\'[^\']+\'',
     "single_hyphen": r'^(?!-)[\w]+-[\w]+(?!-)$',
     "date_range": r'^[\(\[]\d{4}[\-–]\d{4}[\)\]]$',
-    "in_parenthesis": r'^[\(\[\{].*[\)\]\}]$',
+    "in_parenthesis": '^[\(\[\{][^()\[\]{}]*[\)\]\}]$',
+    "in_quotes": r'^[\'"][^\'"]*[\'"]$',
     "copyright": r'(?:^©[a-zA-Z]+$)|(?:^[a-zA-Z]+©$)',
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
@@ -99,21 +99,21 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_in_quotes(word: str) -> list:
-        p_count = PuncMatcher.punc_count(word)
-        if p_count == 2 and (word[0] in ['"', "'"]) and (word[-1] in ['"', "'"]):
-            initial_quote = word[0]
-            final_quote = word[-1]
+        result = check_regex(word, "in_quotes")
+        if result:
+            initial_parenthesis = word[0]
+            final_parenthesis = word[-1]
             content = word[1:-1]
             processed_content = TokenProcessor.process_token(content)
             if isinstance(processed_content, tuple):
                 processed_content = [processed_content]
-            return [(initial_quote, "Punc")] + processed_content + [(final_quote, "Punc")]
+            return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
 
     @staticmethod
     @apply_charfix
     def is_in_parenthesis(word: str) -> list:
-        p_count = PuncMatcher.punc_count(word)
-        if p_count == 2 and (word[0] in ['(', '[', '{']) and (word[-1] in [')', ']', '}']):
+        result = check_regex(word, "in_parenthesis")
+        if result:
             initial_parenthesis = word[0]
             final_parenthesis = word[-1]
             content = word[1:-1]
@@ -541,7 +541,7 @@ check_methods = [
         TokenPreProcess.is_currency,
         TokenPreProcess.is_percentage_numbers_chars,
         TokenPreProcess.is_percentage_numbers,
-        TokenPreProcess.is_multiple_smiley_in,
+        #TokenPreProcess.is_multiple_smiley_in,
         TokenPreProcess.is_multiple_smiley,
 
 
@@ -560,7 +560,7 @@ check_methods = [
 
         TokenPreProcess.is_multiple_emoticon,
         TokenPreProcess.is_three_or_more,
-        TokenPreProcess.is_inner_char,
+        #TokenPreProcess.is_inner_char,
         TokenPreProcess.is_non_latin,
         TokenPreProcess.is_one_char_fixable,
         # TokenPreProcess.is_num_char_sequence
