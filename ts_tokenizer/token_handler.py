@@ -204,7 +204,6 @@ class TokenPreProcess:
 
             return result_list
 
-        return None
 
     @staticmethod
     def is_email(word: str) -> tuple:
@@ -517,16 +516,16 @@ check_methods = [
         TokenPreProcess.is_emoticon,
         TokenPreProcess.is_number,
 
+
         # Specific Cases for Punctuation Use
-        TokenPreProcess.is_underscored,
         TokenPreProcess.is_in_quotes,
         TokenPreProcess.is_in_parenthesis,
+        TokenPreProcess.is_underscored,
+
         TokenPreProcess.is_email,
         TokenPreProcess.is_email_punc,
         TokenPreProcess.is_prefix_url,
         TokenPreProcess.is_non_prefix_url,
-        TokenPreProcess.is_multiple_smiley_in,
-        TokenPreProcess.is_multiple_smiley,
         TokenPreProcess.is_date_range,
         TokenPreProcess.is_date,
         TokenPreProcess.is_hour,
@@ -542,6 +541,8 @@ check_methods = [
         TokenPreProcess.is_currency,
         TokenPreProcess.is_percentage_numbers_chars,
         TokenPreProcess.is_percentage_numbers,
+        TokenPreProcess.is_multiple_smiley_in,
+        TokenPreProcess.is_multiple_smiley,
 
 
         # These need recursive handling
