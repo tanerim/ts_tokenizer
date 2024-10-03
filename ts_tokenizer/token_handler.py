@@ -9,9 +9,8 @@ from .emoticon_check import EmoticonParser
 from .punctuation_process import PuncMatcher
 
 puncs = re.escape(string.punctuation)
-extra_puncs = ["–", "'", "°", "—"]
-for p in extra_puncs:
-    puncs += p
+extra_puncs = ["–", "'", "°", "—", "(", ")"]
+puncs += re.escape(''.join(extra_puncs))
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
@@ -19,9 +18,9 @@ REGEX_PATTERNS = {
     "hashtag": r'^#[^#]{1,143}$',
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
-    "email_punc": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']+$',
-    "Non_Prefix_URL": fr'[-a-zA-Z0-9@:%._\\+~#=]{{1,256}}\.({LocalData.domains()})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
-    "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?:/\S*)?',
+    "email_punc": r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b',
+    "Non_Prefix_URL": fr'[-a-zA-Z0-9:%._\\+~#=]{{1,256}}\.({LocalData.domains()})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
+    "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?![@])(?:/\S*)?',
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
     "percentage_numbers_chars": r'%(\d+\D+)',
     "percentage_numbers": r'%(\d+)$',
@@ -157,18 +156,66 @@ class TokenPreProcess:
         return (result, "Roman_Number") if result else None
 
     @staticmethod
-    def is_email_punc(word: str) -> tuple:
+    def is_email_punc(word: str) -> list:
+        # Check if the word matches the email with punctuation pattern
         result = check_regex(word, "email_punc")
-        return (result, "Email_Punc") if result else None
+
+        if result:
+            # Initialize variables to count starting and ending punctuation
+            start_punc_count = 0
+            end_punc_count = 0
+
+            # Count starting punctuation
+            for char in word:
+                if char in puncs:
+                    start_punc_count += 1
+                else:
+                    break
+
+            # Count ending punctuation
+            for char in word[::-1]:
+                if char in puncs:
+                    end_punc_count += 1
+                else:
+                    break
+
+            # Handle case when there's no end punctuation or start punctuation
+            initial_punc = word[:start_punc_count] if start_punc_count > 0 else ""
+            final_punc = word[-end_punc_count:] if end_punc_count > 0 else ""
+
+            # Extract email part
+            if start_punc_count > 0 and end_punc_count > 0:
+                email_part = word[start_punc_count: -end_punc_count]
+            elif start_punc_count > 0:
+                email_part = word[start_punc_count:]
+            elif end_punc_count > 0:
+                email_part = word[:-end_punc_count]
+            else:
+                email_part = word
+
+            # Prepare output
+            result_list = []
+            if initial_punc:
+                result_list.append((initial_punc, "Punc"))
+            if email_part:
+                result_list.append((email_part, "Email"))
+            if final_punc:
+                result_list.append((final_punc, "Punc"))
+
+            return result_list
+
+        return None
 
     @staticmethod
     def is_email(word: str) -> tuple:
         result = check_regex(word, "email")
-        return (result, "Email") if result else None
+        if result and any(dne in word for dne in LocalData.domains()) and word[
+            0] not in puncs and word[-1] not in puncs:
+            return (result, "Email")
 
     @staticmethod
     def is_prefix_url(word: str) -> tuple:
-        if any(dne in word for dne in LocalData.domains()):
+        if any(dne in word for dne in LocalData.domains()) and "@" not in word:
             result = check_regex(word, "prefix_url")
             return (result, "Prefix_URL") if result else None
 
@@ -471,9 +518,9 @@ check_methods = [
         TokenPreProcess.is_number,
 
         # Specific Cases for Punctuation Use
+        TokenPreProcess.is_underscored,
         TokenPreProcess.is_in_quotes,
         TokenPreProcess.is_in_parenthesis,
-        TokenPreProcess.is_underscored,
         TokenPreProcess.is_email,
         TokenPreProcess.is_email_punc,
         TokenPreProcess.is_prefix_url,
