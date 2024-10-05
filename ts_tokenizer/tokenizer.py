@@ -7,7 +7,7 @@ import argparse
 import multiprocessing
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
-from ts_tokenizer.token_handler import TokenProcessor
+from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
 
 
 # Tokenizer class definition
@@ -30,6 +30,19 @@ class TSTokenizer:
 
     @staticmethod
     def tokenize_line(line, return_format):
+        # Debugging: print the line being processed
+        # print(f"Processing line: {line}")
+
+        # Check if the line is an XML tag
+        if TokenPreProcess.is_xml(line):
+            # print("Identified as XML: ", line)  # Debugging XML detection
+            if return_format == 'tagged':
+                return "\t".join(TokenPreProcess.is_xml(line))
+#                return f"{line}\tXML_Tag"  # Return in a consistent format
+            else:
+                return line  # For other formats, return as it is
+
+        # Proceed with tokenization for non-XML lines
         processed_tokens = [TokenProcessor.process_token(token) for token in line.split()]
         flat_tokens = []
         for token_list in processed_tokens:
@@ -37,6 +50,7 @@ class TSTokenizer:
                 flat_tokens.extend(token_list)
             else:
                 flat_tokens.append(token_list)
+
         # Handle output formats
         if return_format == 'tokenized':
             return '\n'.join([token[0] for token in flat_tokens])
@@ -71,11 +85,13 @@ class TSTokenizer:
 
                     for line in in_file:
                         line = line.strip()
-                        batch.append(line)
+                        if line:  # Only process non-empty lines
+                            batch.append(line)
 
                         if len(batch) >= batch_size:
-                            future = executor.submit(TSTokenizer.tokenize_line, "\n".join(batch), args.output)
-                            print(future.result())
+                            futures = [executor.submit(TSTokenizer.tokenize_line, line, args.output) for line in batch]
+                            for future in futures:
+                                print(future.result())
                             batch = []  # Clear batch after processing
 
                         if pbar:
@@ -83,8 +99,9 @@ class TSTokenizer:
 
                     # Process remaining lines in the last batch
                     if batch:
-                        future = executor.submit(TSTokenizer.tokenize_line, "\n".join(batch), args.output)
-                        print(future.result())
+                        futures = [executor.submit(TSTokenizer.tokenize_line, line, args.output) for line in batch]
+                        for future in futures:
+                            print(future.result())
                         if pbar:
                             pbar.update(len(batch))
 

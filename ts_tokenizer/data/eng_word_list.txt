@@ -32833,6 +32833,7 @@ capuls
 caput
 capybara
 capybaras
+car
 carabao
 carabaos
 carabid

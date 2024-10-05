@@ -11,6 +11,7 @@ from .punctuation_process import PuncMatcher
 puncs = re.escape(string.punctuation)
 extra_puncs = ["–", "'", "°", "—", "(", ")"]
 puncs += re.escape(''.join(extra_puncs))
+domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])  # Escaping only necessary parts
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
@@ -19,16 +20,15 @@ REGEX_PATTERNS = {
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
     "email_punc": r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b',
-    "Non_Prefix_URL": fr'[-a-zA-Z0-9:%._\\+~#=]{{1,256}}\.({LocalData.domains()})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
-    "prefix_url": r'(?:(?:http|https|ftp)://)?(?:www\.)?[A-Za-z0-9\-_]+(?:\.[A-Za-z0-9\-_]+)+(?![@])(?:/\S*)?',
+    "url_pattern": fr'(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}(?:{domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
     "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
     "percentage_numbers_chars": r'%(\d+\D+)',
-    "percentage_numbers": r'%(\d+)$',
+    "percentage_numbers": r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)',
     "single_hyphen": r'^(?!-)[\w]+-[\w]+(?!-)$',
     "date_range": r'^[\(\[]\d{4}[\-–]\d{4}[\)\]]$',
     "in_parenthesis": '^[\(\[\{][^()\[\]{}]*[\)\]\}]$',
     "in_quotes": r'^[\'"][^\'"]*[\'"]$',
-    "copyright": r'(?:^©[a-zA-Z]+$)|(?:^[a-zA-Z]+©$)',
+    "copyright": r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)',
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
     "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "num_char_sequence": r'\d+[\w\s]*',
@@ -204,25 +204,20 @@ class TokenPreProcess:
 
             return result_list
 
-
     @staticmethod
     def is_email(word: str) -> tuple:
         result = check_regex(word, "email")
-        if result and any(dne in word for dne in LocalData.domains()) and word[
-            0] not in puncs and word[-1] not in puncs:
+        if result and any(dne in word for dne in LocalData.domains()) and word[0] not in puncs and word[-1] not in puncs:
             return (result, "Email")
 
     @staticmethod
-    def is_prefix_url(word: str) -> tuple:
-        if any(dne in word for dne in LocalData.domains()) and "@" not in word:
-            result = check_regex(word, "prefix_url")
-            return (result, "Prefix_URL") if result else None
-
-    @staticmethod
-    def is_non_prefix_url(word: str) -> tuple:
-        if any(dne in word for dne in LocalData.domains()):
-            result = check_regex(word, "Non_Prefix_URL")
-            return (result, "Non_Prefix_URL") if result else None
+    def is_url(word: str) -> tuple:
+        if any(dne in word for dne in LocalData.domains()) and "@" not in word and word[0] not in puncs and word[-1] not in [")", "(", "[", "]"]:
+            result = check_regex(word, "url_pattern")
+            if "'" in word:
+                return (result, "URL_Suffix")
+            else:
+                return (result, "URL") if result else None
 
     @staticmethod
     def is_copyright(word: str) -> tuple:
@@ -248,10 +243,9 @@ class TokenPreProcess:
     # Lexicon Based Tokens
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_abbr(word: str, lower_word: str) -> tuple:
+    def is_abbr(word: str) -> tuple:
         # Use lower_word for comparison
-        return (word, "Abbr") if lower_word in LocalData.abbrs() else None
+        return (word, "Abbr") if word in LocalData.abbrs() else None
 
     @staticmethod
     @apply_charfix
@@ -264,8 +258,7 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_in_exceptions(word: str, lower_word: str) -> tuple:
-        if lower_word in LocalData.exception_words():
-            return word, "Exception"
+        return (word, "Exception") if lower_word in LocalData.exception_words() else None
 
     @staticmethod
     @apply_charfix
@@ -407,10 +400,13 @@ class TokenPreProcess:
                     break
             if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
                 final_punc = word[-end_punc_count:]
-                remaining_word = lower_word[:-end_punc_count]
-                processed_word = TokenProcessor.process_token(remaining_word)
+                remaining_word = word[:-end_punc_count]
+                lower_remaining_word = lower_word[:-end_punc_count]
+                processed_word = TokenProcessor.process_token(lower_remaining_word)
                 if isinstance(processed_word, tuple):
                     processed_word = [processed_word]
+                if processed_word:
+                    processed_word[0] = (remaining_word, processed_word[0][1])
                 return processed_word + [(final_punc, "Punc")]
 
     @staticmethod
@@ -469,17 +465,6 @@ class TokenPreProcess:
         return (result, "Three_Or_More") if result else None
 
     @staticmethod
-    def is_inner_char(word):
-        pattern = r'\([a-zA-ZğüşıöçĞÜŞİÖÇ]\)'
-        if "(" in word and ")" in word:
-            if re.search(pattern, word):
-                candidate = re.split(pattern, word)
-                candidate = "".join(candidate)
-                if candidate in LocalData.word_list():
-                    return word, "Inner_Char"
-        return None
-
-    @staticmethod
     def is_non_latin(word):
         u_word = unicodedata.normalize('NFC', word)
         allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
@@ -508,9 +493,9 @@ check_methods = [
         TokenPreProcess.is_xml,
 
         # Lexicon Based Tokens
-        TokenPreProcess.is_in_lexicon,
         TokenPreProcess.is_abbr,
         TokenPreProcess.is_in_exceptions,
+        TokenPreProcess.is_in_lexicon,
         TokenPreProcess.is_in_eng_words,
         TokenPreProcess.is_smiley,
         TokenPreProcess.is_emoticon,
@@ -524,8 +509,7 @@ check_methods = [
 
         TokenPreProcess.is_email,
         TokenPreProcess.is_email_punc,
-        TokenPreProcess.is_prefix_url,
-        TokenPreProcess.is_non_prefix_url,
+        TokenPreProcess.is_url,
         TokenPreProcess.is_date_range,
         TokenPreProcess.is_date,
         TokenPreProcess.is_hour,
@@ -560,7 +544,6 @@ check_methods = [
 
         TokenPreProcess.is_multiple_emoticon,
         TokenPreProcess.is_three_or_more,
-        #TokenPreProcess.is_inner_char,
         TokenPreProcess.is_non_latin,
         TokenPreProcess.is_one_char_fixable,
         # TokenPreProcess.is_num_char_sequence
