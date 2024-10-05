@@ -1,15 +1,17 @@
 from .data import LocalData
 
-
 class EmoticonParser:
 
     @classmethod
     def emoticon_count(cls, word):
         emoticon_count = 0
-        for emoticon in LocalData.emoticons():
-            if emoticon in word:
+        chars = list(word)
+        chars = [char for char in chars if not char.isdigit() and not char.isalpha()]
+        for char in chars:
+            if char in LocalData.emoticons():
                 emoticon_count += 1
         return emoticon_count
+
 
     @classmethod
     def emoticon_check(cls, word):

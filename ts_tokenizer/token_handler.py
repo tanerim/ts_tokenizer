@@ -25,7 +25,7 @@ REGEX_PATTERNS = {
     "percentage_numbers_chars": r'%(\d+\D+)',
     "percentage_numbers": r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)',
     "single_hyphen": r'^(?!-)[\w]+-[\w]+(?!-)$',
-    "date_range": r'^[\(\[]\d{4}[\-–]\d{4}[\)\]]$',
+    "date_range": r'^\d{4}-\d{4}$',
     "in_parenthesis": '^[\(\[\{][^()\[\]{}]*[\)\]\}]$',
     "in_quotes": r'^[\'"][^\'"]*[\'"]$',
     "copyright": r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)',
@@ -125,18 +125,19 @@ class TokenPreProcess:
     @staticmethod
     def is_date_range(word: str) -> tuple:
         p_count = PuncMatcher.punc_count(word)
-        result = check_regex(word, "date_range") if p_count == 1 and PuncMatcher.find_punctuation(word) == "-" else None
-        return (result, "Date_Range") if result else None
-
-    @staticmethod
-    def is_hour(word: str) -> tuple:
-        result = check_regex(word, "hour")
-        return (result, "Hour") if result else None
+        if PuncMatcher.find_punctuation(word) == "-" and p_count == 1:
+            result = check_regex(word, "date_range")
+            return (result, "Date_Range") if result else None
 
     @staticmethod
     def is_date(word: str) -> tuple:
         result = DateCheck.is_date(word)
         return (word, "Date") if result else None
+
+    @staticmethod
+    def is_hour(word: str) -> tuple:
+        result = check_regex(word, "hour")
+        return (result, "Hour") if result else None
 
     @staticmethod
     def is_percentage_numbers(word: str) -> tuple:
@@ -468,18 +469,19 @@ class TokenPreProcess:
     def is_non_latin(word):
         u_word = unicodedata.normalize('NFC', word)
         allowed_chars = set("abcçdefgğhıijklmnoöprsştuüvyzwqxâîûABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZWQXÂÎ")
-        sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars and char not in puncs)
+        sum_foreign_char = sum(1 for char in u_word if char not in allowed_chars or char not in puncs)
         sum_punc = PuncMatcher.punc_count(u_word)
         has_digit = any(char.isdigit() for char in u_word)
         hyphen_check = PuncMatcher.hyphen_in(word)
+        underscore_check = TokenPreProcess.is_underscored(word)
         multiple_emoticon = TokenPreProcess.is_multiple_emoticon(word)
-        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon:
+        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon and not underscore_check:
             return u_word, "Non_Latin"
         return None
 
     @staticmethod
     def is_one_char_fixable(word):
-        extra_chars = ["¬", "¬"]
+        extra_chars = ["¬", "-"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
                 fixed_word = word.replace(extra, "")
@@ -527,6 +529,7 @@ check_methods = [
         TokenPreProcess.is_percentage_numbers,
         #TokenPreProcess.is_multiple_smiley_in,
         TokenPreProcess.is_multiple_smiley,
+        TokenPreProcess.is_one_char_fixable,
 
 
         # These need recursive handling
@@ -545,7 +548,6 @@ check_methods = [
         TokenPreProcess.is_multiple_emoticon,
         TokenPreProcess.is_three_or_more,
         TokenPreProcess.is_non_latin,
-        TokenPreProcess.is_one_char_fixable,
         # TokenPreProcess.is_num_char_sequence
     ]
 
