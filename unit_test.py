@@ -153,8 +153,8 @@ class TestTokenPreProcess(unittest.TestCase):
             self.assertEqual(TokenPreProcess.is_multiple_smiley(word), expected)
 
     def test_is_multiple_smiley_in(self):
-        words = ['Heyyo:-):-)', ':-)', 'invalid']
-        expected_results = [('Heyyo:-):-)', 'Multiple_Smiley_In'), None, None]
+        words = ['Heyyo:-):-)', ':-)', 'invalid', 'yes:):)']
+        expected_results = [('Heyyo:-):-)', 'Multiple_Smiley_In'), None, None, ('yes:):)', 'Multiple_Smiley_In')]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_multiple_smiley_in(word), expected)
 
@@ -235,6 +235,12 @@ class TestTokenPreProcess(unittest.TestCase):
         expected_results = [('word_123', 'Alphanumeric_Underscored'), None, None, None]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_underscored(word), expected)
+
+    def test_is_three_or_more(self):
+        words = ['-----', '.....','!!']
+        expected_results = [('-----', 'Three_Or_More'), ('.....', 'Three_Or_More'), None]
+        for word, expected in zip(words, expected_results):
+            self.assertEqual(TokenPreProcess.is_three_or_more(word), expected)
 
     def test_is_date_range(self):
         words = ['1990-1995', '1995-2000', '(invalid-range)']

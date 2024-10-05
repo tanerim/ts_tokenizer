@@ -30,7 +30,8 @@ REGEX_PATTERNS = {
     "in_quotes": r'^[\'"][^\'"]*[\'"]$',
     "copyright": r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)',
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
-    "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
+    # "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
+    "three_or_more": r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation)),
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
     "apostrophed": r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b",
@@ -124,9 +125,8 @@ class TokenPreProcess:
 
     @staticmethod
     def is_date_range(word: str) -> tuple:
-        p_count = PuncMatcher.punc_count(word)
-        if PuncMatcher.find_punctuation(word) == "-" and p_count == 1:
-            result = check_regex(word, "date_range")
+        result = check_regex(word, "date_range")
+        if result:
             return (result, "Date_Range") if result else None
 
     @staticmethod
@@ -158,33 +158,22 @@ class TokenPreProcess:
 
     @staticmethod
     def is_email_punc(word: str) -> list:
-        # Check if the word matches the email with punctuation pattern
         result = check_regex(word, "email_punc")
-
         if result:
-            # Initialize variables to count starting and ending punctuation
             start_punc_count = 0
             end_punc_count = 0
-
-            # Count starting punctuation
             for char in word:
                 if char in puncs:
                     start_punc_count += 1
                 else:
                     break
-
-            # Count ending punctuation
             for char in word[::-1]:
                 if char in puncs:
                     end_punc_count += 1
                 else:
                     break
-
-            # Handle case when there's no end punctuation or start punctuation
             initial_punc = word[:start_punc_count] if start_punc_count > 0 else ""
             final_punc = word[-end_punc_count:] if end_punc_count > 0 else ""
-
-            # Extract email part
             if start_punc_count > 0 and end_punc_count > 0:
                 email_part = word[start_punc_count: -end_punc_count]
             elif start_punc_count > 0:
@@ -193,8 +182,6 @@ class TokenPreProcess:
                 email_part = word[:-end_punc_count]
             else:
                 email_part = word
-
-            # Prepare output
             result_list = []
             if initial_punc:
                 result_list.append((initial_punc, "Punc"))
@@ -202,7 +189,6 @@ class TokenPreProcess:
                 result_list.append((email_part, "Email"))
             if final_punc:
                 result_list.append((final_punc, "Punc"))
-
             return result_list
 
     @staticmethod
@@ -462,8 +448,10 @@ class TokenPreProcess:
         exceptions = ["...", "!!!"]
         if word in exceptions:
             return word, "Punc"
+
+        # Check for three or more identical punctuation characters
         result = check_regex(word, "three_or_more")
-        return (result, "Three_Or_More") if result else None
+        return (word, "Three_Or_More") if result else None
 
     @staticmethod
     def is_non_latin(word):
@@ -527,7 +515,7 @@ check_methods = [
         TokenPreProcess.is_currency,
         TokenPreProcess.is_percentage_numbers_chars,
         TokenPreProcess.is_percentage_numbers,
-        #TokenPreProcess.is_multiple_smiley_in,
+        TokenPreProcess.is_multiple_smiley_in,
         TokenPreProcess.is_multiple_smiley,
         TokenPreProcess.is_one_char_fixable,
 
@@ -542,11 +530,11 @@ check_methods = [
         TokenPreProcess.is_fmp,
 
         # Raw Punctuation
+        TokenPreProcess.is_three_or_more,
         TokenPreProcess.is_punc,
         TokenPreProcess.is_roman_number,
 
         TokenPreProcess.is_multiple_emoticon,
-        TokenPreProcess.is_three_or_more,
         TokenPreProcess.is_non_latin,
         # TokenPreProcess.is_num_char_sequence
     ]
