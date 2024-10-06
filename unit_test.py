@@ -2,6 +2,7 @@ import unittest
 from ts_tokenizer.token_handler import TokenPreProcess
 
 
+
 class TestTokenPreProcess(unittest.TestCase):
 
     def test_is_xml(self):
@@ -184,7 +185,7 @@ class TestTokenPreProcess(unittest.TestCase):
 
     def test_is_mssp(self):
         words = ['.araba.', '..araba..', '.']
-        expected_results = [[('.', 'Punc'), ('araba', 'Valid_Word'),('.', 'Punc')], None, None]
+        expected_results = [[('.', 'Punc'), ('araba', 'Valid_Word'), ('.', 'Punc')], None, None]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_mssp(word), expected)
 
@@ -207,8 +208,8 @@ class TestTokenPreProcess(unittest.TestCase):
             self.assertEqual(TokenPreProcess.is_fmp(word), expected)
 
     def test_is_apostrophed(self):
-        words = ["Defne'nin", "invalid"]
-        expected_results = [("Defne'nin", 'Apostrophed'), None]
+        words = ["Defne'nin", "Bengü\"nün", "Türkiye ́de"]
+        expected_results = [("Defne'nin", 'Apostrophed'), None, ("Türkiye'de", 'Apostrophed')]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_apostrophed(word), expected)
 
@@ -225,8 +226,8 @@ class TestTokenPreProcess(unittest.TestCase):
             self.assertEqual(TokenPreProcess.is_one_char_fixable(word), expected)
 
     def test_is_punc(self):
-        words = ['!!!', 'invalid!', '(!)']
-        expected_results = [('!!!', 'Punc'), None, ('(!)', 'Punc')]
+        words = ['!!!', 'invalid!', '(!)', '---']
+        expected_results = [('!!!', 'Punc'), None, ('(!)', 'Punc'), ('---', 'Punc')]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_punc(word), expected)
 
@@ -237,7 +238,7 @@ class TestTokenPreProcess(unittest.TestCase):
             self.assertEqual(TokenPreProcess.is_underscored(word), expected)
 
     def test_is_three_or_more(self):
-        words = ['-----', '.....','!!']
+        words = ['-----', '.....', '!!']
         expected_results = [('-----', 'Three_Or_More'), ('.....', 'Three_Or_More'), None]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_three_or_more(word), expected)
@@ -247,6 +248,7 @@ class TestTokenPreProcess(unittest.TestCase):
         expected_results = [('1990-1995', 'Date_Range'), ('1995-2000', 'Date_Range'), None]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_date_range(word), expected)
+
 
 if __name__ == '__main__':
     unittest.main()

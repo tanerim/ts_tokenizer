@@ -8,6 +8,8 @@ import multiprocessing
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
+from ts_tokenizer.char_fix import CharFix
+
 
 
 # Tokenizer class definition
@@ -30,20 +32,15 @@ class TSTokenizer:
 
     @staticmethod
     def tokenize_line(line, return_format):
-        # Debugging: print the line being processed
-        # print(f"Processing line: {line}")
-
         # Check if the line is an XML tag
         if TokenPreProcess.is_xml(line):
-            # print("Identified as XML: ", line)  # Debugging XML detection
             if return_format == 'tagged':
                 return "\t".join(TokenPreProcess.is_xml(line))
-#                return f"{line}\tXML_Tag"  # Return in a consistent format
             else:
-                return line  # For other formats, return as it is
-
+                return line
         # Proceed with tokenization for non-XML lines
-        processed_tokens = [TokenProcessor.process_token(token) for token in line.split()]
+        #processed_tokens = [TokenProcessor.process_token(token) for token in line.split()]
+        processed_tokens = [TokenProcessor.process_token(token) for token in line.split() if token]
         flat_tokens = []
         for token_list in processed_tokens:
             if isinstance(token_list, list):
@@ -84,7 +81,7 @@ class TSTokenizer:
                     batch = []
 
                     for line in in_file:
-                        line = line.strip()
+                        line = CharFix.fix(line.strip())
                         if line:  # Only process non-empty lines
                             batch.append(line)
 

@@ -1,14 +1,15 @@
 import re
+import html
 import unicodedata
 # Tuples for character replacement
 REPLACEMENTS_CHAR = [
     ("þ", "ş"), ("Þñ", "ı"), ("ð", "ğ"), ("ɪ", "ı"), ("ḡ", "ğ"), ("¤", "ğ"), ("а", "a"), ("ƒ", "a"),
-    ("œ", "i"), ("ð", "ğ"), ("ǧ", "ğ"), ("е", "e"), ("åÿ", "ş"), ("ș", "ş"), ("ɑ", "a"), ("о", "o"), ("í", "i"),
+    ("œ", "i"), ("ǧ", "ğ"), ("е", "e"), ("åÿ", "ş"), ("ș", "ş"), ("ɑ", "a"), ("о", "o"), ("í", "i"),
     ("Ã¶", "ö"), ("Ã¼", "ü"), ("Ã1/4", "ü"), ("Ã1/4", "ü"), ("Ã§", "ç"), ("Ä±", "ı"), ("›", "ı"), ("Ý", "İ"), ("Ã", "Ö"), ("Ð", "Ğ"), ("ġ", "Ş"),
     ("ÃŸ", "ş"), ("�", "ü"), ("…", "..."), ("»", ">"), ("«", "<"), ("s¸", "ş"), ("Ģ", "ş"), ("Þ", "Ş"), ("Ġ", "İ"),
     ("\\u011f", "ğ"), ("\\u00fc", "ü"), ("\\u0131", "ı"), ("\\u015f", "ş"), ("\\u00e7", "ç"), ("\\u00f6", "ö"),
     ("\\u0130", "İ"), ("\\u00dc", "Ü"), ("\\u015e", "Ş"), ("\\u00c7", "Ç"), ("&#252;", "ü"), ("ģ", "ş"), ("ä±", "ı"),
-    ("õ", "ı"), ("ﬂ", "ş"), ("ä°", "i"), ("đ", "i"),
+    ("õ", "ı"), ("ﬂ", "ş"), ("ä°", "i"), ("đ", "i"), ('\\u2022', ''),
     # Funny Char Problem
     ("ýº", "ış"), ("ºý", "şı"), ("üº", "üş"), ("ºü", "şü"), ("aº", "aş"), ("ºa", "şa"),
     ("uº", "uş"), ("ºu", "şu"), ("eº", "eş"), ("ºe", "şe"), ("ıº", "ış"), ("ºı", "şı"),
@@ -31,15 +32,18 @@ REPLACEMENTS_HTML = [
     ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&nbsp;", ""), ("&Uuml;", "Ü"),
     ("&uuml;", "ü"), ("&Ouml;", "Ö"), ("&ouml;", "ö"), ("&Ccedil;", "Ç"), ("&ccedil;", "ç"),
     ("&Iuml;", "İ"), ("&iuml;", "i"), ("&ETH;", "Ğ"), ("&eth;", "ğ"), ("&THORN;", "Ş"), ("&thorn;", "ş"),
-    ("&Auml;", "Ä"), ("&auml;", "ä"), ("&szlig;", "ß"), ("&rsquo;", "'"), ("&lsquo;", "‘"), ("&ndash;", "-")
+    ("&Auml;", "Ä"), ("&auml;", "ä"), ("&szlig;", "ß"), ("&rsquo;", "'"), ("&lsquo;", "‘"), ("&ndash;", "-"),
+    ("&raquo;&raquo;", ">")
 ]
 
 # Tuples for quotation mark replacement
 REPLACEMENTS_QUOTE = [
-    ("“", "\""), ("”", "\""), ("’’", "\""), ("‘‘", "\""), ("‘’", "\""), ("‘’", "\""), ("", "\""), ("", "\""),
+    ("\"\"", "\""), (" ́", "'"), ("ʹ", "'"), ("ʺ", "\""),
+    ("\"\"", "\""), ("“", "\""), ("”", "\""), ("’’", "\""), ("‘‘", "\""), ("‘’", "\""), ("‘’", "\""), ("", "\""), ("", "\""), ("““", "\""),
     ("''", "\""), ("", "\""), ("â", "'"), ("‘", "'"), ("’", "'"), ("", "'"), ("â€™", "'"), ("â€š", ","),
     ("’", "'"), ("’", "'"), ("’", "'"), ("\\u2018", "\""), ("\\u2019", "'"), ("˵", "'"), ("˶", "'"), ("'", "'"),
-    ("\\u201c", "'"), ("\\u201d", "'"), ("ʼ", "'"),  ("``", "'"), ("´", "'"), ("`", "'"), ("´", "'"), ("’", "'"), ("′′", "'"), ("′", "'")
+    ("\\u201c", "'"), ("\\u201d", "'"), ("ʼ", "'"), ("``", "'"), ("´", "'"), ("`", "'"), ("´", "'"), ("’", "'"), ("′′", "'"), ("′", "'"),
+    ("‟", "'")
 ]
 
 REPLACEMENTS_CONTROL_CHAR = [
@@ -82,10 +86,45 @@ class CharFix:
         return CharFix.batch_replace(word, CharFix._compiled_pattern_quote, dict(REPLACEMENTS_QUOTE))
 
     @staticmethod
-    def fix(word: str) -> str:
-        word = unicodedata.normalize('NFKC', word)  # Normalize Unicode
-        word = CharFix.char_check(word)  # Apply character fixes
-        word = CharFix.remove_unicode_controls(word)  # Remove control characters
-        word = CharFix.html_entity_replace(word)  # Replace HTML entities
-        word = CharFix.fix_quote(word)  # Fix quotes
+    def remove_diacritics(word: str) -> str:
+        normalized = unicodedata.normalize('NFD', word)
+        return ''.join(c for c in normalized if not unicodedata.combining(c))
+
+    @staticmethod
+    def replace_diacritics(word: str) -> str:
+        # Replace only the problematic quote diacritic with a regular apostrophe
+        replacements = {"́": "'"}  # Replace acute accent with apostrophe
+        return ''.join(replacements.get(c, c) for c in word).replace(" ", "")
+
+    @staticmethod
+    def balance_quotes(word: str) -> str:
+        # Handle empty word case
+        if not word:
+            return word
+
+        # Count occurrences of quotes
+        single_quote_count = word.count("'")
+        double_quote_count = word.count("\"")
+
+        # Ensure quotes are balanced
+        if single_quote_count % 2 != 0:
+            word = word.replace("'", "\"", 1)  # Replace the first unmatched single quote with double quote
+
+        if double_quote_count % 2 != 0:
+            word = word.replace("\"", "'", 1)  # Replace the first unmatched double quote with single quote
+
         return word
+
+    @staticmethod
+    def replace_all(word: str) -> str:
+        word = CharFix.remove_unicode_controls(word)  # Remove control characters
+        word = CharFix.replace_diacritics(word)
+        word = CharFix.fix_quote(word)
+        word = CharFix.char_check(word)  # Apply character fixes
+        word = CharFix.html_entity_replace(html.unescape(word))  # Replace HTML entities
+        # word = CharFix.balance_quotes(word)
+        return word
+
+    @staticmethod
+    def fix(word: str) -> str:
+        return CharFix.replace_all(word)
