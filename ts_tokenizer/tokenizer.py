@@ -1,7 +1,3 @@
-"""
-ts-tokenizer
-tanersezerr@gmail.com
-"""
 import sys
 import argparse
 import multiprocessing
@@ -9,8 +5,6 @@ from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
 from ts_tokenizer.char_fix import CharFix
-
-
 
 # Tokenizer class definition
 class TSTokenizer:
@@ -28,40 +22,41 @@ class TSTokenizer:
         parser.add_argument("filename", help="Name of the file to process")
         parser.add_argument("-w", "--word", action="store_true", help="Enable CLI input mode")
         parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
+        parser.add_argument("-j", "--jobs", type=int, help="Number of parallel workers", default=multiprocessing.cpu_count() - 1)
         return parser.parse_args()
 
     @staticmethod
     def tokenize_line(line, return_format):
-        # Check if the line is an XML tag
-        if TokenPreProcess.is_xml(line):
-            if return_format == 'tagged':
-                return "\t".join(TokenPreProcess.is_xml(line))
-            else:
-                return line
-        # Proceed with tokenization for non-XML lines
-        #processed_tokens = [TokenProcessor.process_token(token) for token in line.split()]
-        processed_tokens = [TokenProcessor.process_token(token) for token in line.split() if token]
-        flat_tokens = []
-        for token_list in processed_tokens:
-            if isinstance(token_list, list):
-                flat_tokens.extend(token_list)
-            else:
-                flat_tokens.append(token_list)
+        if len(line) != 0:
+            # Check if the line is an XML tag
+            if TokenPreProcess.is_xml(line):
+                if return_format == 'tagged':
+                    return "\t".join(TokenPreProcess.is_xml(line))
+                else:
+                    return line
+            # Proceed with tokenization for non-XML lines
+            processed_tokens = [TokenProcessor.process_token(token) for token in line.split() if token]
+            flat_tokens = []
+            for token_list in processed_tokens:
+                if isinstance(token_list, list):
+                    flat_tokens.extend(token_list)
+                else:
+                    flat_tokens.append(token_list)
 
-        # Handle output formats
-        if return_format == 'tokenized':
-            return '\n'.join([token[0] for token in flat_tokens])
-        elif return_format == 'tagged':
-            return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
-        elif return_format == 'lines':
-            return [token[0] for token in flat_tokens]
-        elif return_format == 'tagged_lines':
-            return ' '.join([f"({token[0]}\t{token[1]})" for token in flat_tokens])
+            # Handle output formats
+            if return_format == 'tokenized':
+                return '\n'.join([token[0] for token in flat_tokens])
+            elif return_format == 'tagged':
+                return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
+            elif return_format == 'lines':
+                return [token[0] for token in flat_tokens]
+            elif return_format == 'tagged_lines':
+                return ' '.join([f"({token[0]}\t{token[1]})" for token in flat_tokens])
 
     @staticmethod
     def ts_tokenize():
         args = TSTokenizer.parse_arguments()
-        num_workers = max(1, multiprocessing.cpu_count() - 1)
+        num_workers = args.jobs
 
         if args.word:
             word = sys.argv[-1]
@@ -81,7 +76,7 @@ class TSTokenizer:
                     batch = []
 
                     for line in in_file:
-                        line = CharFix.fix(line.strip())
+                        line = CharFix.fix(line.strip())  # Strip whitespace and fix characters
                         if line:  # Only process non-empty lines
                             batch.append(line)
 

@@ -33,7 +33,7 @@ REPLACEMENTS_HTML = [
     ("&uuml;", "ü"), ("&Ouml;", "Ö"), ("&ouml;", "ö"), ("&Ccedil;", "Ç"), ("&ccedil;", "ç"),
     ("&Iuml;", "İ"), ("&iuml;", "i"), ("&ETH;", "Ğ"), ("&eth;", "ğ"), ("&THORN;", "Ş"), ("&thorn;", "ş"),
     ("&Auml;", "Ä"), ("&auml;", "ä"), ("&szlig;", "ß"), ("&rsquo;", "'"), ("&lsquo;", "‘"), ("&ndash;", "-"),
-    ("&raquo;&raquo;", ">")
+    ("&raquo;&raquo;", ">"), ("&lrm;", ""), ("&rlm;", "")
 ]
 
 # Tuples for quotation mark replacement
@@ -123,7 +123,7 @@ class CharFix:
         word = CharFix.char_check(word)  # Apply character fixes
         word = CharFix.html_entity_replace(html.unescape(word))  # Replace HTML entities
         # word = CharFix.balance_quotes(word)
-        return word
+        return html.unescape(word)
 
     @staticmethod
     def fix(word: str) -> str:

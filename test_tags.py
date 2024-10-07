@@ -1,5 +1,8 @@
 from ts_tokenizer.char_fix import CharFix
 
-word = "Türkiye ́de"
+import sys
 
-print(CharFix.fix(word))
+f = open(sys.argv[1]).read().split('\n')
+
+for line in f:
+    print(CharFix.fix(line))

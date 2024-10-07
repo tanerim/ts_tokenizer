@@ -739,6 +739,7 @@ PM
 PO
 POAŞ
 PPK
+pp
 PR
 Prof
 Prof.
