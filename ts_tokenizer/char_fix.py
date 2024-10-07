@@ -33,7 +33,7 @@ REPLACEMENTS_HTML = [
     ("&uuml;", "ü"), ("&Ouml;", "Ö"), ("&ouml;", "ö"), ("&Ccedil;", "Ç"), ("&ccedil;", "ç"),
     ("&Iuml;", "İ"), ("&iuml;", "i"), ("&ETH;", "Ğ"), ("&eth;", "ğ"), ("&THORN;", "Ş"), ("&thorn;", "ş"),
     ("&Auml;", "Ä"), ("&auml;", "ä"), ("&szlig;", "ß"), ("&rsquo;", "'"), ("&lsquo;", "‘"), ("&ndash;", "-"),
-    ("&raquo;&raquo;", ">"), ("&lrm;", ""), ("&rlm;", "")
+    ("&raquo;&raquo;", ">"), ("&lrm;", ""), ("&rlm;", ""), ("&raquo;", ">"), ("&laquo;", "<")
 ]
 
 # Tuples for quotation mark replacement
@@ -43,7 +43,7 @@ REPLACEMENTS_QUOTE = [
     ("''", "\""), ("", "\""), ("â", "'"), ("‘", "'"), ("’", "'"), ("", "'"), ("â€™", "'"), ("â€š", ","),
     ("’", "'"), ("’", "'"), ("’", "'"), ("\\u2018", "\""), ("\\u2019", "'"), ("˵", "'"), ("˶", "'"), ("'", "'"),
     ("\\u201c", "'"), ("\\u201d", "'"), ("ʼ", "'"), ("``", "'"), ("´", "'"), ("`", "'"), ("´", "'"), ("’", "'"), ("′′", "'"), ("′", "'"),
-    ("‟", "'")
+    ("‟", "'"), ("́", "'")
 ]
 
 REPLACEMENTS_CONTROL_CHAR = [
@@ -92,9 +92,8 @@ class CharFix:
 
     @staticmethod
     def replace_diacritics(word: str) -> str:
-        # Replace only the problematic quote diacritic with a regular apostrophe
-        replacements = {"́": "'"}  # Replace acute accent with apostrophe
-        return ''.join(replacements.get(c, c) for c in word).replace(" ", "")
+        replacements = {"́": "'"}
+        return ''.join(replacements.get(c, c) for c in word)
 
     @staticmethod
     def balance_quotes(word: str) -> str:
@@ -118,12 +117,13 @@ class CharFix:
     @staticmethod
     def replace_all(word: str) -> str:
         word = CharFix.remove_unicode_controls(word)  # Remove control characters
-        word = CharFix.replace_diacritics(word)
+        #word = CharFix.replace_diacritics(word)
         word = CharFix.fix_quote(word)
         word = CharFix.char_check(word)  # Apply character fixes
-        word = CharFix.html_entity_replace(html.unescape(word))  # Replace HTML entities
+        word = CharFix.html_entity_replace(word)  # Replace HTML entities
         # word = CharFix.balance_quotes(word)
         return html.unescape(word)
+        #return word
 
     @staticmethod
     def fix(word: str) -> str:

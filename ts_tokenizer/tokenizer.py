@@ -27,31 +27,33 @@ class TSTokenizer:
 
     @staticmethod
     def tokenize_line(line, return_format):
-        if len(line) != 0:
-            # Check if the line is an XML tag
-            if TokenPreProcess.is_xml(line):
-                if return_format == 'tagged':
-                    return "\t".join(TokenPreProcess.is_xml(line))
-                else:
-                    return line
-            # Proceed with tokenization for non-XML lines
-            processed_tokens = [TokenProcessor.process_token(token) for token in line.split() if token]
-            flat_tokens = []
-            for token_list in processed_tokens:
-                if isinstance(token_list, list):
-                    flat_tokens.extend(token_list)
-                else:
-                    flat_tokens.append(token_list)
+        # First check if the line is an XML tag
+        xml_tag = TokenPreProcess.is_xml(line)
+        if xml_tag:
+            # If the return format is tagged, output it as a tagged XML tag
+            if return_format == 'tagged':
+                return "\t".join(xml_tag)  # Return as XML_Tag with tag
+            else:
+                return line  # Just return the original line (XML tag) unchanged
 
-            # Handle output formats
-            if return_format == 'tokenized':
-                return '\n'.join([token[0] for token in flat_tokens])
-            elif return_format == 'tagged':
-                return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
-            elif return_format == 'lines':
-                return [token[0] for token in flat_tokens]
-            elif return_format == 'tagged_lines':
-                return ' '.join([f"({token[0]}\t{token[1]})" for token in flat_tokens])
+        # Proceed with tokenization if the line is not XML
+        processed_tokens = [TokenProcessor.process_token(token) for token in line.split() if token]
+        flat_tokens = []
+        for token_list in processed_tokens:
+            if isinstance(token_list, list):
+                flat_tokens.extend(token_list)
+            else:
+                flat_tokens.append(token_list)
+
+        # Handle output formats
+        if return_format == 'tokenized':
+            return '\n'.join([token[0] for token in flat_tokens])
+        elif return_format == 'tagged':
+            return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
+        elif return_format == 'lines':
+            return [token[0] for token in flat_tokens]
+        elif return_format == 'tagged_lines':
+            return ' '.join([f"({token[0]}\t{token[1]})" for token in flat_tokens])
 
     @staticmethod
     def ts_tokenize():
@@ -76,7 +78,12 @@ class TSTokenizer:
                     batch = []
 
                     for line in in_file:
-                        line = CharFix.fix(line.strip())  # Strip whitespace and fix characters
+                        # Only strip spaces for non-XML tags
+                        if not TokenPreProcess.is_xml(line):
+                            line = CharFix.fix(line.strip())  # Strip whitespace and fix characters for non-XML lines
+                        else:
+                            line = CharFix.fix(line)  # Just apply CharFix without stripping spaces for XML tags
+
                         if line:  # Only process non-empty lines
                             batch.append(line)
 

@@ -14,7 +14,8 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
-    "xml_tag": r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")+\s*/?>|</\w+\s*>",
+    # "xml_tag": r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")+\s*/?>|</\w+\s*>",
+    "xml_tag": r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")*\s*/?>|</\w+\s*>",
     "hashtag": r'^#[^#]{1,143}$',
     "mention": r'^@[^@]{1,143}$',
     "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
@@ -78,9 +79,15 @@ class TokenPreProcess:
     # return word, tag as tuple
     @staticmethod
     def is_xml(word: str) -> tuple:
-        if word[0] == "<" and word[-1] == ">" and word[1] != "<" and word[-1] != ">":
-            result = check_regex(word, "xml_tag")
-            return (result, "XML_Tag") if result else None
+        # Check if the word starts with '<' and ends with '>', and there are no other '<' or '>' inside the word
+        if word.startswith("<") and word.endswith(">") and (word.count("<") == 1 and word.count(">") == 1):
+            if "/" not in word and " " in word:
+                result = check_regex(word, "xml_tag")
+                return (result, "XML_Tag") if result else None
+            elif " " not in word and "/"  in word:
+                result = check_regex(word, "xml_tag")
+                return (result, "XML_Tag") if result else None
+
 
     @staticmethod
     @apply_charfix

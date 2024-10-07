@@ -1,8 +1,8 @@
+from ts_tokenizer.token_handler import TokenPreProcess
 from ts_tokenizer.char_fix import CharFix
+word = '<text id="0012">'
+print(TokenPreProcess.is_xml(word))
 
-import sys
+print(CharFix.fix(word))
 
-f = open(sys.argv[1]).read().split('\n')
 
-for line in f:
-    print(CharFix.fix(line))
