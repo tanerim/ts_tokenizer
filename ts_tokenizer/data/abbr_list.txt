@@ -150,6 +150,7 @@ BES
 BESOB
 BEÜ
 BİB
+BİST
 BİK
 BİLTİR
 BJK
@@ -1043,3 +1044,5 @@ Yzb
 ZKÜ
 ZMO
 ZRV
+TİKA
+GAP

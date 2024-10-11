@@ -30,6 +30,7 @@ REGEX_PATTERNS = {
     "in_quotes": r'^[\'"][^\'"]*[\'"]$',
     "copyright": r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)',
     "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
+    "initial_parenthesis": r"^([\(]+)([^\)]+)([\)]+)(.*)$",
     # "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
     "three_or_more": r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation)),
     "num_char_sequence": r'\d+[\w\s]*',
@@ -129,6 +130,23 @@ class TokenPreProcess:
                 if isinstance(processed_content, tuple):
                     processed_content = [processed_content]
                 return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_initial_parenthesis(word: str, lower_word: str) -> list:
+        result = check_regex(word, "initial_parenthesis")
+
+        if result:
+            parts = word.split(")")
+            parenthesis_content = parts[0]+")"
+            processed_parenthesis = TokenPreProcess.is_in_parenthesis(parenthesis_content)
+            remaining_part = parts[1]
+            processed_remaining = TokenProcessor.process_token(remaining_part) if remaining_part else []
+            if isinstance(processed_remaining, tuple):
+                processed_remaining = [processed_remaining]
+            return processed_parenthesis + processed_remaining
+
 
     @staticmethod
     def is_date_range(word: str) -> tuple:
@@ -513,6 +531,7 @@ check_methods = [
         # Specific Cases for Punctuation Use
         TokenPreProcess.is_in_quotes,
         TokenPreProcess.is_in_parenthesis,
+        TokenPreProcess.is_initial_parenthesis,
         TokenPreProcess.is_underscored,
 
         TokenPreProcess.is_email,

@@ -129,3 +129,9 @@ tie-break
 start-up
 shoot-'em-up
 shoot-em-up
+demir-çelik
+yurtiçi
+yurtdışı
+yüzölçümü
+süpervizyon
+taşkömürü
