@@ -275,12 +275,6 @@ class TokenPreProcess:
         if lower_word in LocalData.word_list():
             return word, "Valid_Word"
 
-    @staticmethod
-    @apply_charfix
-    @tr_lowercase
-    def is_in_correction_mark(word: str, lower_word: str) -> tuple:
-        if lower_word in LocalData.correction_mark():
-            return word, "Valid_Word"
 
     @staticmethod
     @apply_charfix
@@ -530,15 +524,11 @@ check_methods = [
         # Then check if input is only composed of punctuations.
         TokenPreProcess.is_punc,
 
-
         # Lexicon Based Tokens
         TokenPreProcess.is_abbr,
         TokenPreProcess.is_in_exceptions,
 
-
-
         TokenPreProcess.is_in_lexicon,
-        TokenPreProcess.is_in_correction_mark,
         TokenPreProcess.is_in_eng_words,
         TokenPreProcess.is_emoticon,
         TokenPreProcess.is_number,
