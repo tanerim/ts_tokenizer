@@ -150,12 +150,15 @@ class TokenPreProcess:
                 if isinstance(processed_remaining, tuple):
                     processed_remaining = [processed_remaining]
                 return numbered_title + processed_remaining
+
             processed_parenthesis = TokenPreProcess.is_in_parenthesis(parenthesis_content)
             remaining_part = parts[1].strip()
             processed_remaining = TokenProcessor.process_token(remaining_part) if remaining_part else []
             if isinstance(processed_remaining, tuple):
                 processed_remaining = [processed_remaining]
-            return processed_parenthesis + processed_remaining
+
+            # Ensure processed_parenthesis is not None
+            return (processed_parenthesis or []) + processed_remaining
 
     @staticmethod
     def is_date_range(word: str) -> tuple:
