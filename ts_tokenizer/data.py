@@ -13,6 +13,7 @@ exception_words = set(line.strip() for line in open(os.path.join(data_dir, 'exce
 eng_words = set(line.strip() for line in open(os.path.join(data_dir, 'eng_word_list.txt')))
 domains = set(line.strip() for line in open(os.path.join(data_dir, 'domains.txt')))
 currencies = set(line.strip() for line in open(os.path.join(data_dir, 'currency_symbols.txt')))
+correction_mark = set(line.strip() for line in open(os.path.join(data_dir, 'corection_mark.txt')))
 
 
 class LocalData:
@@ -30,6 +31,10 @@ class LocalData:
 
     @staticmethod
     def word_list():
+        return word_list
+
+    @staticmethod
+    def correction_mark():
         return word_list
 
     @staticmethod

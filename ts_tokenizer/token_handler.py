@@ -85,10 +85,9 @@ class TokenPreProcess:
             if "/" not in word and " " in word:
                 result = check_regex(word, "xml_tag")
                 return (result, "XML_Tag") if result else None
-            elif " " not in word and "/"  in word:
+            elif " " not in word and "/" in word:
                 result = check_regex(word, "xml_tag")
                 return (result, "XML_Tag") if result else None
-
 
     @staticmethod
     @apply_charfix
@@ -157,8 +156,6 @@ class TokenPreProcess:
             if isinstance(processed_remaining, tuple):
                 processed_remaining = [processed_remaining]
             return processed_parenthesis + processed_remaining
-
-
 
     @staticmethod
     def is_date_range(word: str) -> tuple:
@@ -276,6 +273,13 @@ class TokenPreProcess:
     @tr_lowercase
     def is_in_lexicon(word: str, lower_word: str) -> tuple:
         if lower_word in LocalData.word_list():
+            return word, "Valid_Word"
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_in_correction_mark(word: str, lower_word: str) -> tuple:
+        if lower_word in LocalData.correction_mark():
             return word, "Valid_Word"
 
     @staticmethod
@@ -412,7 +416,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_fmp(word: str, lower_word: str) -> list:
+    def is_fmp(word: str, lower_word: str) -> tuple:
         if len(word) > 1 and word not in exception_list:
             end_punc_count = 0
             for char in word[::-1]:
@@ -534,6 +538,7 @@ check_methods = [
 
 
         TokenPreProcess.is_in_lexicon,
+        TokenPreProcess.is_in_correction_mark,
         TokenPreProcess.is_in_eng_words,
         TokenPreProcess.is_emoticon,
         TokenPreProcess.is_number,
