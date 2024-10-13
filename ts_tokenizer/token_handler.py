@@ -36,7 +36,8 @@ REGEX_PATTERNS = {
     "num_char_sequence": r'\d+[\w\s]*',
     "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
     "apostrophed": r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b",
-    "currency": rf"(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])"
+    "currency": rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$"
+
 }
 
 exception_list = ["(!)", "...", "[...]"]
@@ -177,10 +178,34 @@ class TokenPreProcess:
         return (result, "Hour") if result else None
 
     @staticmethod
-    def is_percentage_numbers(word: str) -> tuple:
+    def is_percentage_numbers(word: str) -> list:
+        # Use PuncMatcher to count punctuation in the word
         p_count = PuncMatcher.punc_count(word)
         result = check_regex(word, "percentage_numbers") if p_count == 1 else None
-        return (result, "Percentage_Numbers") if result else None
+        pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|%\d+|\d+|[%])'
+        tokens = re.findall(pattern, word)
+
+        if not result:
+            return None
+
+        if len(tokens) == 2 and tokens[1].startswith('%'):
+            print("Two tokens:", tokens)
+
+            initial = TokenProcessor.process_token(tokens[0])
+            combined_percentage = TokenProcessor.process_token(tokens[1])
+
+            return [initial, combined_percentage]
+
+        elif len(tokens) == 3 and "%" in tokens[1]:
+            print("Three tokens:", tokens)
+
+            initial = TokenProcessor.process_token(tokens[0])
+            combined_percentage = ("%" + tokens[2], "Percentage_Numbers")
+
+            return [initial, combined_percentage]
+
+        return None
+
 
     @staticmethod
     @apply_charfix
@@ -277,7 +302,6 @@ class TokenPreProcess:
     def is_in_lexicon(word: str, lower_word: str) -> tuple:
         if lower_word in LocalData.word_list():
             return word, "Valid_Word"
-
 
     @staticmethod
     @apply_charfix
@@ -508,7 +532,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_one_char_fixable(word):
-        extra_chars = ["¬", "-"]
+        extra_chars = ["¬", "-", "º"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
                 fixed_word = word.replace(extra, "")
