@@ -360,14 +360,22 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_isp(word: str) -> list:
-        if len(word) > 1 and word[0] in puncs and all(char not in puncs for char in word[1:]):
+        if word[0] in puncs:
             initial_punc = word[0]
             remaining_word = word[1:]
             processed_word = TokenProcessor.process_token(remaining_word)
             if isinstance(processed_word, tuple):
                 processed_word = [processed_word]
-
             return [(initial_punc, "Punc")] + processed_word
+
+        elif len(word) > 1 and word[0] in puncs and all(char not in puncs for char in word[1:]):
+            initial_punc = word[0]
+            remaining_word = word[1:]
+            processed_word = TokenProcessor.process_token(remaining_word)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+            return [(initial_punc, "Punc")] + processed_word
+
 
     @staticmethod
     @apply_charfix
@@ -531,7 +539,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_one_char_fixable(word):
-        extra_chars = ["¬", "-", "º", "."]
+        extra_chars = ["¬", "-", "º"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
                 fixed_word = word.replace(extra, "")

@@ -1,4 +1,4 @@
-from .token_handler import TokenProcessor
+from ts_tokenizer.token_handler import TokenProcessor
 
 class oov_parser:
     def __init__(self):
