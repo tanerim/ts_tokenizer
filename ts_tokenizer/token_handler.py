@@ -470,23 +470,30 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str) -> tuple:
-        if len(word) > 1 and word not in exception_list:
-            end_punc_count = 0
-            for char in word[::-1]:
-                if char in puncs:
-                    end_punc_count += 1
-                else:
-                    break
-            if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
-                final_punc = word[-end_punc_count:]
-                remaining_word = word[:-end_punc_count]
-                lower_remaining_word = lower_word[:-end_punc_count]
-                processed_word = TokenProcessor.process_token(lower_remaining_word)
-                if isinstance(processed_word, tuple):
-                    processed_word = [processed_word]
-                if processed_word:
-                    processed_word[0] = (remaining_word, processed_word[0][1])
-                return processed_word + [(final_punc, "Punc")]
+        fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
+        if fmp_regex.search(word):
+            first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
+            before_punc = word[:first_punc_index]
+            from_punc = word[first_punc_index:]
+            if from_punc in exception_list:
+                return [TokenProcessor.process_token(before_punc)], [(from_punc, "Punc"), ("0", "1")]
+            if len(word) > 1 and word not in exception_list:
+                end_punc_count = 0
+                for char in word[::-1]:
+                    if char in puncs:
+                        end_punc_count += 1
+                    else:
+                        break
+                if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
+                    final_punc = word[-end_punc_count:]
+                    remaining_word = word[:-end_punc_count]
+                    lower_remaining_word = lower_word[:-end_punc_count]
+                    processed_word = TokenProcessor.process_token(lower_remaining_word)
+                    if isinstance(processed_word, tuple):
+                        processed_word = [processed_word]
+                    if processed_word:
+                        processed_word[0] = (remaining_word, processed_word[0][1])
+                    return processed_word + [(final_punc, "Punc"), ("0", "2")]
 
     @staticmethod
     @apply_charfix
@@ -623,13 +630,15 @@ check_methods = [
         TokenPreProcess.is_one_char_fixable,
 
         # These need recursive handling
-        TokenPreProcess.is_fsp,
+        TokenPreProcess.is_imp,
         TokenPreProcess.is_isp,
+        TokenPreProcess.is_fmp,
+        TokenPreProcess.is_fsp,
         TokenPreProcess.is_mssp,
         TokenPreProcess.is_msp,
         TokenPreProcess.is_midp,
-        TokenPreProcess.is_imp,
-        TokenPreProcess.is_fmp,
+
+
 
         # Raw Punctuation
         TokenPreProcess.is_three_or_more,
