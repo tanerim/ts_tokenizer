@@ -1046,3 +1046,9 @@ ZMO
 ZRV
 TİKA
 GAP
+TR
+XML
+WiFi
+mah
+KDV
+UK
