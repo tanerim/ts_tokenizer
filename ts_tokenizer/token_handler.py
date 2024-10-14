@@ -55,10 +55,23 @@ def punc_pos(word: str) -> list:
     return [i for i, char in enumerate(word) if char in puncs]
 
 
+def split_on_punctuation(word: str, punctuation_list: str) -> list:
+    result = []
+    i = 0
+    for j, char in enumerate(word):
+        if char in punctuation_list:
+            if i < j:
+                result.append((word[i:j], "Word"))
+            result.append((char, "Punc"))
+            i = j + 1
+    if i < len(word):
+        result.append((word[i:], "Word"))
+    return result
+
+
 def apply_charfix(func):
     def wrapper(word, *args, **kwargs):
         fixed_word = CharFix.fix(word)
-        # Pass the fixed word, and also any additional args (like lower_word)
         return func(fixed_word, *args, **kwargs)
     return wrapper
 
@@ -66,7 +79,6 @@ def apply_charfix(func):
 def tr_lowercase(func):
     def wrapper(word, *args, **kwargs):
         turkish_lowercase = CharFix.tr_lowercase(word)
-        # Pass both original word and lowercase version to the function
         return func(word, turkish_lowercase, *args, **kwargs)
     return wrapper
 
@@ -179,32 +191,21 @@ class TokenPreProcess:
 
     @staticmethod
     def is_percentage_numbers(word: str) -> list:
-        # Use PuncMatcher to count punctuation in the word
         p_count = PuncMatcher.punc_count(word)
         result = check_regex(word, "percentage_numbers") if p_count == 1 else None
         if result:
-            #pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|%\d+|\d+|[%])'
             pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|\d+%|%\d+|\d+|%)'
             tokens = re.findall(pattern, word)
 
             if len(tokens) == 2 and tokens[1].startswith('%'):
-                print("Two tokens:", tokens)
-
                 initial = TokenProcessor.process_token(tokens[0])
                 combined_percentage = TokenProcessor.process_token(tokens[1])
-
                 return [initial, combined_percentage]
 
             elif len(tokens) == 3 and "%" in tokens[1]:
-                print("Three tokens:", tokens)
-
                 initial = TokenProcessor.process_token(tokens[0])
                 combined_percentage = ("%" + tokens[2], "Percentage_Numbers")
-
                 return [initial, combined_percentage]
-
-            return None
-
 
     @staticmethod
     @apply_charfix
@@ -357,10 +358,26 @@ class TokenPreProcess:
                 processed_word = [processed_word]
             return processed_word + [(final_punc, "Punc")]
 
+        elif len(word) > 1 and word[-1] in puncs and punc_count(word) > 2:
+            final_punc = word[-1]
+            remaining_word = word[:-1]
+            processed_word = split_on_punctuation(remaining_word, puncs)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+            return processed_word + [(final_punc, "Punc")]
+
+        elif word[-1] in puncs:
+            final_punc = word[-1]
+            remaining_word = word[:-1]
+            processed_word = TokenProcessor.process_token(remaining_word)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+            return processed_word + [(final_punc, "Punc")]
+
     @staticmethod
     @apply_charfix
     def is_isp(word: str) -> list:
-        if word[0] in puncs:
+        if len(word) > 1 and word[0] in puncs and all(char not in puncs for char in word[1:]):
             initial_punc = word[0]
             remaining_word = word[1:]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -368,7 +385,15 @@ class TokenPreProcess:
                 processed_word = [processed_word]
             return [(initial_punc, "Punc")] + processed_word
 
-        elif len(word) > 1 and word[0] in puncs and all(char not in puncs for char in word[1:]):
+        elif len(word) > 1 and word[0] in puncs and punc_count(word) > 2:
+            initial_punc = word[0]
+            remaining_word = word[1:]
+            processed_word = split_on_punctuation(remaining_word, puncs)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]
+            return [(initial_punc, "Punc")] + processed_word
+
+        elif word[0] in puncs:
             initial_punc = word[0]
             remaining_word = word[1:]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -630,13 +655,21 @@ class TokenProcessor:
         elif output_format == 'string':
             return f"{result[0]}\t{result[1]}"
 
+    #@staticmethod
+    #def process_token(token: str, output_format: str = 'tuple') -> tuple:
+    #    for check in check_methods:
+    #        result = check(token)
+    #        if result:
+    #            return TokenProcessor.format_output(result, output_format)
+
+        # If no checks match, return "OOV" with the requested output format
+    #    oov_result = (token, "OOV")
+    #    return TokenProcessor.format_output(oov_result, output_format)
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
         for check in check_methods:
             result = check(token)
             if result:
                 return TokenProcessor.format_output(result, output_format)
+        return TokenProcessor.format_output((token, "OOV"), output_format)
 
-        # If no checks match, return "OOV" with the requested output format
-        oov_result = (token, "OOV")
-        return TokenProcessor.format_output(oov_result, output_format)
