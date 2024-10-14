@@ -182,29 +182,28 @@ class TokenPreProcess:
         # Use PuncMatcher to count punctuation in the word
         p_count = PuncMatcher.punc_count(word)
         result = check_regex(word, "percentage_numbers") if p_count == 1 else None
-        pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|%\d+|\d+|[%])'
-        tokens = re.findall(pattern, word)
+        if result:
+            #pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|%\d+|\d+|[%])'
+            pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|\d+%|%\d+|\d+|%)'
+            tokens = re.findall(pattern, word)
 
-        if not result:
+            if len(tokens) == 2 and tokens[1].startswith('%'):
+                print("Two tokens:", tokens)
+
+                initial = TokenProcessor.process_token(tokens[0])
+                combined_percentage = TokenProcessor.process_token(tokens[1])
+
+                return [initial, combined_percentage]
+
+            elif len(tokens) == 3 and "%" in tokens[1]:
+                print("Three tokens:", tokens)
+
+                initial = TokenProcessor.process_token(tokens[0])
+                combined_percentage = ("%" + tokens[2], "Percentage_Numbers")
+
+                return [initial, combined_percentage]
+
             return None
-
-        if len(tokens) == 2 and tokens[1].startswith('%'):
-            print("Two tokens:", tokens)
-
-            initial = TokenProcessor.process_token(tokens[0])
-            combined_percentage = TokenProcessor.process_token(tokens[1])
-
-            return [initial, combined_percentage]
-
-        elif len(tokens) == 3 and "%" in tokens[1]:
-            print("Three tokens:", tokens)
-
-            initial = TokenProcessor.process_token(tokens[0])
-            combined_percentage = ("%" + tokens[2], "Percentage_Numbers")
-
-            return [initial, combined_percentage]
-
-        return None
 
 
     @staticmethod
@@ -532,7 +531,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_one_char_fixable(word):
-        extra_chars = ["¬", "-", "º"]
+        extra_chars = ["¬", "-", "º", "."]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
                 fixed_word = word.replace(extra, "")
