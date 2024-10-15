@@ -172,13 +172,13 @@ class TestTokenPreProcess(unittest.TestCase):
 
     def test_is_fsp(self):
         words = ['araba.', 'araba..', '.']
-        expected_results = [[('araba', 'Valid_Word'), ('.', 'Punc')], None, None]
+        expected_results = [[('araba', 'Valid_Word'), ('.', 'Punc')], None]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_fsp(word), expected)
 
     def test_is_isp(self):
-        words = ['.araba', '..araba', '.']
-        expected_results = [[('.', 'Punc'), ('araba', 'Valid_Word')], None, None]
+        words = ['.araba', '...araba', '.']
+        expected_results = [[('.', 'Punc'), ('araba', 'Valid_Word')], [('...', 'Punc'), ('araba', 'Valid_Word')], [("."), ("Punc")]]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_isp(word), expected)
 
