@@ -61,11 +61,13 @@ def split_on_punctuation(word: str, punctuation_list: str) -> list:
     for j, char in enumerate(word):
         if char in punctuation_list:
             if i < j:
-                result.append((word[i:j], "Word"))
+                processed_token = TokenProcessor.process_token(word[i:j])
+                result.append((word[i:j], processed_token[1]))
             result.append((char, "Punc"))
             i = j + 1
     if i < len(word):
-        result.append((word[i:], "Word"))
+        processed_token = TokenProcessor.process_token(word[i:j])
+        result.append((word[i:j], processed_token[1]))
     return result
 
 
@@ -156,7 +158,7 @@ class TokenPreProcess:
                 parenthesis_content = parts[0] + "]"
             elif word[0] == "{":
                 parenthesis_content = parts[0] + "}"
-            if re.match(r'^[\(\[\{]\d+[\)\]\}]$', parenthesis_content):  # Matches "(1)", "(2)", etc.
+            if re.match(r'^[\(\[\{]\d{1,2}[\)\]\}]$', parenthesis_content):  # Matches "(1)", "(20)", etc.
                 numbered_title = [(parenthesis_content, "Numbered_Title")]
                 remaining_part = parts[1].strip()
                 processed_remaining = TokenProcessor.process_token(remaining_part) if remaining_part else []
@@ -196,10 +198,14 @@ class TokenPreProcess:
         if result:
             pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|\d+%|%\d+|\d+|%)'
             tokens = re.findall(pattern, word)
+            print(tokens)
+
+            if len(tokens) == 1 and tokens[1].startswith('%'):
 
             if len(tokens) == 2 and tokens[1].startswith('%'):
                 initial = TokenProcessor.process_token(tokens[0])
                 combined_percentage = TokenProcessor.process_token(tokens[1])
+                print("INITIAL", initial)
                 return [initial, combined_percentage]
 
             elif len(tokens) == 3 and "%" in tokens[1]:
@@ -476,7 +482,7 @@ class TokenPreProcess:
             before_punc = word[:first_punc_index]
             from_punc = word[first_punc_index:]
             if from_punc in exception_list:
-                return [TokenProcessor.process_token(before_punc)], [(from_punc, "Punc"), ("0", "1")]
+                return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
             if len(word) > 1 and word not in exception_list:
                 end_punc_count = 0
                 for char in word[::-1]:
@@ -493,7 +499,7 @@ class TokenPreProcess:
                         processed_word = [processed_word]
                     if processed_word:
                         processed_word[0] = (remaining_word, processed_word[0][1])
-                    return processed_word + [(final_punc, "Punc"), ("0", "2")]
+                    return processed_word + [(final_punc, "Punc")]
 
     @staticmethod
     @apply_charfix
@@ -571,7 +577,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_one_char_fixable(word):
-        extra_chars = ["¬", "-", "º"]
+        extra_chars = ["¬", "-", "º", "0", "1"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
                 fixed_word = word.replace(extra, "")

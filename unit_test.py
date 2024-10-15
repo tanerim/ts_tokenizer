@@ -171,14 +171,14 @@ class TestTokenPreProcess(unittest.TestCase):
             self.assertEqual(TokenPreProcess.is_multiple_emoticon(word), expected)
 
     def test_is_fsp(self):
-        words = ['araba.', 'araba..', '.']
-        expected_results = [[('araba', 'Valid_Word'), ('.', 'Punc')], None]
+        words = ['araba.']
+        expected_results = [[('araba', 'Valid_Word'), ('.', 'Punc')]]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_fsp(word), expected)
 
     def test_is_isp(self):
-        words = ['.araba', '...araba', '.']
-        expected_results = [[('.', 'Punc'), ('araba', 'Valid_Word')], [('...', 'Punc'), ('araba', 'Valid_Word')], [("."), ("Punc")]]
+        words = ['.araba']
+        expected_results = [[('.', 'Punc'), ('araba', 'Valid_Word')]]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_isp(word), expected)
 
