@@ -203,14 +203,13 @@ class TokenPreProcess:
     def is_percentage_numbers_chars(word: str) -> list:
         result = check_regex(word, "percentage_numbers_chars")
         if result:
-            pattern = r'(%\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?%|[a-zA-ZşŞıİçÇğĞöÖüÜ]+|[%\W]+)'
+            pattern = r'(%\d+(?:[.,]\d+)?(?:-\d+)?|\d+(?:[.,]\d+)?%|[a-zA-ZşŞıİçÇğĞöÖüÜ]+|[%\W]+)'
             tokens = re.findall(pattern, word)
-
             processed_tokens = []
 
             if tokens:
                 first_token = tokens[0]
-                if re.match(r'%\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?%', first_token):
+                if re.match(r'%\d+(?:[.,]\d+)?(?:-\d+)?|\d+(?:[.,]\d+)?%', first_token):
                     processed_tokens.append((first_token, "Percentage_Numbers"))
                 else:
                     processed_tokens.append(TokenProcessor.process_token(first_token))
