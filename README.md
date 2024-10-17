@@ -53,7 +53,7 @@ input_text = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera a
     değiştirdi
     .
 
-
+Note that tags are not part-of-speech tags but they define the given string.
     
     $ ts-tokenizer -o tagged input.txt
 
