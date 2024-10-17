@@ -98,6 +98,10 @@ The "tagged_lines" parameter reads input file line-by-line and returns a list of
 
     yenilikçi	Valid_Word
 
+The tokenizer is designed to take advantge of multiple cores. Default value is [Total Number of Cores - 1].
+-j parameter sets the number of parallel workers.
+
+    $ ts-tokenizer -j 2 -o tagged input_file
 
 ## Using CLI Arguments with pipelines
 
@@ -153,17 +157,19 @@ By employing sort and uniq commands frequency of the words with target tag could
     
     $ ts-tokenizer --help
 
-    usage: main.py [-h] [-o {tokenized,tagged}] [-w] [-v] filename
+    usage: main.py [-h] [-o {tokenized,lines,tagged,tagged_lines}] [-w] [-v] [-j JOBS] filename
 
     positional arguments:
-    filename              Name of the file to process
-
+      filename              Name of the file to process
+    
     options:
-        -h, --help            show this help message and exit
-        -o {tokenized,lines,tagged}, --output {tokenized,tagged}
-                        Specify the output format
-        -w, --word            Enable cli input mode
-        -v, --verbose         Enable verbose mod
+      -h, --help            show this help message and exit
+      -o {tokenized,lines,tagged,tagged_lines}, --output {tokenized,lines,tagged,tagged_lines}
+                            Specify the output format
+      -w, --word            Enable CLI input mode
+      -v, --verbose         Enable verbose mode
+      -j JOBS, --jobs JOBS  Number of parallel workers
+
 
 ## Classes
 
