@@ -46,6 +46,8 @@ class TSTokenizer:
                 flat_tokens.append(token_list)
 
         # Handle output formats
+
+        # Handle output formats
         if return_format == 'tokenized':
             return '\n'.join([token[0] for token in flat_tokens])
         elif return_format == 'tagged':
@@ -53,7 +55,7 @@ class TSTokenizer:
         elif return_format == 'lines':
             return [token[0] for token in flat_tokens]
         elif return_format == 'tagged_lines':
-            return ' '.join([f"({token[0]}\t{token[1]})" for token in flat_tokens])
+            return [(token[0], token[1]) for token in flat_tokens]  # Returns a list of tuples
 
     @staticmethod
     def ts_tokenize():
