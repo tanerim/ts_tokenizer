@@ -52,7 +52,6 @@ class TSTokenizer:
         elif return_format == 'lines':
             return [token[0] for token in flat_tokens]
         elif return_format == 'tagged_lines':
-            # Corrected part: Iterate over flat_tokens and return a list of tuples
             return [(token[0], token[1]) for token in flat_tokens]  # Returns a list of tuples
 
     @staticmethod
@@ -63,7 +62,6 @@ class TSTokenizer:
 
         # If input is provided via stdin, process it directly
         if input_text is not None:  # Stdin input is passed here
-            print(TSTokenizer.tokenize_line(input_text, output_format))
             sys.exit(0)
 
         # If no piped input, process in word or file mode
@@ -81,26 +79,24 @@ class TSTokenizer:
                     batch = []
 
                     for line in in_file:
-                        print(f"Processing line: {line.strip()}")  # Debug: print each line being processed
-                        # Only strip spaces for non-XML tags
+                        print(f"Processing line: {line.strip()}")
                         if not TokenPreProcess.is_xml(line):
-                            line = CharFix.fix(line.strip())  # Strip whitespace and fix characters for non-XML lines
+                            line = CharFix.fix(line.strip())
                         else:
-                            line = CharFix.fix(line)  # Just apply CharFix without stripping spaces for XML tags
+                            line = CharFix.fix(line)
 
-                        if line:  # Only process non-empty lines
+                        if line:
                             batch.append(line)
 
                         if len(batch) >= batch_size:
                             futures = [executor.submit(TSTokenizer.tokenize_line, line, output_format) for line in batch]
                             for future in futures:
                                 print(future.result())
-                            batch = []  # Clear batch after processing
+                            batch = []
 
                         if pbar:
                             pbar.update(batch_size)
 
-                    # Process remaining lines in the last batch
                     if batch:
                         futures = [executor.submit(TSTokenizer.tokenize_line, line, output_format) for line in batch]
                         for future in futures:
