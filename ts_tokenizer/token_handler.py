@@ -198,8 +198,10 @@ class TokenPreProcess:
         if result:
             pattern = r'([a-zA-ZşŞıİçÇğĞöÖüÜ]+|\d+%|%\d+|\d+|%)'
             tokens = re.findall(pattern, word)
+            if len(tokens) == 1:
+                return (word, "Percentage_Numbers")
 
-            if len(tokens) == 2 and tokens[1].startswith('%'):
+            elif len(tokens) == 2 and tokens[1].startswith('%'):
                 initial = TokenProcessor.process_token(tokens[0])
                 combined_percentage = TokenProcessor.process_token(tokens[1])
                 print("INITIAL", initial)
