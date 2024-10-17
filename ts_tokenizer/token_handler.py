@@ -14,37 +14,39 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
-    # "xml_tag": r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")+\s*/?>|</\w+\s*>",
-    "xml_tag": r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")*\s*/?>|</\w+\s*>",
-    "hashtag": r'^#[^#]{1,143}$',
-    "mention": r'^@[^@]{1,143}$',
-    "email": r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])',
-    "email_punc": r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b',
-    "url_pattern": fr'(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}(?:{domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])',
-    "hour": r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)",
-    "percentage_numbers_chars": r'%(\d+\D+)',
-    "percentage_numbers": r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)',
-    "single_hyphen": r'^(?!-)[\w]+-[\w]+(?!-)$',
-    "date_range": r'^\d{4}-\d{4}$',
-    "in_parenthesis": '^[\(\[\{][^()\[\]{}]*[\)\]\}]$',
-    "in_quotes": r'^[\'"][^\'"]*[\'"]$',
-    "copyright": r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)',
-    "registered": r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)',
-    "initial_parenthesis": r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$",
-    # "three_or_more": r'([' + re.escape(string.punctuation) + r'])\1{2,}',
-    "three_or_more": r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation)),
-    "num_char_sequence": r'\d+[\w\s]*',
-    "roman_number": r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$',
-    "apostrophed": r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b",
-    "currency": rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$"
-
+    # Precompiled regular expressions using re.compile()
+    "xml_tag": re.compile(r"<\s*\w+(\s+\w+\s*=\s*\"[^\"]+\")*\s*/?>|</\w+\s*>"),
+    "hashtag": re.compile(r'^#[^#]{1,143}$'),
+    "mention": re.compile(r'^@[^@]{1,143}$'),
+    "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
+    "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
+    "url_pattern": re.compile(fr'(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}(?:{domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
+    "hour": re.compile(r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)"),
+    "percentage_numbers_chars": re.compile(r'%(\d+\D+)'),
+    "percentage_numbers": re.compile(r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)'),
+    "single_hyphen": re.compile(r'^(?!-)[\w]+-[\w]+(?!-)$'),
+    "date_range": re.compile(r'^\d{4}-\d{4}$'),
+    "in_parenthesis": re.compile(r'^[\(\[\{][^()\[\]{}]*[\)\]\}]$'),
+    "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
+    "copyright": re.compile(r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)'),
+    "registered": re.compile(r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)'),
+    "initial_parenthesis": re.compile(r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$"),
+    "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
+    "num_char_sequence": re.compile(r'\d+[\w\s]*'),
+    "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
+    "apostrophed": re.compile(r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b"),
+    "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$")
 }
+
 
 exception_list = ["(!)", "...", "[...]"]
 
 
+#def check_regex(word, pattern):
+#    return word if re.search(REGEX_PATTERNS[pattern], CharFix.fix(word)) else None
+
 def check_regex(word, pattern):
-    return word if re.search(REGEX_PATTERNS[pattern], CharFix.fix(word)) else None
+    return word if REGEX_PATTERNS[pattern].search(CharFix.fix(word)) else None
 
 
 def punc_count(word: str) -> int:
@@ -599,12 +601,10 @@ check_methods = [
         # Lexicon Based Tokens
         TokenPreProcess.is_abbr,
         TokenPreProcess.is_in_exceptions,
-
         TokenPreProcess.is_in_lexicon,
         TokenPreProcess.is_in_eng_words,
         TokenPreProcess.is_emoticon,
         TokenPreProcess.is_number,
-
 
         # Specific Cases for Punctuation Use
         TokenPreProcess.is_in_quotes,
@@ -614,14 +614,12 @@ check_methods = [
         # Before validation make sure it is apostrophed
         TokenPreProcess.is_apostrophed,
         TokenPreProcess.is_underscored,
-
         TokenPreProcess.is_email,
         TokenPreProcess.is_email_punc,
         TokenPreProcess.is_url,
         TokenPreProcess.is_date_range,
         TokenPreProcess.is_date,
         TokenPreProcess.is_hour,
-
 
         # Basic Regex Tokens
         TokenPreProcess.is_mention,
@@ -644,12 +642,11 @@ check_methods = [
         TokenPreProcess.is_msp,
         TokenPreProcess.is_midp,
 
-
-
         # Raw Punctuation
         TokenPreProcess.is_three_or_more,
         TokenPreProcess.is_roman_number,
 
+        # Final Checks
         TokenPreProcess.is_multiple_emoticon,
         TokenPreProcess.is_non_latin,
         TokenPreProcess.is_num_char_sequence

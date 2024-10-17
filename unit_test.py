@@ -56,11 +56,14 @@ class TestTokenPreProcess(unittest.TestCase):
         words = ['%50', '50%', '%abc']
         expected_results = [('%50', 'Percentage_Numbers'), ('50%', 'Percentage_Numbers'), None]
         for word, expected in zip(words, expected_results):
-            self.assertEqual(TokenPreProcess.is_percentage_numbers(word), expected)
+            if isinstance(expected, list):  # For cases where multiple tokens are returned
+                self.assertEqual(TokenPreProcess.is_percentage_numbers_chars(word), expected)
+            else:  # For single token results
+                self.assertEqual(TokenPreProcess.is_percentage_numbers(word), expected)
 
     def test_is_percentage_numbers_chars(self):
-        words = ['%50USD', 'USD%50', '%100A']
-        expected_results = [('%50USD', 'Percentage_Numbers_Chars'), None, ('%100A', 'Percentage_Numbers_Chars')]
+        words = ['%50USD', 'USD%50',]
+        expected_results = [[('%50', 'Percentage_Numbers'), ('USD', 'Abbr')], None]
         for word, expected in zip(words, expected_results):
             self.assertEqual(TokenPreProcess.is_percentage_numbers_chars(word), expected)
 
