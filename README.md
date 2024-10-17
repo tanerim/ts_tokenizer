@@ -88,15 +88,6 @@ The "tagged_lines" parameter reads input file line-by-line and returns a list of
 
     [('Queen', 'English_Word'), (',', 'Punc'), ('31.10.1975', 'Date'), ('tarihinde', 'Valid_Word'), ('çıkardığı', 'Valid_Word'), ('A', 'OOV'), ('Night', 'English_Word'), ('at', 'Valid_Word'), ('the', 'English_Word'), ('Opera', 'Valid_Word'), ('albümüyle', 'Valid_Word'),('dünya', 'Valid_Word'), ('müziğini', 'Valid_Word'), ('değiştirdi', 'Valid_Word'), ('.', 'Punc')]
 
--w parameter reads given word/sentence on bash cli. Note that this parameter get only one word and omits whitespaces.
-
-    $ ts-tokenizer -w "yenilikçi"
-    
-    yenilikçi
-
-    $ ts-tokenizer -w -o tagged "yenilikçi"
-
-    yenilikçi	Valid_Word
 
 The tokenizer is designed to take advantge of multiple cores. Default value is [Total Number of Cores - 1].
 -j parameter sets the number of parallel workers.
@@ -166,7 +157,6 @@ By employing sort and uniq commands frequency of the words with target tag could
       -h, --help            show this help message and exit
       -o {tokenized,lines,tagged,tagged_lines}, --output {tokenized,lines,tagged,tagged_lines}
                             Specify the output format
-      -w, --word            Enable CLI input mode
       -v, --verbose         Enable verbose mode
       -j JOBS, --jobs JOBS  Number of parallel workers
 

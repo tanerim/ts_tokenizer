@@ -20,7 +20,6 @@ class TSTokenizer:
             help="Specify the output format"
         )
         parser.add_argument("filename", nargs='?', help="Name of the file to process (optional if input is piped)")
-        parser.add_argument("-w", "--word", action="store_true", help="Enable CLI input mode")
         parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
         parser.add_argument("-j", "--jobs", type=int, help="Number of parallel workers", default=multiprocessing.cpu_count() - 1)
         return parser.parse_args()
@@ -53,7 +52,8 @@ class TSTokenizer:
         elif return_format == 'lines':
             return [token[0] for token in flat_tokens]
         elif return_format == 'tagged_lines':
-            return [(token[0], token[1])]  # Returns a list of tuples
+            # Corrected part: Iterate over flat_tokens and return a list of tuples
+            return [(token[0], token[1]) for token in flat_tokens]  # Returns a list of tuples
 
     @staticmethod
     def ts_tokenize(input_text=None, filename=None, output_format='tokenized'):
@@ -81,6 +81,7 @@ class TSTokenizer:
                     batch = []
 
                     for line in in_file:
+                        print(f"Processing line: {line.strip()}")  # Debug: print each line being processed
                         # Only strip spaces for non-XML tags
                         if not TokenPreProcess.is_xml(line):
                             line = CharFix.fix(line.strip())  # Strip whitespace and fix characters for non-XML lines
@@ -112,4 +113,6 @@ class TSTokenizer:
 
 
 if __name__ == "__main__":
-    TSTokenizer.ts_tokenize()
+    args = TSTokenizer.parse_arguments()
+    TSTokenizer.ts_tokenize(filename=args.filename, output_format=args.output)
+
