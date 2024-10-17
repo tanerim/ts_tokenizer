@@ -75,10 +75,13 @@ input_text = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera a
 
 
 The other two arguments are "lines" and "tagged_lines".
+The "lines" parameter reads input file line-by-line and returns a list for each line.
 
     $ ts-tokenizer -o lines input.txt
 
     ['Queen', ',', '31.10.1975', 'tarihinde', 'çıkardığı', 'A', 'Night', 'at', 'the', 'Opera', 'albümüyle', 'dünya', 'müziğini', 'değiştirdi', '.']
+
+The "tagged_lines" parameter reads input file line-by-line and returns a list of tuples for each line.
 
 
     $ ts-tokenizer -o tagged_lines input.txt
