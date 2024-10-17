@@ -60,11 +60,9 @@ class TSTokenizer:
         num_workers = args.jobs
 
         # If input is provided via stdin (piped), process it directly
-        if not sys.stdin.isatty():  # Stdin input is passed here
-            input_text = sys.stdin.read().strip()  # Read piped input
-            if input_text:
-                print(TSTokenizer.tokenize_line(input_text, output_format))
-            sys.exit(0)
+        if input_text:  # Handle piped input directly
+            print(TSTokenizer.tokenize_line(input_text, output_format))
+            return
 
         # If filename is provided, process the file input
         if filename:
