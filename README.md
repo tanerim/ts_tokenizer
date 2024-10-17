@@ -1,8 +1,18 @@
 # TS Tokenizer
 
-ts-tokenizer is a rule-based tokenizer specifically designed for processing Turkish text.  
+**TS Tokenizer** is a hybrid tokenizer designed for Turkish text.
+It uses a hybrid (lexicon-based and rule-based) approach to split text into tokens.
+The tokenizer leverages regular expressions to handle non-standard text elements like dates, percentages, URLs, and punctuation marks.
 
-It provides functionalities to split text into tokens following the grammatical and linguistic rules of the Turkish language.
+
+### Key Features:
+- **Hybrid Approach**: Uses a hybrid (lexicon-based and rule-based approach) for tokenization.
+- **Handling of Special Tokens**: Recognizes special tokens like mentions, hashtags, emails, URLs, numbers, smiley, emoticons, etc..
+- **Highly Configurable**: Provides multiple output formats to suit different NLP processing needs,
+- including plain tokens, tagged tokens, and token-tag pairs in list or line formats.
+
+Whether you are working on natural language processing (NLP), information retrieval, or text mining for Turkish, **TS Tokenizer** offers
+a versatile and reliable solution for tokenization.
 
 
 # Installation
@@ -18,13 +28,72 @@ Basic usage returns tokenized output of given text file.
 
 ## CLI Arguments
 
--o parameter takes two arguments, 'tokenized' and 'tagged'. Tokenized is the default value and it is not obligatory to declare. 
+-o parameter takes four arguments.
+
+The two arguments 'tokenized' and 'tagged' returns word/per/line output.
+Tokenized is the default value and it is not obligatory to declare.
+
+input_text = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
+
+    $ ts-tokenizer input text
+
+    Queen
+    ,
+    31.10.1975
+    tarihinde
+    çıkardığı
+    A
+    Night
+    at
+    the
+    Opera
+    albümüyle
+    dünya
+    müziğini
+    değiştirdi
+    .
+
+
     
     $ ts-tokenizer -o tagged input.txt
 
+    Queen	English_Word
+    ,	Punc
+    31.10.1975	Date
+    tarihinde	Valid_Word
+    çıkardığı	Valid_Word
+    A	OOV
+    Night	English_Word
+    at	Valid_Word
+    the	English_Word
+    Opera	Valid_Word
+    albümüyle	Valid_Word
+    dünya	Valid_Word
+    müziğini	Valid_Word
+    değiştirdi	Valid_Word
+    .	Punc
+
+
+The other two arguments are "lines" and "tagged_lines".
+
+    $ ts-tokenizer -o lines input.txt
+
+    ['Queen', ',', '31.10.1975', 'tarihinde', 'çıkardığı', 'A', 'Night', 'at', 'the', 'Opera', 'albümüyle', 'dünya', 'müziğini', 'değiştirdi', '.']
+
+
+    $ ts-tokenizer -o tagged_lines input.txt
+
+    [('Queen', 'English_Word'), (',', 'Punc'), ('31.10.1975', 'Date'), ('tarihinde', 'Valid_Word'), ('çıkardığı', 'Valid_Word'), ('A', 'OOV'), ('Night', 'English_Word'), ('at', 'Valid_Word'), ('the', 'English_Word'), ('Opera', 'Valid_Word'), ('albümüyle', 'Valid_Word'),('dünya', 'Valid_Word'), ('müziğini', 'Valid_Word'), ('değiştirdi', 'Valid_Word'), ('.', 'Punc')]
+
 -w parameter reads given word/sentence on bash cli. Note that this parameter get only one word and omits whitespaces.
 
-    $ ts-tokenizer -w "geliyorlar..."
+    $ ts-tokenizer -w "yenilikçi"
+    
+    yenilikçi
+
+    $ ts-tokenizer -w -o tagged "yenilikçi"
+
+    yenilikçi	Valid_Word
 
 
 ## Using CLI Arguments with pipelines
