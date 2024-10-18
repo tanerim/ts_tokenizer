@@ -262,13 +262,14 @@ print(PuncTagCheck.punc_tag_check(word))
     $ ('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
 
 
-### Punc_tag_check
+### PuncTagCheck
+
+punc_count returns number of punctuations in given string as integer.
 
 ```python
 from ts_tokenizer.punctuation_process import PuncTagCheck
 word = "-eski,yeni,"
 print(PuncTagCheck.punc_tag_check(word))
-
-('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
-
 ```
+    $ ('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
+
