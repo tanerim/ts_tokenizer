@@ -217,7 +217,7 @@ This method returns information about the punctuations in given word.
 
 ## PuncMatcher Class
 
-This class has 7 methods:
+This class has 6 methods. They return information about punctuations in given string.
 
 ### punc_count
 This method returns number of punctuations in given string as list
