@@ -215,11 +215,11 @@ print(CharFix.fix_quote(line))
 ## Punctuation Check
 This method returns information about the punctuations in given word.
 
-### PuncMatcher Class
+## PuncMatcher Class
 
 This class has 7 methods:
 
-# Punctuation Count
+### punc_count
 This method returns number of punctuations in given string as list
 
 ```python
@@ -228,14 +228,14 @@ from ts_tokenizer.punctuation_process import PuncMatcher
 sample_one = "ornek,"
 sample_two = "kalem,kitap,defter"
 
-punc_count_sample_one = PuncMatcher.punc_count(sample_one)
-punc_count_sample_two = PuncMatcher.punc_count(sample_two)
-
-print(f"{sample_one} ==> {punc_count_sample_one}")  # Output: ornek, ==> 1
-print(f"{sample_two} ==> {punc_count_sample_two}")  # Output: kalem,kitap,defter ==> 2
+print(PuncMatcher.punc_count(sample_one))
+    $ 1
+print(PuncMatcher.punc_count(sample_two))
+    $ 3
 ```
+---
 
-# Punctuation Positions
+### punc_pos
 This method returns indexes of punctuations in given string as list
 
 ```python
@@ -244,23 +244,24 @@ from ts_tokenizer.punctuation_process import PuncMatcher
 sample_one = "ornek,"
 sample_two = "kalem,kitap,defter"
 
-punc_pos_sample_one = PuncMatcher.punc_pos(sample_one)
-punc_pos_sample_two = PuncMatcher.punc_pos(sample_two)
-
-print(f"{sample_one} ==> {punc_pos_sample_one}")  # Output: ornek, ==> [5]
-print(f"{sample_two} ==> {punc_pos_sample_two}")  # Output: kalem,kitap,defter ==> [5, 11]
+print(PuncMatcher.punc_pos(sample_one))
+    $ [5]
+print(PuncMatcher.punc_pos(sample_two))
+    $ [5. 11]
 ```
+---
 
-# Find Punctuation
-This methods returns the punctuation pattern in given string.
+### find_punctuation
+The find_punctuation method identifies the pattern of punctuation in a word or phrase.
 
 The tags returned by **PuncMatcher.find_punctuation** are:
-- **MSSP**: MultiSide Single Punctuation __(-eski,yeni,)__
-- **ISP**: Initial Single Punctuation __(-eski)__
 - **FSP**: Final Single Punctuation __(yeni,)__
-- **MSP**: MultiSide Punctuation __(--eski,yeni!!)__
-- **FMP**: Final Multiple Punctuation __(yeni,,,)__
+- **ISP**: Initial Single Punctuation __(-eski)__
 - **IMP**: Initial Multiple Punctuation __(..eski)__
+- **FMP**: Final Multiple Punctuation __(yeni,,,)__
+- **MSSP**: MultiSide Single Punctuation __(-eski,yeni,)__
+- **MSP**: MultiSide Punctuation __(--eski,yeni!!)__
+
 
 ```python
 from ts_tokenizer.punctuation_process import PuncMatcher
@@ -285,6 +286,10 @@ print(PuncMatcher.find_punctuation(sample_five))  # Multi-Side Single Punctuatio
 print(PuncMatcher.find_punctuation(sample_six))  # Multi-Side Punctuation (MSP)
     $ MSP
 ```
+---
+
+
+
 
 
 
