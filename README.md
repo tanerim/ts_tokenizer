@@ -288,11 +288,56 @@ print(PuncMatcher.find_punctuation(sample_six))  # Multi-Side Punctuation (MSP)
 ```
 ---
 
+## inner_punctuation
+The inner_punctuation method identifies internal punctuation characters in the middle of a word or phrase.
 
+```python
+sample_one = "kalem,kitap"
+sample_two = "kalem,kitap,defter"
+sample_three = "kalem..kitap"
 
+print(PuncMatcher.inner_punctuation(sample_one))
+    $ Inner_Single_Punc
+print(PuncMatcher.inner_punctuation(sample_two))
+    $ Inner_Multiple_Punc
+print(PuncMatcher.inner_punctuation(sample_three))
+    $ Inner_Multiple_Punc
+```
 
+---
 
+## apostrophed
+The apostrophed method identifies if given string that contains apostrophes.
 
+```python
+sample_one = "Defne'nin"
+sample_two = "Defne'"
+sample_three = "Defne"
+
+print(PuncMatcher.apostrophed(sample_one))  # Output: apostrophes_in
+    $ apostrophes_in
+print(PuncMatcher.apostrophed(sample_two))  # Output: apostrophes_in
+    $ apostrophes_in
+print(PuncMatcher.apostrophed(sample_three))  # Output: None
+    $ None
+```
+
+---
+
+## hyphenated
+This method checks if given string has a hyphen and if it has the surronding words are valid.
+
+```python
+sample_one = "gel-git"
+sample_two = "gel-gitX"
+
+print(PuncMatcher.hyphenated(sample_one))  # Output: Hyphenated
+    $ Hyphenated
+print(PuncMatcher.hyphenated(sample_two))  # Output: None
+    $ None
+```
+
+---
 
 ### PuncTagCheck
 
