@@ -23,7 +23,10 @@ REPLACEMENTS_CHAR = [
     ("-", "-"), ("–", "-"), ("⁄", "/"), ("-", "-"), ("—-", "-"), ("﴾", "("), ("﴿", ")"),
     # punctuation_process.py line 178 - fails if not replaced
     # needs a better solution
-    ("°°", "°")
+    ("°°", "°"),
+    # extra replacements
+    ("<200a>", ""), ("<200b>", ""), ("<200c>", ""), ("<200d>", ""), ("<200e>", ""),
+    ("<202a>", ""), ("<202b>", ""), ("<202c>", ""), ("<202d>", ""), ("<202e>", "")
 ]
 
 # Tuples for html entities replacement
