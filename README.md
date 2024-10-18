@@ -213,38 +213,48 @@ print(CharFix.fix_quote(line))
 
 
 ## Punctuation Check
-This method returns information about the punctuations in given word
+This method returns information about the punctuations in given word.
 
 ### PuncMatcher Class
-**punc_count** returns number of punctuations in given string as integer.
+
+This class has 7 methods:
+
+# Punctuation Count
+This method returns number of punctuations in given string as list
 
 ```python
 from ts_tokenizer.punctuation_process import PuncMatcher
-word = "-eski,yeni,"
-print(PuncMatcher.punc_count(word))
-```
-    $ 3
 
-**punc_post** returns indexes of punctuatioıns in given string as list.
+sample_one = "ornek,"
+sample_two = "kalem,kitap,defter"
+
+punc_count_sample_one = PuncMatcher.punc_count(sample_one)
+punc_count_sample_two = PuncMatcher.punc_count(sample_two)
+
+print(f"{sample_one} ==> {punc_count_sample_one}")  # Output: ornek, ==> 1
+print(f"{sample_two} ==> {punc_count_sample_two}")  # Output: kalem,kitap,defter ==> 2
+```
+
+# Punctuation Positions
+This method returns indexes of punctuations in given string as list
 
 ```python
 from ts_tokenizer.punctuation_process import PuncMatcher
-word = "-eski,yeni,"
-print(PuncMatcher.punc_pos(word))
+
+sample_one = "ornek,"
+sample_two = "kalem,kitap,defter"
+
+punc_pos_sample_one = PuncMatcher.punc_pos(sample_one)
+punc_pos_sample_two = PuncMatcher.punc_pos(sample_two)
+
+print(f"{sample_one} ==> {punc_pos_sample_one}")  # Output: ornek, ==> [5]
+print(f"{sample_two} ==> {punc_pos_sample_two}")  # Output: kalem,kitap,defter ==> [5, 11]
 ```
-    $ [0, 5, 10]
 
+# Find Punctuation
+This methods returns the punctuation pattern in given string.
 
-**find_punctuation** returns a tag to handle given string.
-
-```python
-from ts_tokenizer.punctuation_process import PuncMatcher
-word = "-eski,yeni,"
-print(PuncMatcher.find_punctuation(word))
-```
-    $ MSSP
-
-The tags are:
+The tags returned by **PuncMatcher.find_punctuation** are:
 - **MSSP**: MultiSide Single Punctuation __(-eski,yeni,)__
 - **ISP**: Initial Single Punctuation __(-eski)__
 - **FSP**: Final Single Punctuation __(yeni,)__
@@ -252,14 +262,31 @@ The tags are:
 - **FMP**: Final Multiple Punctuation __(yeni,,,)__
 - **IMP**: Initial Multiple Punctuation __(..eski)__
 
-
-
 ```python
-from ts_tokenizer.punctuation_process import PuncTagCheck
-word = "-eski,yeni,"
-print(PuncTagCheck.punc_tag_check(word))
+from ts_tokenizer.punctuation_process import PuncMatcher
+
+sample_one = "ornek,"
+sample_two = ",ornek"
+sample_three = "..ornek"
+sample_four = "ornek.."
+sample_five = ",ornek."
+sample_six = "..ornek.."
+
+print(PuncMatcher.find_punctuation(sample_one))  # Final Single Punctuation (FSP)
+    $ FSP
+print(PuncMatcher.find_punctuation(sample_two))  # Initial Single Punctuation (ISP)
+    $ ISP
+print(PuncMatcher.find_punctuation(sample_three))  # Initial Multiple Punctuation (IMP)
+    $ IMP
+print(PuncMatcher.find_punctuation(sample_four))  # Final Multiple Punctuation (FMP)
+    $ FMP
+print(PuncMatcher.find_punctuation(sample_five))  # Multi-Side Single Punctuation (MSSP)
+    $ MSSP
+print(PuncMatcher.find_punctuation(sample_six))  # Multi-Side Punctuation (MSP)
+    $ MSP
 ```
-    $ ('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
+
+
 
 
 ### PuncTagCheck

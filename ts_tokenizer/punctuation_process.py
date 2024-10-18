@@ -15,13 +15,6 @@ for p in extra_puncs:
 PuncPattern = r'^(?P<initial>[%s]*)(?P<word>.*?)(?P<final>[%s]*)$' % (puncs, puncs)
 
 
-def fix_tr_lowercase(word):
-    conversion = {'I': 'ı', 'İ': 'i'}
-    for key, value in conversion.items():
-        word = word.replace(key, value)
-    return word.lower()
-
-
 class PuncMatcher:
 
     @classmethod
@@ -106,7 +99,7 @@ class PuncMatcher:
         if ("-" in word and word.count("-") == 1 and word[0] != "-" and word[-1] != "-"
                 and not any(c in string.punctuation for c in word if c != "-")):
             parts = word.split("-")
-            if all(fix_tr_lowercase(part) in LocalData.word_list() for part in parts):
+            if all(CharFix.tr_lowercase(part) in LocalData.word_list() for part in parts):
                 return "Hyphenated"  # Valid hyphenated word
 
     @staticmethod
