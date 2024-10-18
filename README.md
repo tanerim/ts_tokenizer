@@ -1,37 +1,50 @@
 # TS Tokenizer
 
-**TS Tokenizer** is a hybrid tokenizer designed for Turkish text.
+**TS Tokenizer** is a hybrid tokenizer designed specifically for tokenizing Turkish texts.
 It uses a hybrid (lexicon-based and rule-based) approach to split text into tokens.
-The tokenizer leverages regular expressions to handle non-standard text elements like dates, percentages, URLs, and punctuation marks.
 
 
 ### Key Features:
 - **Hybrid Approach**: Uses a hybrid (lexicon-based and rule-based approach) for tokenization.
 - **Handling of Special Tokens**: Recognizes special tokens like mentions, hashtags, emails, URLs, numbers, smiley, emoticons, etc..
-- **Highly Configurable**: Provides multiple output formats to suit different NLP processing needs,
-- including plain tokens, tagged tokens, and token-tag pairs in list or line formats.
+- **Highly Configurable**: Provides multiple output formats to suit different NLP processing needs, including plain tokens, tagged tokens, and token-tag pairs in list or line formats.
 
-Whether you are working on natural language processing (NLP), information retrieval, or text mining for Turkish, **TS Tokenizer** offers
-a versatile and reliable solution for tokenization.
+On natural language processing (NLP), information retrieval, or text mining for Turkish, **TS Tokenizer** offers
+a reliable solution for tokenization.
 
+---
 
-# Installation
+## Installation
 
-You can install the ts-tokenizer package using pip. Ensure you have Python 3.9 or higher installed on your system.
+You can install the ts-tokenizer package using pip.
 
     pip install ts-tokenizer
 
+Ensure you have Python 3.9 or higher installed on your system.
+
+---
+
 ## Command line tool
-Basic usage returns tokenized output of given text file.
+
+You can use TS Tokenizer directly from the command line for both file inputs and pipeline processing:
+## Tokenize from a File:
 
     $ ts-tokenizer input.txt
 
+## Tokenizing with Piped Input:
+
+    $ zcat input.txt.gz | ts-tokenizer
+
+---
+
 ## CLI Arguments
 
--o parameter takes four arguments.
+You can specify the output format using the -o option:
 
-The two arguments 'tokenized' and 'tagged' returns word/per/line output.
-Tokenized is the default value and it is not obligatory to declare.
+- **tokenized (default):** Returns plain tokens, one per line.
+- **tagged:** Returns tokens with their tags.
+- **lines:** Returns tokenized lines as lists.
+- **tagged_lines:** Returns tokenized lines as a list of tuples (token, tag).
 
 input_text = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
 
@@ -88,27 +101,36 @@ The "tagged_lines" parameter reads input file line-by-line and returns a list of
 
     [('Queen', 'English_Word'), (',', 'Punc'), ('31.10.1975', 'Date'), ('tarihinde', 'Valid_Word'), ('çıkardığı', 'Valid_Word'), ('A', 'OOV'), ('Night', 'English_Word'), ('at', 'Valid_Word'), ('the', 'English_Word'), ('Opera', 'Valid_Word'), ('albümüyle', 'Valid_Word'),('dünya', 'Valid_Word'), ('müziğini', 'Valid_Word'), ('değiştirdi', 'Valid_Word'), ('.', 'Punc')]
 
+---
 
-The tokenizer is designed to take advantge of multiple cores. Default value is [Total Number of Cores - 1].
--j parameter sets the number of parallel workers.
+## Parallel Processing
+Use the -j option to set the number of parallel workers:
 
     $ ts-tokenizer -j 2 -o tagged input_file
 
+By default, TS Tokenizer uses [number of CPU cores - 1].
+
+---
+
 ## Using CLI Arguments with pipelines
 
-ts-tokenizer could also be used in a pipeline on bash.
+You can use TS Tokenizer in bash pipelines, such as counting word frequencies:
 
 Following sample returns calculated  frequencies for the given file:
 
     $ ts-tokenizer input.txt | sort | uniq -c | sort -n
 
+---
+
 For case-insensitive output tr is employed in the sample below:
 
     $ ts-tokenizer input.txt | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -n
 
-Sample below returns number of tags in given text
+---
 
-    $ts-tokenizer -o tagged input.txt | cut -f3 | sort | uniq -c
+To count tags:
+
+    $ts-tokenizer -o tagged input.txt | cut -f2 | sort | uniq -c
       1 Hyphen_In
       1 Inner_Punc
       2 FMP
@@ -122,7 +144,7 @@ Sample below returns number of tags in given text
 
 To find a specific tag following command could be used.
 
-    $ ts-tokenizer -o tagged input.txt | cut -f2,3 | grep "Num_Char_Seq"
+    $ ts-tokenizer -o tagged input.txt | cut -f1,2 | grep "Num_Char_Seq"
     40'ar	Num_Char_Seq
     2.	Num_Char_Seq
     24.	Num_Char_Seq
@@ -132,19 +154,11 @@ To find a specific tag following command could be used.
     20'şer	Num_Char_Seq
     40'ar	Num_Char_Seq
 
-By employing sort and uniq commands frequency of the words with target tag could be found:
+---
 
-    $ ts-tokenizer -o tagged Test_Text.txt | cut -f2,3 | grep "Num_Char_Seq" | sort | uniq -c | sort -n
-      1 16'sı	Num_Char_Seq
-      1 20'şer	Num_Char_Seq
-      1 2.	Num_Char_Seq
-      1 8.	Num_Char_Seq
-      2 24.	Num_Char_Seq
-      2 40'ar	Num_Char_Seq
+## Help
 
-
-
---help returns help
+Get detailed help for available options using:
     
     $ ts-tokenizer --help
 
@@ -160,105 +174,101 @@ By employing sort and uniq commands frequency of the words with target tag could
       -v, --verbose         Enable verbose mode
       -j JOBS, --jobs JOBS  Number of parallel workers
 
+---
 
-## Classes
+# Classes
 
 ## CharFix
 
-This class has 4 methods. They are useful to fix corrupted texts.
-
-### CharFix Class
-
-```python
-from ts_tokenizer.char_fix import CharFix
-```
+CharFix offers methods to correct corrupted Turkish text:
 
 ### Fix Characters
 
 ```python
-line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-print(CharFix.fix(line))
+from ts_tokenizer.char_fix import CharFix
 
-Parça ve bütün ilişkisi her zaman işlevsel değildir.
+line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
+print(CharFix.fix(line))  # Fixes corrupted characters
+
 ```
 ### Lowercase
 
 ```python
+from ts_tokenizer.char_fix import CharFix
+
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 print(CharFix.tr_lowercase(line))
-
-istanbul ve ığdır ''arası'' 1528 km'dir.
 ```
+    $istanbul ve ığdır ''arası'' 1528 km'dir.
+
 ### Fix Quotes
 
 ```python
+from ts_tokenizer.char_fix import CharFix
+
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 print(CharFix.fix_quote(line))
-
-İstanbul ve Iğdır "arası" 1528 km'dir.
 ```
+    $ İstanbul ve Iğdır "arası" 1528 km'dir.
 
 
-## TokenCheck
+## Punctuation Check
+This method returns information about the punctuations in given word
 
-This class is used to pass input tokens to the tokenizer for further analysis.
-However, it could be used for various tasks.<br>
-The tags are "Valid_Word", "Exception_Word", "Eng_Word", "Date", "Hour", "In_Parenthesis", "In_Quotes", "Smiley", "Inner_Char", "Abbr", "Number", "Non_Prefix_URL", "Prefix_URL", "Emoticon", "Mention", "HashTag", "Percentage_Numbers", "Percentage_Number_Chars", "Num_Char_Seq", "Multiple_Smiley", "Punc", "Underscored", "Hyphenated", "Hyphen_In", "Multiple_Emoticon", "Copyright", "Email", "Registered", "Three_or_More"
-
-### token_tagger
+### PuncMatcher Class
+**punc_count** returns number of punctuations in given string as integer.
 
 ```python
-from ts_tokenizer.token_check import TokenCheck
+from ts_tokenizer.punctuation_process import PuncMatcher
+word = "-eski,yeni,"
+print(PuncMatcher.punc_count(word))
 ```
+    $ 3
 
-### Default Usage
-```python
-word = "ParÃ§a"
-print(TokenCheck.token_tagger(word))
-
-$ Valid_Word
-
-print(TokenCheck.token_tagger(word, output="all", output_format="tuple"))
-
-$ ('ParÃ§a', 'Parça', 'Valid_Word')
-
-print(TokenCheck.token_tagger(word, output="all", output_format="list"))
-
-$ ['ParÃ§a', 'Parça', 'Valid_Word']
-
-word = "#tstokenizer"
-print(TokenCheck.token_tagger(word, output='all', output_format='tuple'))  # Returns a tuple
-('#tstokenizer', '#tstokenizer', 'HashTag')
-
-word = "#tanerim"
-print(TokenCheck.token_tagger(word, output='all', output_format='list'))   # Returns a list
-['@tanerim', '@tanerim', 'Mention']
-
-word = ":):):)"
-print(TokenCheck.token_tagger(word, output='all', output_format='string'))   # Returns a tab-separated string
-:):):)  :):):)  Multiple_Smiley
-```
+**punc_post** returns indexes of punctuatioıns in given string as list.
 
 ```python
-line = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
+from ts_tokenizer.punctuation_process import PuncMatcher
+word = "-eski,yeni,"
+print(PuncMatcher.punc_pos(word))
+```
+    $ [0, 5, 10]
 
-for word in line.split(" "):
-    TokenTag = TokenCheck.token_tagger(word, output='all', output_format='list')
-    print(TokenTag)
-['Queen', 'Queen', 'Eng_Word']
-[',', ',', 'Punc']
-['31.10.1975', '31.10.1975', 'Date']
-['tarihinde', 'tarihinde', 'Valid_Word']
-['çıkardıðı', 'çıkardığı', 'Valid_Word']
-['A', 'A', 'OOV']
-['Night', 'Night', 'Eng_Word']
-['at', 'at', 'Valid_Word']
-['the', 'the', 'Eng_Word']
-['Opera', 'Opera', 'Valid_Word']
-['albÃ¼mÃ¼yle', 'albümüyle', 'Valid_Word']
-['dÃ¼nya', 'dünya', 'Valid_Word']
-['mÃ¼ziðini', 'müziğini', 'Valid_Word']
-['deðiåÿtirdi', 'değiştirdi', 'Valid_Word']
-['.', '.', 'Punc']
+
+**find_punctuation** returns a tag to handle given string.
+
+```python
+from ts_tokenizer.punctuation_process import PuncMatcher
+word = "-eski,yeni,"
+print(PuncMatcher.find_punctuation(word))
+```
+    $ MSSP
+
+The tags are:
+- **MSSP**: MultiSide Single Punctuation __(-eski,yeni,)__
+- **ISP**: Initial Single Punctuation __(-eski)__
+- **FSP**: Final Single Punctuation __(yeni,)__
+- **MSP**: MultiSide Punctuation __(--eski,yeni!!)__
+- **FMP**: Final Multiple Punctuation __(yeni,,,)__
+- **IMP**: Initial Multiple Punctuation __(..eski)__
+
+
+
+```python
+from ts_tokenizer.punctuation_process import PuncTagCheck
+word = "-eski,yeni,"
+print(PuncTagCheck.punc_tag_check(word))
+```
+    $ ('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
+
+
+### Punc_tag_check
+
+```python
+from ts_tokenizer.punctuation_process import PuncTagCheck
+word = "-eski,yeni,"
+print(PuncTagCheck.punc_tag_check(word))
+
+('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
 
 ```
