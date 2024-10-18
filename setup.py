@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ts_tokenizer',
-    version='0.1.12',
+    version='0.1.13',
     packages=find_packages(),
     package_data={
     'ts_tokenizer': ['data/*.txt'],
