@@ -307,7 +307,7 @@ print(PuncMatcher.inner_punctuation(sample_three))
 ---
 
 ## apostrophed
-The apostrophed method identifies if given string that contains apostrophes.
+This method identifies if given string that contains an apostrophe that is surronding with any characters.
 
 ```python
 sample_one = "Defne'nin"
@@ -317,7 +317,7 @@ sample_three = "Defne"
 print(PuncMatcher.apostrophed(sample_one))  # Output: apostrophes_in
     $ apostrophes_in
 print(PuncMatcher.apostrophed(sample_two))  # Output: apostrophes_in
-    $ apostrophes_in
+    $ None
 print(PuncMatcher.apostrophed(sample_three))  # Output: None
     $ None
 ```
@@ -338,15 +338,3 @@ print(PuncMatcher.hyphenated(sample_two))  # Output: None
 ```
 
 ---
-
-### PuncTagCheck
-
-punc_count returns number of punctuations in given string as integer.
-
-```python
-from ts_tokenizer.punctuation_process import PuncTagCheck
-word = "-eski,yeni,"
-print(PuncTagCheck.punc_tag_check(word))
-```
-    $ ('Hyphen_Initial', '-eski,yeni,', 3, [0, 5, 10])
-

@@ -89,7 +89,7 @@ class PuncMatcher:
         match = re.match(r"\b\w+'[a-zA-Z]+\b", word)
         if match:
             punc_positions = cls.punc_pos(word)
-            if cls.punc_count(word) == 1 and punc_positions and "'" in word:
+            if cls.punc_count(word) == 1 and punc_positions and "'" in word and word[-1] != "'":
                 return "apostrophes_in"
         return None
 
