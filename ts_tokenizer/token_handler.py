@@ -205,21 +205,23 @@ class TokenPreProcess:
     def is_percentage_numbers_chars(word: str) -> list:
         result = check_regex(word, "percentage_numbers_chars")
         if result:
-            pattern = r'(%\d+(?:[.,]\d+)?(?:-\d+)?|\d+(?:[.,]\d+)?%|[a-zA-ZşŞıİçÇğĞöÖüÜ]+|[%\W]+)'
+            # Regex pattern to split into words and percentages
+            pattern = r'(%\d+(?:[.,]\d+)?(?:-\d+)?|\d+(?:[.,]\d+)?%|[a-zA-ZşŞıİçÇğĞöÖüÜ]+)'
             tokens = re.findall(pattern, word)
+            print(tokens)
+
             processed_tokens = []
 
             if tokens:
+                # Process the first token
                 first_token = tokens[0]
-                if re.match(r'%\d+(?:[.,]\d+)?(?:-\d+)?|\d+(?:[.,]\d+)?%', first_token):
-                    processed_tokens.append((first_token, "Percentage_Numbers"))
-                else:
-                    processed_tokens.append(TokenProcessor.process_token(first_token))
+                processed_tokens.append(TokenProcessor.process_token(first_token))
 
+                # Process the remaining tokens
                 for token in tokens[1:]:
                     processed_tokens.append(TokenProcessor.process_token(token))
 
-            return processed_tokens if processed_tokens else [result, "Percentage_Numbers_Chars"]
+            return processed_tokens if processed_tokens else [(word, "Percentage_Numbers_Chars")]
 
     @staticmethod
     def is_roman_number(word: str) -> tuple:
