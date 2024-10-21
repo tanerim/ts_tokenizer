@@ -212,7 +212,7 @@ class TokenPreProcess:
                 if isinstance(processed_word, tuple):
                     return [(TokenProcessor.process_token(initial)), (final, "Punc")]
             else:
-                return (word, "percentage_number_chars")
+                return (word, "Percentage_Numbers")
 
     @staticmethod
     def is_roman_number(word: str) -> tuple:

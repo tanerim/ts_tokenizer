@@ -3,7 +3,7 @@ import argparse
 from ts_tokenizer.tokenizer import TSTokenizer
 
 def main():
-    parser = argparse.ArgumentParser(description="ts-tokenizer")
+    parser = argparse.ArgumentParser(description="Tokenizer Script")
     parser.add_argument(
         'filename',
         nargs='?',
@@ -15,9 +15,14 @@ def main():
         default='tokenized',
         help="Specify the output format"
     )
-    parser.add_argument('-w', '--word', action='store_true', help="Enable CLI input mode")
+    parser.add_argument(
+        '-s', '--string', action='store_true', default=True, help="Return the output as a string (default)"
+    )
+    parser.add_argument(
+        '-j', '--json', action='store_true', help="Return the output as JSON"
+    )
     parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
-    parser.add_argument('-j', '--jobs', type=int, help="Number of parallel workers", default=None)
+    parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
 
     args = parser.parse_args()
 
@@ -30,7 +35,7 @@ def main():
 
         try:
             # Tokenize the input text from stdin
-            TSTokenizer.ts_tokenize(input_text=input_text, output_format=args.output, num_workers=args.jobs)
+            TSTokenizer.ts_tokenize(input_file=input_text, output_format=args.output, num_workers=args.num_workers)
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
@@ -38,7 +43,7 @@ def main():
     # Case 2: Filename provided
     elif args.filename:
         try:
-            TSTokenizer.ts_tokenize(filename=args.filename, output_format=args.output, num_workers=args.jobs)
+            TSTokenizer.ts_tokenize(filename=args.filename, output_format=args.output, num_workers=args.num_workers)
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)

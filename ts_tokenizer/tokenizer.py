@@ -1,22 +1,28 @@
 import sys
 import multiprocessing
 from tqdm import tqdm
+import json
 from concurrent.futures import ProcessPoolExecutor
 from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
 from ts_tokenizer.char_fix import CharFix
 
-class TSTokenizer:
 
-    @staticmethod
-    def tokenize_line(line, return_format):
-        """
-        Tokenizes a single line and returns the result based on the specified return format.
-        """
+def tokenize_line(line, return_format, json_output):
+    """
+    Tokenizes a single line and returns the result based on the specified return format.
+    """
+    try:
+        # Strip whitespace and remove any invisible characters
+        line = line.strip().replace('\u200b', '').replace('\ufeff', '')  # Remove zero-width spaces and BOM markers
+
+        if not line:  # Skip processing if the line is empty or contains only invisible characters
+            return None
+
         # First check if the line is an XML tag
         xml_tag = TokenPreProcess.is_xml(line)
         if xml_tag:
             if return_format == 'tagged':
-                return "\t".join(xml_tag)  # Return as XML_Tag with tag
+                return json.dumps(xml_tag, ensure_ascii=False) if json_output else "\t".join(xml_tag)
             else:
                 return line  # Return the original line (XML tag) unchanged
 
@@ -31,23 +37,44 @@ class TSTokenizer:
 
         # Handle output formats
         if return_format == 'tokenized':
+            if json_output:
+                return json.dumps({"tokens": [token[0] for token in flat_tokens]}, ensure_ascii=False)
             return '\n'.join([token[0] for token in flat_tokens])
+
         elif return_format == 'tagged':
+            if json_output:
+                return json.dumps([{"token": token[0], "tag": token[1]} for token in flat_tokens], ensure_ascii=False)
             return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
+
         elif return_format == 'lines':
+            if json_output:
+                return json.dumps({"tokens": [token[0] for token in flat_tokens]}, ensure_ascii=False)
             return ' '.join([token[0] for token in flat_tokens])
+
         elif return_format == 'tagged_lines':
+            if json_output:
+                return json.dumps([{"token": token[0], "tag": token[1]} for token in flat_tokens], ensure_ascii=False)
             return [(token[0], token[1]) for token in flat_tokens]  # Return a list of tuples
 
+    except (IndexError, TypeError) as e:
+        # Handle any string index out of range or type errors gracefully
+        print(f"Error processing line: {line}\nException: {e}", file=sys.stderr)
+        return None  # Return None to indicate an error occurred
+
+
+class TSTokenizer:
+
     @staticmethod
-    def ts_tokenize(input_text=None, filename=None, output_format='tokenized', num_workers=None, verbose=False):
+    def ts_tokenize(input_file=None, filename=None, output_format='tokenized', num_workers=None, verbose=False, json_output=False):
         if num_workers is None:
             num_workers = multiprocessing.cpu_count() - 1
 
         # Case 1: Handle piped input directly (input_text is provided)
-        if input_text:
-            for line in input_text.splitlines():
-                print(TSTokenizer.tokenize_line(line, output_format))
+        if input_file:
+            for line in input_file.splitlines():
+                result = tokenize_line(line, output_format, json_output)
+                if result is not None:
+                    print(result)
             return
 
         # Case 2: Handle file input (filename is provided)
@@ -78,20 +105,24 @@ class TSTokenizer:
 
                         # When the batch size is reached, process the batch in parallel
                         if len(batch) >= batch_size:
-                            futures = [executor.submit(TSTokenizer.tokenize_line, line, output_format) for line in batch]
+                            futures = [executor.submit(tokenize_line, line, output_format, json_output) for line in batch]
                             for future in futures:
-                                print(future.result())
+                                result = future.result()
+                                if result is not None:
+                                    print(result)
                             batch = []  # Clear batch after processing
 
                         # Update progress bar if verbose mode is enabled
                         if pbar:
-                            pbar.update(batch_size)
+                            pbar.update(min(len(batch), batch_size))
 
                     # Process remaining lines in the last batch
                     if batch:
-                        futures = [executor.submit(TSTokenizer.tokenize_line, line, output_format) for line in batch]
+                        futures = [executor.submit(tokenize_line, line, output_format, json_output) for line in batch]
                         for future in futures:
-                            print(future.result())
+                            result = future.result()
+                            if result is not None:
+                                print(result)
 
                         # Update progress bar for the remaining lines
                         if pbar:
@@ -116,21 +147,44 @@ if __name__ == "__main__":
         default='tokenized',
         help="Specify the output format"
     )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        '-s', '--string', action='store_true', help="Return the output as a string (default)"
+    )
+    group.add_argument(
+        '-j', '--json', action='store_true', help="Return the output as JSON"
+    )
     parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
-    parser.add_argument('-j', '--jobs', type=int, help="Number of parallel workers", default=None)
+    parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
 
     args = parser.parse_args()
+
+    # Set default output to string if neither is specified
+    if not args.string and not args.json:
+        args.string = True
 
     # Check if input is from stdin or file
     if not sys.stdin.isatty():
         input_text = sys.stdin.read().strip()
         if input_text:
-            TSTokenizer.ts_tokenize(input_text=input_text, output_format=args.output, num_workers=args.jobs, verbose=args.verbose)
+            TSTokenizer.ts_tokenize(
+                input_file=input_text,
+                output_format=args.output,
+                num_workers=args.num_workers,
+                verbose=args.verbose,
+                json_output=args.json
+            )
         else:
             print("Error: No input received from stdin.", file=sys.stderr)
             sys.exit(1)
     elif args.filename:
-        TSTokenizer.ts_tokenize(filename=args.filename, output_format=args.output, num_workers=args.jobs, verbose=args.verbose)
+        TSTokenizer.ts_tokenize(
+            filename=args.filename,
+            output_format=args.output,
+            num_workers=args.num_workers,
+            verbose=args.verbose,
+            json_output=args.json
+        )
     else:
         print("Usage: ts-tokenizer <filename> or pipe input via stdin (e.g., cat file.txt | ts-tokenizer)")
         sys.exit(1)
