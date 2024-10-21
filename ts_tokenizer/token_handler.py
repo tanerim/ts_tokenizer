@@ -205,38 +205,14 @@ class TokenPreProcess:
     def is_percentage_numbers_chars(word: str) -> list:
         result = check_regex(word, "percentage_numbers_chars")
         if result:
-            # Regex pattern to split into words and percentages
-            pattern = r'(%\d+(?:[.,]\d+)?(?:-\d+)?|\d+(?:[.,]\d+)?%|[a-zA-ZşŞıİçÇğĞöÖüÜ]+)'
-            tokens = re.findall(pattern, word)
-            print(tokens, len(tokens))
-            if not tokens:
-                return [(word, "Percentage_Numbers_Chars")]
-
-            processed_tokens = []
-
-            if tokens:
-                if len(tokens) == 1:
-                    return [(word, "Percentage_Numbers_Chars")]
-                elif len(tokens) == 2:
-                    if str(tokens[0]).startswith("%"):
-                        return [(tokens[0], "Percentage_Numbers_Chars"), TokenProcessor.process_token(tokens[1])]
-                    elif str(tokens[1]).startswith("%"):
-                        return [TokenProcessor.process_token(tokens[0]), (tokens[1], "Percentage_Numbers_Chars")]
-                    return [(tokens[0], "Percentage_Numbers_Chars"), TokenProcessor.process_token(tokens[1])]
-                elif len(tokens) == 3:
-                    return [TokenProcessor.process_token(tokens[0]), (tokens[1], "Percentage_Numbers_Chars"), TokenProcessor.process_token(tokens[2])]
-                else:
-                    # Process the first token
-                    first_token = tokens[0]
-                    second_token = tokens[1]
-                    processed_tokens.append(TokenProcessor.process_token(first_token))
-                    processed_tokens.append(TokenProcessor.process_token(second_token))
-
-                    # Process the remaining tokens
-                    for token in tokens:
-                        processed_tokens.append(TokenProcessor.process_token(token))
-
-            return processed_tokens if processed_tokens else [(word, "Percentage_Numbers_Chars")]
+            if word[-1] in puncs:
+                initial = word[:-1]
+                final = word[-1]
+                processed_word = (initial, final)
+                if isinstance(processed_word, tuple):
+                    return [(TokenProcessor.process_token(initial)), (final, "Punc")]
+            else:
+                return (word, "percentage_number_chars")
 
     @staticmethod
     def is_roman_number(word: str) -> tuple:
