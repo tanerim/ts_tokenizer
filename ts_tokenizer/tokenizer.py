@@ -7,7 +7,7 @@ from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
 from ts_tokenizer.char_fix import CharFix
 
 
-def tokenize_line(line, return_format, json_output):
+def tokenize_line(line, return_format, json_output=False):
     """
     Tokenizes a single line and returns the result based on the specified return format.
     """
@@ -37,8 +37,7 @@ def tokenize_line(line, return_format, json_output):
 
         # Handle output formats
         if return_format == 'tokenized':
-            if json_output:
-                return json.dumps({"tokens": [token[0] for token in flat_tokens]}, ensure_ascii=False)
+            # Do not apply JSON formatting for 'tokenized'
             return '\n'.join([token[0] for token in flat_tokens])
 
         elif return_format == 'tagged':
@@ -54,12 +53,13 @@ def tokenize_line(line, return_format, json_output):
         elif return_format == 'tagged_lines':
             if json_output:
                 return json.dumps([{"token": token[0], "tag": token[1]} for token in flat_tokens], ensure_ascii=False)
-            return [(token[0], token[1]) for token in flat_tokens]  # Return a list of tuples
+            return [(token[0], token[1])]  # Return a list of tuples
 
     except (IndexError, TypeError) as e:
         # Handle any string index out of range or type errors gracefully
         print(f"Error processing line: {line}\nException: {e}", file=sys.stderr)
         return None  # Return None to indicate an error occurred
+
 
 
 class TSTokenizer:
