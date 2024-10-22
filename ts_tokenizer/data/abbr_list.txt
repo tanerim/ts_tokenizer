@@ -96,6 +96,7 @@ Ar-Ge
 AR-GE
 Ar.Gör
 ark
+A.B.D.
 A.Ş.
 AŞ
 ASAL
@@ -598,6 +599,8 @@ LPG
 LPI
 LSD
 Ltd
+lt
+Lt
 LYS
 m
 M
@@ -1052,3 +1055,9 @@ WiFi
 mah
 KDV
 UK
+kwh
+Kwh
+KwH
+Gwh
+krş
+gima
