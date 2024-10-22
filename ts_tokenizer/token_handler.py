@@ -139,13 +139,16 @@ class TokenPreProcess:
         if len(word) > 2:
             result = check_regex(word, "in_parenthesis")
             if result:
-                initial_parenthesis = word[0]
-                final_parenthesis = word[-1]
-                content = word[1:-1]
-                processed_content = TokenProcessor.process_token(content)
-                if isinstance(processed_content, tuple):
-                    processed_content = [processed_content]
-                return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
+                if re.match(r"^\([0-9]{1,2}\)$", word):
+                    return [(word, "Numbered_Title")]
+                else:
+                    initial_parenthesis = word[0]
+                    final_parenthesis = word[-1]
+                    content = word[1:-1]
+                    processed_content = TokenProcessor.process_token(content)
+                    if isinstance(processed_content, tuple):
+                        processed_content = [processed_content]
+                    return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
 
     @staticmethod
     @apply_charfix
@@ -287,16 +290,36 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_num_char_sequence(word: str) -> tuple:
+    def is_num_char_sequence(word: str) -> list:
         result = check_regex(word, "num_char_sequence")
         if result:
-            if word.count("-") == 1:
-                parts = word.split("-")
-                initial = TokenProcessor.process_token(parts[0])
-                final = TokenProcessor.process_token(parts[1])
-                return [initial, ("-", "Punc"), final]
-            else:
-                return (result, "Num_Char_Sequence") if result else None
+            separators = ["-", "|", "(", ")", ":", ";", "—", "\\"]
+            for sep in separators:
+                if sep in word:
+                    parts = word.split(sep)
+
+                    if len(parts) == 2 and parts[0] and parts[1]:
+                        initial = TokenProcessor.process_token(parts[0])
+                        final = TokenProcessor.process_token(parts[1])
+
+                        if isinstance(initial, tuple):
+                            initial = [initial]
+                        if isinstance(final, tuple):
+                            final = [final]
+
+                        return initial + [(sep, "Punc")] + final
+
+            if len(word) > 1 and word[-1] in separators:
+                final_punc = word[-1]
+                remaining_word = word[:-1]
+                processed_word = TokenProcessor.process_token(remaining_word)
+
+                if isinstance(processed_word, tuple):
+                    processed_word = [processed_word]
+
+                return processed_word + [(final_punc, "Punc")]
+
+            return [(result, "Num_Char_Sequence")] if result else [(word, "Num_Char_Sequence")]
 
     # Lexicon Based Tokens
     @staticmethod
@@ -359,6 +382,8 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str) -> list:
+        if re.match(r"^[a-zAZ]{1}\)", word):
+            return word, "Numbered_Title"
         if len(word) > 1 and word[-1] in puncs and all(char not in puncs for char in word[:-1]):
             final_punc = word[-1]
             remaining_word = word[:-1]

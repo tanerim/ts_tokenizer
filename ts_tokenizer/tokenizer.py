@@ -55,11 +55,10 @@ def tokenize_line(line, return_format, json_output=False):
                 return json.dumps([{"token": token[0], "tag": token[1]} for token in flat_tokens], ensure_ascii=False)
             return [(token[0], token[1])]  # Return a list of tuples
 
-    except (IndexError, TypeError) as e:
+    except (IndexError, TypeError):
         # Handle any string index out of range or type errors gracefully
-        print(f"Error processing line: {line}\nException: {e}", file=sys.stderr)
+        # print(f"Error processing line: {line}\nException: {e}", file=sys.stderr)
         return None  # Return None to indicate an error occurred
-
 
 
 class TSTokenizer:
