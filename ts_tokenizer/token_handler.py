@@ -20,7 +20,7 @@ REGEX_PATTERNS = {
     "mention": re.compile(r'^@[^@]{1,143}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
-    "url_pattern": re.compile(fr'(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}(?:{domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
+    "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}(?:{domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
     "hour": re.compile(r"\b(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?(?=$|\s)"),
     "percentage_numbers_chars": re.compile(r'%(\d+\D+)'),
     "percentage_numbers": re.compile(r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)'),
@@ -265,6 +265,7 @@ class TokenPreProcess:
         if any(dne in word for dne in LocalData.domains()) and "@" not in word and word[0] not in puncs and word[-1] not in [")", "(", "[", "]"]:
             result = check_regex(word, "url_pattern")
             if "'" in word:
+                word.split("'")
                 return (result, "URL_Suffix") if result else None
             else:
                 return (result, "URL") if result else None
@@ -288,7 +289,14 @@ class TokenPreProcess:
     @apply_charfix
     def is_num_char_sequence(word: str) -> tuple:
         result = check_regex(word, "num_char_sequence")
-        return (result, "Num_Char_Sequence") if result else None
+        if result:
+            if word.count("-") == 1:
+                parts = word.split("-")
+                initial = TokenProcessor.process_token(parts[0])
+                final = TokenProcessor.process_token(parts[1])
+                return [initial, ("-", "Punc"), final]
+            else:
+                return (result, "Num_Char_Sequence") if result else None
 
     # Lexicon Based Tokens
     @staticmethod
@@ -501,7 +509,8 @@ class TokenPreProcess:
     def is_apostrophed(word: str) -> tuple:
         result = check_regex(word, "apostrophed")
         if result:
-            return word, "Apostrophed"
+            if word[-1] in puncs:
+                return [(word[:-1], "Apostrophed"), (word[-1], "Punc")]
 
     @staticmethod
     @apply_charfix
