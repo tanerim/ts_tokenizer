@@ -125,13 +125,13 @@ class TokenPreProcess:
     def is_in_quotes(word: str) -> list:
         result = check_regex(word, "in_quotes")
         if result:
-            initial_parenthesis = word[0]
-            final_parenthesis = word[-1]
+            initial_quotes = word[0]
+            final_quotes = word[-1]
             content = word[1:-1]
             processed_content = TokenProcessor.process_token(content)
             if isinstance(processed_content, tuple):
                 processed_content = [processed_content]
-            return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
+            return [(initial_quotes, "Punc")] + processed_content + [(final_quotes, "Punc")]
 
     @staticmethod
     @apply_charfix
@@ -139,7 +139,7 @@ class TokenPreProcess:
         if len(word) > 2:
             result = check_regex(word, "in_parenthesis")
             if result:
-                if re.match(r"^\([0-9]{1,2}\)$", word):
+                if punc_count(word) < 3 and "'" not in word and re.match(r"^\([0-9]{1,2}\)$", word):
                     return [(word, "Numbered_Title")]
                 else:
                     initial_parenthesis = word[0]
@@ -163,7 +163,7 @@ class TokenPreProcess:
                 parenthesis_content = parts[0] + "]"
             elif word[0] == "{":
                 parenthesis_content = parts[0] + "}"
-            if re.match(r'^[\(\[\{]\d{1,2}[\)\]\}]$', parenthesis_content):  # Matches "(1)", "(20)", etc.
+            if re.match(r'^[\(\[\{]\d{1,2}[\)\]\}]$', parenthesis_content) and "'" not in word:  # Matches "(1)", "(20)", etc.
                 numbered_title = [(parenthesis_content, "Numbered_Title")]
                 remaining_part = parts[1].strip()
                 processed_remaining = TokenProcessor.process_token(remaining_part) if remaining_part else []
@@ -382,7 +382,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str) -> list:
-        if re.match(r"^[a-zAZ]{1}\)", word):
+        if re.match(r"^[a-zAZ]{1}\)", word) and punc_count(word) < 2:
             return word, "Numbered_Title"
         if len(word) > 1 and word[-1] in puncs and all(char not in puncs for char in word[:-1]):
             final_punc = word[-1]
