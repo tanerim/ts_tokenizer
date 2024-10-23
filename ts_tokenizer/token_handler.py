@@ -536,6 +536,8 @@ class TokenPreProcess:
         if result:
             if word[-1] in puncs:
                 return [(word[:-1], "Apostrophed"), (word[-1], "Punc")]
+            else:
+                return (word, "Apostrophed")
 
     @staticmethod
     @apply_charfix
