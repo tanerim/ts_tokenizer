@@ -1,5 +1,7 @@
 import re
 import string
+from typing import List, Tuple, Any
+
 from .data import LocalData
 from .char_fix import CharFix
 from .date_check import DateCheck
@@ -30,6 +32,8 @@ REGEX_PATTERNS = {
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)'),
     "registered": re.compile(r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)'),
+    "trade_mark": re.compile(r'(?:^™[a-zA-Z]+$)|(?:^[a-zA-Z]+™$)'),
+    "bullet_list": re.compile(r'(?:^•[a-zA-Z]+$)|(?:^[a-zA-Z]$)'),
     "initial_parenthesis": re.compile(r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$"),
     "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
@@ -41,9 +45,6 @@ REGEX_PATTERNS = {
 
 exception_list = ["(!)", "...", "[...]"]
 
-
-#def check_regex(word, pattern):
-#    return word if re.search(REGEX_PATTERNS[pattern], CharFix.fix(word)) else None
 
 def check_regex(word, pattern):
     return word if REGEX_PATTERNS[pattern].search(CharFix.fix(word)) else None
@@ -223,6 +224,11 @@ class TokenPreProcess:
         return (result, "Roman_Number") if result else None
 
     @staticmethod
+    def is_bullet_list(word: str) -> tuple:
+        result = check_regex(word, "bullet_list")
+        return (result, "Bullet_List") if result else None
+
+    @staticmethod
     def is_email_punc(word: str) -> list:
         result = check_regex(word, "email_punc")
         if result:
@@ -282,6 +288,11 @@ class TokenPreProcess:
     def is_registered(word: str) -> tuple:
         result = check_regex(word, "registered")
         return (result, "Registered") if result else None
+
+    @staticmethod
+    def is_trademark(word: str) -> tuple:
+        result = check_regex(word, "trade_mark")
+        return (result, "Trade_Mark") if result else None
 
     @staticmethod
     def is_currency(word: str) -> tuple:
@@ -382,31 +393,14 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str) -> list:
-        if re.match(r"^[a-zAZ]{1}\)", word) and punc_count(word) < 2:
-            return word, "Numbered_Title"
-        if len(word) > 1 and word[-1] in puncs and all(char not in puncs for char in word[:-1]):
+        if punc_count(word) == 1 and word[-1] in puncs:
             final_punc = word[-1]
             remaining_word = word[:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
             if isinstance(processed_word, tuple):
                 processed_word = [processed_word]
-            return processed_word + [(final_punc, "Punc")]
+                return processed_word + [(final_punc, "Punc")]
 
-        elif len(word) > 1 and word[-1] in puncs and punc_count(word) > 2:
-            final_punc = word[-1]
-            remaining_word = word[:-1]
-            processed_word = split_on_punctuation(remaining_word, puncs)
-            if isinstance(processed_word, tuple):
-                processed_word = [processed_word]
-            return processed_word + [(final_punc, "Punc")]
-
-        elif word[-1] in puncs:
-            final_punc = word[-1]
-            remaining_word = word[:-1]
-            processed_word = TokenProcessor.process_token(remaining_word)
-            if isinstance(processed_word, tuple):
-                processed_word = [processed_word]
-            return processed_word + [(final_punc, "Punc")]
 
     @staticmethod
     @apply_charfix
@@ -504,30 +498,51 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str) -> tuple:
-        fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
-        if fmp_regex.search(word):
-            first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
-            before_punc = word[:first_punc_index]
-            from_punc = word[first_punc_index:]
-            if from_punc in exception_list:
-                return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
-            if len(word) > 1 and word not in exception_list:
-                end_punc_count = 0
-                for char in word[::-1]:
-                    if char in puncs:
-                        end_punc_count += 1
-                    else:
-                        break
-                if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
-                    final_punc = word[-end_punc_count:]
-                    remaining_word = word[:-end_punc_count]
-                    lower_remaining_word = lower_word[:-end_punc_count]
-                    processed_word = TokenProcessor.process_token(lower_remaining_word)
-                    if isinstance(processed_word, tuple):
-                        processed_word = [processed_word]
-                    if processed_word:
-                        processed_word[0] = (remaining_word, processed_word[0][1])
-                    return processed_word + [(final_punc, "Punc")]
+        if punc_count(word) >= 2 :
+            fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
+            for exception in exception_list:
+                if exception in word:
+                    before_exception, exception_part, after_exception = word.partition(exception)
+                    tokens = []
+                    if before_exception:
+                        tokens.append(TokenProcessor.process_token(before_exception))
+                    tokens.append((exception_part, "Punc"))
+                    if after_exception:
+                        if after_exception in puncs:
+                            tokens.append((after_exception, "Punc"))
+                        else:
+                            tokens.append(TokenProcessor.process_token(after_exception))
+                    return tokens
+
+            if fmp_regex.search(word):
+                first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
+                before_punc = word[:first_punc_index]
+                from_punc = word[first_punc_index:]
+
+                if from_punc in exception_list:
+                    return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+
+                if len(word) > 1 and word not in exception_list:
+                    end_punc_count = 0
+                    for char in word[::-1]:
+                        if char in puncs:
+                            end_punc_count += 1
+                        else:
+                            break
+
+                    if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
+                        final_punc = word[-end_punc_count:]
+                        remaining_word = word[:-end_punc_count]
+                        lower_remaining_word = lower_word[:-end_punc_count]
+                        processed_word = TokenProcessor.process_token(lower_remaining_word)
+                        if isinstance(processed_word, tuple):
+                            processed_word = [processed_word]
+                        if processed_word:
+                            processed_word[0] = (remaining_word, processed_word[0][1])
+                        separated_puncs = [(char, "Punc") for char in final_punc]
+                        return processed_word + separated_puncs
+
+            return TokenProcessor.process_token(word)
 
     @staticmethod
     @apply_charfix
@@ -541,22 +556,36 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_midp(word: str) -> list:
-        if len(word) > 2:
-            if word[0] not in puncs and word[-1] not in puncs:
-                mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
-                if len(mid_punc_pos) == 1:
-                    mid_punc_idx = mid_punc_pos[0]
-                    initial_part = word[:mid_punc_idx]
-                    mid_punc = word[mid_punc_idx]
-                    remaining_part = word[mid_punc_idx + 1:]
-                    processed_initial = TokenProcessor.process_token(initial_part)
-                    processed_remaining = TokenProcessor.process_token(remaining_part)
-                    if isinstance(processed_initial, tuple):
-                        processed_initial = [processed_initial]
-                    if isinstance(processed_remaining, tuple):
-                        processed_remaining = [processed_remaining]
-                    return processed_initial + [(mid_punc, "Punc")] + processed_remaining
+    @tr_lowercase
+    def is_midp(word: str, lower_word: str) -> list:
+        # Ensure the word is at least 3 characters long and doesn't start or end with punctuation
+        if len(word) > 2 and word[0] not in puncs and word[-1] not in puncs:
+            if "-" in lower_word:
+                parts = lower_word.split("-")
+                if len(parts) == 2:
+                    processed_initial = TokenProcessor.process_token(parts[0])
+                    processed_remaining = TokenProcessor.process_token(parts[1])
+                    if processed_initial[1] == processed_remaining[1] == "Valid_Word":
+                        return [(word, "Hyphenated")]
+
+            mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
+
+            if len(mid_punc_pos) == 1:
+                mid_punc_idx = mid_punc_pos[0]
+                initial_part = lower_word[:mid_punc_idx]
+                mid_punc = word[mid_punc_idx]
+                remaining_part = lower_word[mid_punc_idx + 1:]
+
+                processed_initial = TokenProcessor.process_token(initial_part)
+                processed_remaining = TokenProcessor.process_token(remaining_part)
+
+                if isinstance(processed_initial, tuple):
+                    processed_initial = [processed_initial]
+                if isinstance(processed_remaining, tuple):
+                    processed_remaining = [processed_remaining]
+
+                return processed_initial + [(mid_punc, "Punc")] + processed_remaining
+
 
     @staticmethod
     def is_punc(word):
@@ -608,7 +637,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_one_char_fixable(word):
-        extra_chars = ["¬", "-", "º", "0", "1"]
+        extra_chars = ["¬","º", "0", "1"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
                 fixed_word = word.replace(extra, "")
@@ -655,6 +684,7 @@ check_methods = [
         TokenPreProcess.is_hashtag,
         TokenPreProcess.is_copyright,
         TokenPreProcess.is_registered,
+        TokenPreProcess.is_trademark,
         TokenPreProcess.is_currency,
         TokenPreProcess.is_percentage_numbers_chars,
         TokenPreProcess.is_percentage_numbers,
@@ -677,6 +707,7 @@ check_methods = [
 
         # Final Checks
         TokenPreProcess.is_multiple_emoticon,
+        TokenPreProcess.is_bullet_list,
         TokenPreProcess.is_non_latin,
         TokenPreProcess.is_num_char_sequence
     ]
@@ -696,16 +727,6 @@ class TokenProcessor:
         elif output_format == 'string':
             return f"{result[0]}\t{result[1]}"
 
-    #@staticmethod
-    #def process_token(token: str, output_format: str = 'tuple') -> tuple:
-    #    for check in check_methods:
-    #        result = check(token)
-    #        if result:
-    #            return TokenProcessor.format_output(result, output_format)
-
-        # If no checks match, return "OOV" with the requested output format
-    #    oov_result = (token, "OOV")
-    #    return TokenProcessor.format_output(oov_result, output_format)
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
         for check in check_methods:
@@ -713,4 +734,3 @@ class TokenProcessor:
             if result:
                 return TokenProcessor.format_output(result, output_format)
         return TokenProcessor.format_output((token, "OOV"), output_format)
-
