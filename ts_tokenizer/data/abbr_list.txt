@@ -1109,3 +1109,10 @@ EMS
 WAN
 st
 St
+NAT
+NOS
+HES
+VISA
+visa
+TWA
+TAİ
