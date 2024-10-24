@@ -498,8 +498,10 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str) -> tuple:
-        if punc_count(word) >= 2 :
+        if punc_count(word) >= 2:
             fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
+
+            # Check for exceptions
             for exception in exception_list:
                 if exception in word:
                     before_exception, exception_part, after_exception = word.partition(exception)
@@ -514,6 +516,7 @@ class TokenPreProcess:
                             tokens.append(TokenProcessor.process_token(after_exception))
                     return tokens
 
+            # Condition to check if all punctuation marks are the same
             if fmp_regex.search(word):
                 first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
                 before_punc = word[:first_punc_index]
@@ -521,6 +524,13 @@ class TokenPreProcess:
 
                 if from_punc in exception_list:
                     return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+
+                # Handle identical punctuation characters
+                if len(set(from_punc)) == 1:  # All punctuation marks are the same
+                    if before_punc:
+                        return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+                    else:
+                        return [(from_punc, "Punc")]
 
                 if len(word) > 1 and word not in exception_list:
                     end_punc_count = 0
@@ -559,13 +569,19 @@ class TokenPreProcess:
     @tr_lowercase
     def is_midp(word: str, lower_word: str) -> list:
         # Ensure the word is at least 3 characters long and doesn't start or end with punctuation
-        if len(word) > 2 and word[0] not in puncs and word[-1] not in puncs:
+        if len(word) > 2 and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2:
             if "-" in lower_word:
                 parts = lower_word.split("-")
                 if len(parts) == 2:
                     processed_initial = TokenProcessor.process_token(parts[0])
                     processed_remaining = TokenProcessor.process_token(parts[1])
                     if processed_initial[1] == processed_remaining[1] == "Valid_Word":
+                        return [(word, "Hyphenated")]
+                elif len(parts) == 3:
+                    processed_initial = TokenProcessor.process_token(parts[0])
+                    processed_remaining = TokenProcessor.process_token(parts[1])
+                    processed_fial = TokenProcessor.process_token(parts[2])
+                    if processed_initial[1] == processed_remaining[1] == processed_fial[1] == "Valid_Word":
                         return [(word, "Hyphenated")]
 
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
@@ -585,6 +601,8 @@ class TokenPreProcess:
                     processed_remaining = [processed_remaining]
 
                 return processed_initial + [(mid_punc, "Punc")] + processed_remaining
+            else:
+                return TokenProcessor.process_token(word)
 
 
     @staticmethod
