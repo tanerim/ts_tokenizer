@@ -1,15 +1,15 @@
-from ts_tokenizer.token_handler import TokenProcessor
+from token_handler import TokenProcessor
+
 
 class oov_parser:
     def __init__(self):
         pass
 
     @staticmethod
-    def isp_parser(word: str) -> tuple:
-        if word[0] == ",":
-            return TokenProcessor.process_token(word[1:])
+    def tokenize_oov(candidate: tuple) ->tuple:
+        if type(candidate) is tuple:
+            if candidate[1] == "OOV":
+                return TokenProcessor.process_token(candidate[0])
 
 
-word = ",yeniden,eski"
-
-print(oov_parser.isp_parser(word))
+print(oov_parser.tokenize_oov(("oldu-bitti", "OOV")))

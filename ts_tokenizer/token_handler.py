@@ -498,9 +498,7 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str) -> tuple:
-        if punc_count(word) >= 2:
-            fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
-
+        if punc_count(word) >= 2 and word[0] not in puncs:
             # Check for exceptions
             for exception in exception_list:
                 if exception in word:
@@ -515,42 +513,42 @@ class TokenPreProcess:
                         else:
                             tokens.append(TokenProcessor.process_token(after_exception))
                     return tokens
+                    break
 
-            # Condition to check if all punctuation marks are the same
-            if fmp_regex.search(word):
-                first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
-                before_punc = word[:first_punc_index]
-                from_punc = word[first_punc_index:]
+        # Condition to check if all punctuation marks are the same
+        fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
+        if fmp_regex.search(word):
+            first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
+            before_punc = word[:first_punc_index]
+            from_punc = word[first_punc_index:]
 
-                if from_punc in exception_list:
+            if from_punc in exception_list:
+                return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+
+            # Handle identical punctuation characters
+            if len(set(from_punc)) == 1:  # All punctuation marks are the same
+                if before_punc:
                     return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+                else:
+                    return [(from_punc, "Punc")]
 
-                # Handle identical punctuation characters
-                if len(set(from_punc)) == 1:  # All punctuation marks are the same
-                    if before_punc:
-                        return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
-                    else:
-                        return [(from_punc, "Punc")]
+            if len(word) > 1 and word not in exception_list:
+                end_punc_count = 0
+                for char in word[::-1]:
+                    if char in puncs:
+                        end_punc_count += 1
 
-                if len(word) > 1 and word not in exception_list:
-                    end_punc_count = 0
-                    for char in word[::-1]:
-                        if char in puncs:
-                            end_punc_count += 1
-                        else:
-                            break
-
-                    if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
-                        final_punc = word[-end_punc_count:]
-                        remaining_word = word[:-end_punc_count]
-                        lower_remaining_word = lower_word[:-end_punc_count]
-                        processed_word = TokenProcessor.process_token(lower_remaining_word)
-                        if isinstance(processed_word, tuple):
-                            processed_word = [processed_word]
-                        if processed_word:
-                            processed_word[0] = (remaining_word, processed_word[0][1])
-                        separated_puncs = [(char, "Punc") for char in final_punc]
-                        return processed_word + separated_puncs
+                if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
+                    final_punc = word[-end_punc_count:]
+                    remaining_word = word[:-end_punc_count]
+                    lower_remaining_word = lower_word[:-end_punc_count]
+                    processed_word = TokenProcessor.process_token(lower_remaining_word)
+                    if isinstance(processed_word, tuple):
+                        processed_word = [processed_word]
+                    if processed_word:
+                        processed_word[0] = (remaining_word, processed_word[0][1])
+                    separated_puncs = [(char, "Punc") for char in final_punc]
+                    return processed_word + separated_puncs
 
             return TokenProcessor.process_token(word)
 
@@ -568,21 +566,12 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_midp(word: str, lower_word: str) -> list:
-        # Ensure the word is at least 3 characters long and doesn't start or end with punctuation
-        if len(word) > 2 and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2:
+        if len(word) > 2 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2:
             if "-" in lower_word:
                 parts = lower_word.split("-")
-                if len(parts) == 2:
-                    processed_initial = TokenProcessor.process_token(parts[0])
-                    processed_remaining = TokenProcessor.process_token(parts[1])
-                    if processed_initial[1] == processed_remaining[1] == "Valid_Word":
-                        return [(word, "Hyphenated")]
-                elif len(parts) == 3:
-                    processed_initial = TokenProcessor.process_token(parts[0])
-                    processed_remaining = TokenProcessor.process_token(parts[1])
-                    processed_fial = TokenProcessor.process_token(parts[2])
-                    if processed_initial[1] == processed_remaining[1] == processed_fial[1] == "Valid_Word":
-                        return [(word, "Hyphenated")]
+                processed_parts = [TokenProcessor.process_token(part) for part in parts]
+                if all(processed_part[1] == "Valid_Word" for processed_part in processed_parts):
+                    return [(word, "Hyphenated")]
 
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
 
@@ -713,8 +702,8 @@ check_methods = [
         # These need recursive handling
         TokenPreProcess.is_imp,
         TokenPreProcess.is_isp,
-        TokenPreProcess.is_fmp,
         TokenPreProcess.is_fsp,
+        TokenPreProcess.is_fmp,
         TokenPreProcess.is_mssp,
         TokenPreProcess.is_msp,
         TokenPreProcess.is_midp,
