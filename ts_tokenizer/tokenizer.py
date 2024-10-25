@@ -7,7 +7,7 @@ from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
 from ts_tokenizer.char_fix import CharFix
 
 
-def tokenize_line(line, return_format, output=False):
+def tokenize(line, return_format, output=False):
     """
     Tokenizes a single line and returns the result based on the specified return format.
     """
@@ -74,7 +74,7 @@ class TSTokenizer:
         # Case 1: Handle piped input directly (input_text is provided)
         if input_file:
             for line in input_file.splitlines():
-                result = tokenize_line(line, output_format, output)
+                result = tokenize(line, output_format, output)
                 if result is not None:
                     print(result)
             return
@@ -107,7 +107,7 @@ class TSTokenizer:
 
                         # When the batch size is reached, process the batch in parallel
                         if len(batch) >= batch_size:
-                            futures = [executor.submit(tokenize_line, line, output_format, output) for line in batch]
+                            futures = [executor.submit(tokenize, line, output_format, output) for line in batch]
                             for future in futures:
                                 result = future.result()
                                 if result is not None:
@@ -120,7 +120,7 @@ class TSTokenizer:
 
                     # Process remaining lines in the last batch
                     if batch:
-                        futures = [executor.submit(tokenize_line, line, output_format, output) for line in batch]
+                        futures = [executor.submit(tokenize, line, output_format, output) for line in batch]
                         for future in futures:
                             result = future.result()
                             if result is not None:

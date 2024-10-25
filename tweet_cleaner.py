@@ -1,11 +1,10 @@
 from ts_tokenizer.data import word_list
 from ts_tokenizer.char_fix import CharFix
-from ts_tokenizer.tokenizer import tokenize_line
+from ts_tokenizer.tokenizer import tokenize
 
 line = "A_a1daki maddeyi okuyun! FEN kurallar1na ayk1r1 olarak yap1lm1_ binalara Yap1 Kay1t Belgesi verildi + Yap1 depreme dayan1ks1zsa, sorumluluk malikte denildi¶ 0ktidar, y1k1l1rsa sorumlu sizsiniz dedi ve ~5 milyar$ tahsil etti+2018 seçimlerinde oy için yap1ld1"
-print(f"Original Line:\n{line}")
-print("\n")
-tok_line = tokenize_line(line, "lines")
+
+tok_line = tokenize(line, "lines")
 
 fixed_tweet = []
 
