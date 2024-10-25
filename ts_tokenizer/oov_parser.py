@@ -12,4 +12,4 @@ class oov_parser:
                 return TokenProcessor.process_token(candidate[0])
 
 
-print(oov_parser.tokenize_oov(("oldu-bitti", "OOV")))
+#print(oov_parser.tokenize_oov(("oldu-bitti", "OOV")))

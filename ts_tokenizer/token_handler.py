@@ -27,7 +27,8 @@ REGEX_PATTERNS = {
     "percentage_numbers_chars": re.compile(r'%(\d+\D+)'),
     "percentage_numbers": re.compile(r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)'),
     "single_hyphen": re.compile(r'^(?!-)[\w]+-[\w]+(?!-)$'),
-    "date_range": re.compile(r'^\d{4}-\d{4}$'),
+    "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
+    #"date_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[\(\[\{][^()\[\]{}]*[\)\]\}]$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)'),
@@ -566,13 +567,7 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_midp(word: str, lower_word: str) -> list:
-        if len(word) > 2 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2:
-            if "-" in lower_word:
-                parts = lower_word.split("-")
-                processed_parts = [TokenProcessor.process_token(part) for part in parts]
-                if all(processed_part[1] == "Valid_Word" for processed_part in processed_parts):
-                    return [(word, "Hyphenated")]
-
+        if len(word) > 2 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2 and "_" not in word and  "-" not in word:
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
 
             if len(mid_punc_pos) == 1:
@@ -604,15 +599,22 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_underscored(word: str, lower_word: str) -> tuple:
-        if "_" in word and 1 <= word.count("_") <= 1 and word[0] != "_" and word[-1] != "_":
+        if "_" in word and len(word) > 3 and word[0] != "_" and word[-1] != "_":
             parts = lower_word.split("_")
-            # Check if it is alphanumeric underscored
-            if len(parts) == 2 and parts[0].isalpha() and parts[1].isdigit() or parts[0].isdigit() and parts[1].isalpha():
-                return word, "Alphanumeric_Underscored"
-            # Check if all parts exist in the lexicon
-            elif all(part in LocalData.word_list() for part in parts):
-                return word, "Underscored"
-            return word, "OOV"
+            processed_parts = [TokenProcessor.process_token(part) for part in parts]
+            if all(processed_part[1] == "Valid_Word" for processed_part in processed_parts):
+                return [(word, "Underscored")]
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_hyphenated(word: str, lower_word: str) -> tuple:
+        if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
+            parts = lower_word.split("-")
+            processed_parts = [TokenProcessor.process_token(part) for part in parts]
+            if all(processed_part[1] == "Valid_Word" for processed_part in processed_parts):
+                return [(word, "Hyphenated")]
+
 
     @staticmethod
     @apply_charfix
@@ -679,12 +681,14 @@ check_methods = [
         # Before validation make sure it is apostrophed
         TokenPreProcess.is_apostrophed,
         TokenPreProcess.is_underscored,
-        TokenPreProcess.is_email,
-        TokenPreProcess.is_email_punc,
-        TokenPreProcess.is_url,
+        TokenPreProcess.is_hyphenated,
+
         TokenPreProcess.is_date_range,
         TokenPreProcess.is_date,
         TokenPreProcess.is_hour,
+        TokenPreProcess.is_email,
+        TokenPreProcess.is_email_punc,
+        TokenPreProcess.is_url,
 
         # Basic Regex Tokens
         TokenPreProcess.is_mention,
@@ -706,6 +710,7 @@ check_methods = [
         TokenPreProcess.is_fmp,
         TokenPreProcess.is_mssp,
         TokenPreProcess.is_msp,
+        # Check midp at last step !
         TokenPreProcess.is_midp,
 
         # Raw Punctuation
