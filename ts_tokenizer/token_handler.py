@@ -143,10 +143,13 @@ class TokenPreProcess:
             if result:
                 if punc_count(word) < 3 and "'" not in word and re.match(r"^\([0-9]{1,2}\)$", word):
                     return [(word, "Numbered_Title")]
+
                 else:
                     initial_parenthesis = word[0]
                     final_parenthesis = word[-1]
                     content = word[1:-1]
+                    if all(char.isalpha() or char in ['.', '-'] for char in content):
+                        return [(word[0], "Punc"), TokenProcessor.process_token(content), (word[-1], "Punc")]
                     processed_content = TokenProcessor.process_token(content)
                     if isinstance(processed_content, tuple):
                         processed_content = [processed_content]
@@ -217,7 +220,7 @@ class TokenPreProcess:
                 if isinstance(processed_word, tuple):
                     return [(TokenProcessor.process_token(initial)), (final, "Punc")]
             else:
-                return (word, "Percentage_Numbers")
+                return [(word, "Percentage_Numbers")]
 
     @staticmethod
     def is_roman_number(word: str) -> tuple:
@@ -592,13 +595,13 @@ class TokenPreProcess:
     @staticmethod
     def is_punc(word):
         if word in exception_list:
-            return word, "Punc"
+            return [(word, "Punc")]
         return (word, "Punc") if all(char in puncs for char in word) else None
 
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_underscored(word: str, lower_word: str) -> tuple:
+    def is_underscored(word: str, lower_word: str) -> list:
         if "_" in word and len(word) > 3 and word[0] != "_" and word[-1] != "_":
             parts = lower_word.split("_")
             processed_parts = [TokenProcessor.process_token(part) for part in parts]
@@ -608,7 +611,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_hyphenated(word: str, lower_word: str) -> tuple:
+    def is_hyphenated(word: str, lower_word: str) -> list:
         if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
             parts = lower_word.split("-")
             processed_parts = [TokenProcessor.process_token(part) for part in parts]
@@ -618,12 +621,12 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_three_or_more(word):
+    def is_three_or_more(word: str, lower_word: str) -> list:
         exceptions = ["...", "!!!"]
         if word in exceptions:
-            return word, "Punc"
+            return [(word, "Punc")]
         result = check_regex(word, "three_or_more")
-        return (word, "Three_Or_More") if result else None
+        return [(word, "Three_Or_More")] if result else None
 
     @staticmethod
     def verify_latin_chars(word: str) -> bool:
@@ -676,7 +679,7 @@ check_methods = [
         # Specific Cases for Punctuation Use
         TokenPreProcess.is_in_quotes,
         TokenPreProcess.is_in_parenthesis,
-        TokenPreProcess.is_initial_parenthesis,
+        #TokenPreProcess.is_initial_parenthesis,
 
         # Before validation make sure it is apostrophed
         TokenPreProcess.is_apostrophed,
@@ -703,6 +706,7 @@ check_methods = [
         TokenPreProcess.is_multiple_smiley,
         TokenPreProcess.is_one_char_fixable,
 
+
         # These need recursive handling
         TokenPreProcess.is_imp,
         TokenPreProcess.is_isp,
@@ -714,7 +718,7 @@ check_methods = [
         TokenPreProcess.is_midp,
 
         # Raw Punctuation
-        TokenPreProcess.is_three_or_more,
+
         TokenPreProcess.is_roman_number,
 
         # Final Checks
