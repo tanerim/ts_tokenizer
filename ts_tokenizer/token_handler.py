@@ -35,11 +35,13 @@ REGEX_PATTERNS = {
     "copyright": re.compile(r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)'),
     "registered": re.compile(r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)'),
     "trade_mark": re.compile(r'(?:^™[a-zA-Z]+$)|(?:^[a-zA-Z]+™$)'),
-    "bullet_list": re.compile(r'(?:^•[a-zA-Z]+$)|(?:^[a-zA-Z]$)'),
+    "bullet_list": re.compile(r'^•[a-zA-Z]+$'),
     "initial_parenthesis": re.compile(r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$"),
     "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
-    "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
+    "roman_number": re.compile(r'^(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
+
+#    "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$")
 }
@@ -49,7 +51,7 @@ exception_list = ["(!)", "...", "[...]"]
 
 
 def check_regex(word, pattern):
-    print(f"Checking {pattern} for word: {word}")
+    # print(f"Checking {pattern} for word: {word}")
     return word if REGEX_PATTERNS[pattern].search(CharFix.fix(word)) else None
 
 
@@ -66,7 +68,7 @@ def split_on_punctuation(word: str, punctuation_list: str, depth: int = 0) -> li
     i = 0
     for j, char in enumerate(word):
         if char in punctuation_list:
-            if i < j:
+            if i < j:  # Only process if there's something between punctuation
                 processed_token = TokenProcessor.process_token(word[i:j], depth=depth+1)
                 if isinstance(processed_token, list):
                     result.extend(processed_token)
@@ -74,18 +76,17 @@ def split_on_punctuation(word: str, punctuation_list: str, depth: int = 0) -> li
                     result.append((word[i:j], processed_token[1]))
             result.append((char, "Punc"))
             i = j + 1
-    if i < len(word):
+    if i < len(word):  # Process any remaining part after the last punctuation
         processed_token = TokenProcessor.process_token(word[i:], depth=depth+1)
         if isinstance(processed_token, list):
             result.extend(processed_token)
         else:
             result.append((word[i:], processed_token[1]))
-    return result
+    # Filter out any empty tokens from the result
+    return [token for token in result if token[0] != '']
 
 
 
-def verify_latin_chars(word: str) -> bool:
-    return all('a' <= char <= 'z' or 'A' <= char <= 'Z' or char in "ğüşıöçĞÜŞİÖÇ'" for char in word)
 
 def apply_charfix(func):
     def wrapper(word, *args, **kwargs):
@@ -402,6 +403,9 @@ class TokenPreProcess:
 
     @staticmethod
     def is_emoticon(word):
+        # Ensure the word is not empty or a single punctuation mark
+        if not word or all(char in string.punctuation for char in word):
+            return None
         return (word, "Emoticon") if word in LocalData.emoticons() else None
 
     # Multi-Unit Tokens
@@ -631,7 +635,7 @@ class TokenPreProcess:
     def is_punc(word):
         if word in exception_list:
             return [(word, "Punc")]
-        return (word, "Punc") if all(char in puncs for char in word) else None
+        return [(word, "Punc")] if all(char in puncs for char in word) else None
 
 
     @staticmethod
@@ -661,7 +665,7 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    def is_three_or_more(word: str, lower_word: str) -> list:
+    def is_three_or_more(word: str) -> list:
         exceptions = ["...", "!!!"]
         if word in exceptions:
             return [(word, "Punc")]
@@ -715,9 +719,11 @@ lexicon_based_methods = [
 # Regex-Based Matches
 regex_based_methods = [
     TokenPreProcess.is_xml,
+    TokenPreProcess.is_punc,
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_apostrophed,
+    TokenPreProcess.is_url,
     TokenPreProcess.is_underscored,
     TokenPreProcess.is_hyphenated,
     TokenPreProcess.is_date_range,
@@ -725,7 +731,6 @@ regex_based_methods = [
     TokenPreProcess.is_hour,
     TokenPreProcess.is_email,
     TokenPreProcess.is_email_punc,
-    TokenPreProcess.is_url,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_copyright,
@@ -744,14 +749,13 @@ regex_based_methods = [
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_bullet_list,
     TokenPreProcess.is_num_char_sequence,
-    TokenPreProcess.is_punc,
     TokenPreProcess.is_three_or_more
 ]
 
 
 class TokenProcessor:
     # Limit for recursion depth
-    MAX_DEPTH = 10
+    MAX_DEPTH = 100
 
     def __init__(self):
         pass
@@ -768,20 +772,22 @@ class TokenProcessor:
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple', depth: int = 0) -> tuple:
         if depth > TokenProcessor.MAX_DEPTH:
-            return (token, "OOV")  # Return "OOV" if recursion exceeds limit
+            return (token, "OOV")
 
-        # First, check lexicon-based methods
-        for check in lexicon_based_methods:
-            result = check(token)
-            if result:
-                return TokenProcessor.format_output(result, output_format)
+        try:
+            for check in lexicon_based_methods:
+                result = check(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format) if result else None
+            for check in regex_based_methods:
+                result = check(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format) if result else None
+        except Exception as e:
+            print(f"Error processing token '{token}': {e}")
 
-        # If no lexicon-based match, check regex-based methods
-        for check in regex_based_methods:
-            result = check(token)
-            if result:
-                return TokenProcessor.format_output(result, output_format)
-
-        # Return OOV if no match
         return TokenProcessor.format_output((token, "OOV"), output_format)
+
+
+
 
