@@ -82,7 +82,7 @@ class TSTokenizer:
 
         # Case 2: Handle file input (filename is provided)
         if filename:
-            with open(filename, encoding='utf-8') as in_file:
+            with open(filename, 'r', encoding='utf-8') as in_file:
                 # If verbose mode is enabled, initialize progress bar
                 if verbose:
                     total_lines = sum(1 for _ in in_file)

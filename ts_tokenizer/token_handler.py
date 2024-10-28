@@ -40,8 +40,6 @@ REGEX_PATTERNS = {
     "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
     "roman_number": re.compile(r'^(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
-
-#    "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$")
 }
@@ -108,7 +106,7 @@ class TokenPreProcess:
         pass
 
     # Regex Based Tokens
-    # These functions get the input token, checks against to regexs defined above and
+    # These functions get the input token, checks against to regular expressions defined above and
     # return word, tag as tuple
     @staticmethod
     def is_xml(word: str) -> tuple:
@@ -218,10 +216,21 @@ class TokenPreProcess:
             return [(processed_parenthesis or []) + processed_remaining] if processed_remaining else None
 
     @staticmethod
-    def is_date_range(word: str) -> tuple:
+    def is_date_range(word: str) -> list:
         result = check_regex(word, "date_range")
         if result:
-            return (result, "Date_Range") if result else None
+            return [(result, "Date_Range")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    def is_complex_punc(word: str) -> tuple:
+        # Check if the token starts and ends with punctuation
+        if punc_count(word) > 3 and word[0] in puncs and word[-1] in puncs:
+            # Ensure there's meaningful content inside the punctuation
+            inner_content = word[1:-1]
+            if inner_content and not all(char in puncs for char in inner_content):
+                return (word, "Complex_Punc")
+        return None
 
     @staticmethod
     def is_date(word: str) -> tuple:
@@ -338,15 +347,17 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_num_char_sequence(word: str) -> list:
+        # Check if the word matches the numeric character sequence regex
         result = check_regex(word, "num_char_sequence")
+
         if result:
-            separators = ["-", "|", "(", ")", ":", ";", "—", "\\",]
-            # I may prefer using puncs here, dont know yet.
+            separators = ["-", "|", "(", ")", ":", ";", "—", "\\"]
             for sep in separators:
                 if sep in word:
                     parts = word.split(sep)
+                    print(len(parts), parts)
 
-                    if len(parts) == 2 and parts[0] and parts[1]:
+                    if len(parts) == 2:
                         initial = TokenProcessor.process_token(parts[0])
                         final = TokenProcessor.process_token(parts[1])
 
@@ -355,7 +366,7 @@ class TokenPreProcess:
                         if isinstance(final, tuple):
                             final = [final]
 
-                        return [(initial + [(sep, "Punc")] + final)] if result else None
+                        return initial + [(sep, "Punc")] + final
 
             if len(word) > 1 and word[-1] in separators:
                 final_punc = word[-1]
@@ -365,9 +376,11 @@ class TokenPreProcess:
                 if isinstance(processed_word, tuple):
                     processed_word = [processed_word]
 
-                return [(processed_word + [(final_punc, "Punc")])] if result else None
+                return processed_word + [(final_punc, "Punc")]
 
-            return [(result, "Num_Char_Sequence")] if result else [(word, "Num_Char_Sequence")]
+            return [(result, "Number")]
+
+        return [(word, "OOV")]
 
     # Lexicon Based Tokens
     @staticmethod
@@ -381,7 +394,7 @@ class TokenPreProcess:
     @tr_lowercase
     def is_in_lexicon(word: str, lower_word: str) -> tuple:
         if lower_word in LocalData.word_list():
-            return (word, "Valid_Word") if word in LocalData.word_list() else None
+            return (word, "Valid_Word") if lower_word in LocalData.word_list() else None
 
     @staticmethod
     @apply_charfix
@@ -429,14 +442,15 @@ class TokenPreProcess:
     def is_number(word):
         return (word, "Number") if word.isdigit() else None
 
+    @staticmethod
     def is_fsp(word: str) -> list:
-        if punc_count(word) == 1 and word[-1] in puncs:
+        if word[-1] in puncs and punc_count(word) == 1:
             final_punc = word[-1]
             remaining_word = word[:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
             if isinstance(processed_word, tuple):
                 processed_word = [processed_word]
-                return [(processed_word + [(final_punc, "Punc")])]
+                return processed_word + [(final_punc, "Punc")]
         else:
             return None
 
@@ -690,7 +704,8 @@ class TokenPreProcess:
         return None
 
     @staticmethod
-    def is_one_char_fixable(word):
+    @tr_lowercase
+    def is_one_char_fixable(word:str, lower_word: str):
         extra_chars = ["¬","º", "0", "1"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
@@ -720,6 +735,7 @@ lexicon_based_methods = [
 regex_based_methods = [
     TokenPreProcess.is_xml,
     TokenPreProcess.is_punc,
+    TokenPreProcess.is_complex_punc,
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_apostrophed,
@@ -754,8 +770,6 @@ regex_based_methods = [
 
 
 class TokenProcessor:
-    # Limit for recursion depth
-    MAX_DEPTH = 100
 
     def __init__(self):
         pass
@@ -770,23 +784,26 @@ class TokenProcessor:
             return f"{result[0]}\t{result[1]}"
 
     @staticmethod
-    def process_token(token: str, output_format: str = 'tuple', depth: int = 0) -> tuple:
-        if depth > TokenProcessor.MAX_DEPTH:
-            return (token, "OOV")
-
+    def process_token(token: str, output_format: str = 'tuple') -> tuple:
         try:
+            # First, check against lexicon-based methods
             for check in lexicon_based_methods:
                 result = check(token)
                 if result:
                     return TokenProcessor.format_output(result, output_format) if result else None
+            # Then, check against regex-based methods
             for check in regex_based_methods:
                 result = check(token)
                 if result:
                     return TokenProcessor.format_output(result, output_format) if result else None
-        except Exception as e:
-            print(f"Error processing token '{token}': {e}")
 
+        except Exception as e:
+            pass
+#            print(f"Error processing token '{token}': {e}")
+
+        # No match found: return OOV
         return TokenProcessor.format_output((token, "OOV"), output_format)
+
 
 
 
