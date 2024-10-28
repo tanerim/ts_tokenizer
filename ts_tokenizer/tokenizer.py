@@ -20,6 +20,7 @@ def tokenize(line, return_format, output=False):
 
         # First check if the line is an XML tag
         xml_tag = TokenPreProcess.is_xml(line)
+
         if xml_tag:
             if return_format == 'tagged':
                 return json.dumps(xml_tag, ensure_ascii=False) if output else "\t".join(xml_tag)
