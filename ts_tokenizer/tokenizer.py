@@ -101,6 +101,7 @@ class TSTokenizer:
                         if not TokenPreProcess.is_xml(line):
                             line = CharFix.fix(line.strip())  # Strip and fix characters for non-XML lines
                         else:
+                            print(line)
                             line = CharFix.fix(line)  # Apply CharFix without stripping spaces for XML tags
 
                         if line:  # Only process non-empty lines. Do not change

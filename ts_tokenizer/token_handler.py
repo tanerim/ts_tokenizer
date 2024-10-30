@@ -1,6 +1,5 @@
 import re
 import string
-from typing import List, Tuple, Any
 
 from .data import LocalData
 from .char_fix import CharFix
@@ -10,7 +9,7 @@ from .emoticon_check import EmoticonParser
 from .punctuation_process import PuncMatcher
 
 puncs = re.escape(string.punctuation)
-extra_puncs = ["–", "°", "—", "(", ")"]
+extra_puncs = ["–", "°", "—", "(", ")", "@"]
 puncs += re.escape(''.join(extra_puncs))
 domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])  # Escaping only necessary parts
 
@@ -18,32 +17,34 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
     # "xml_tag": re.compile(r"^<\s*/?\s*\w+(\s+\w+\s*=\s*\"[^\"]*\")*\s*/?\s*>$"),
+    # "xml_tag": re.compile(r"<\s*/?\s*\w+(\s+\w+\s*=\s*\"[^\"]*\")*\s*/?\s*>"),
+    # "xml_tag": re.compile(r"<\s*/?\s*\w+(\s+\w+\s*=\s*\"([^\"]*)\")*\s*/?\s*>"),
     "xml_tag": re.compile(r"<\s*/?\s*\w+(\s+\w+\s*=\s*\"[^\"]*\")*\s*/?\s*>"),
     "hashtag": re.compile(r'^#[^#]{1,143}$'),
     "mention": re.compile(r'^@[^@]{1,143}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
-    "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}(?:{domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
+    "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?$"),
     "percentage_numbers_chars": re.compile(r'%(\d+\D+)'),
     "percentage_numbers": re.compile(r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)'),
-    "single_hyphen": re.compile(r'^(?!-)[\w]+-[\w]+(?!-)$'),
+    "single_hyphen": re.compile(r'^(?!-)\w+-\w+(?!-)$'),
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
-    #"date_range": re.compile(r'^\d{4}-\d{4}$'),
-    "in_parenthesis": re.compile(r'^[\(\[\{][^()\[\]{}]*[\)\]\}]$'),
+    "year_range": re.compile(r'^\d{4}-\d{4}$'),
+    "in_parenthesis": re.compile(r'^[(\[{][^()\[\]{}]*[)\]}]$'),
+    "numbered_title": re.compile(r'^[\[({]\d{1,}[])}]$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
-    "copyright": re.compile(r'(?:^©[a-zA-Z0-9]+$)|(?:^[a-zA-Z0-9]+©$)'),
-    "registered": re.compile(r'(?:^®[a-zA-Z]+$)|(?:^[a-zA-Z]+®$)'),
-    "trade_mark": re.compile(r'(?:^™[a-zA-Z]+$)|(?:^[a-zA-Z]+™$)'),
+    "copyright": re.compile(r'(^©[a-zA-Z0-9]+$)|(^[a-zA-Z0-9]+©$)'),
+    "registered": re.compile(r'(^®[a-zA-Z]+$)|(^[a-zA-Z]+®$)'),
+    "trade_mark": re.compile(r'(^™[a-zA-Z]+$)|(^[a-zA-Z]+™$)'),
     "bullet_list": re.compile(r'^•[a-zA-Z]+$'),
-    "initial_parenthesis": re.compile(r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$"),
+    # "initial_parenthesis": re.compile(r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$"),
     "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
     "roman_number": re.compile(r'^(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$")
 }
-
 
 exception_list = ["(!)", "...", "[...]"]
 
@@ -61,35 +62,11 @@ def punc_pos(word: str) -> list:
     return [i for i, char in enumerate(word) if char in puncs]
 
 
-def split_on_punctuation(word: str, punctuation_list: str, depth: int = 0) -> list:
-    result = []
-    i = 0
-    for j, char in enumerate(word):
-        if char in punctuation_list:
-            if i < j:  # Only process if there's something between punctuation
-                processed_token = TokenProcessor.process_token(word[i:j], depth=depth+1)
-                if isinstance(processed_token, list):
-                    result.extend(processed_token)
-                else:
-                    result.append((word[i:j], processed_token[1]))
-            result.append((char, "Punc"))
-            i = j + 1
-    if i < len(word):  # Process any remaining part after the last punctuation
-        processed_token = TokenProcessor.process_token(word[i:], depth=depth+1)
-        if isinstance(processed_token, list):
-            result.extend(processed_token)
-        else:
-            result.append((word[i:], processed_token[1]))
-    # Filter out any empty tokens from the result
-    return [token for token in result if token[0] != '']
-
-
-
-
 def apply_charfix(func):
     def wrapper(word, *args, **kwargs):
         fixed_word = CharFix.fix(word)
         return func(fixed_word, *args, **kwargs)
+
     return wrapper
 
 
@@ -97,6 +74,7 @@ def tr_lowercase(func):
     def wrapper(word, *args, **kwargs):
         turkish_lowercase = CharFix.tr_lowercase(word)
         return func(word, turkish_lowercase, *args, **kwargs)
+
     return wrapper
 
 
@@ -165,75 +143,47 @@ class TokenPreProcess:
             return [(initial_quotes, "Punc")] + processed_content + [(final_quotes, "Punc")] if result else None
 
     @staticmethod
+    def is_numbered_title(word: str) -> list:
+        result = check_regex(word, "numbered_title")
+        if result:
+            return [(result, "Numbered Title")] if result else None
+
+    @staticmethod
     @apply_charfix
-    def is_in_parenthesis(word: str) -> list:
+    def is_in_parenthesis(word: str):
         if len(word) > 2:
             result = check_regex(word, "in_parenthesis")
             if result:
-                if punc_count(word) < 3 and "'" not in word and re.match(r"^\([0-9]{1,2}\)$", word):
-                    return [(word, "Numbered_Title")] if result else None
-
-                else:
-                    initial_parenthesis = word[0]
-                    final_parenthesis = word[-1]
-                    content = word[1:-1]
-                    if all(char.isalpha() or char in ['.', '-'] for char in content):
-                        return [(word[0], "Punc"), TokenProcessor.process_token(content), (word[-1], "Punc")]
-                    processed_content = TokenProcessor.process_token(content)
-                    if isinstance(processed_content, tuple):
-                        processed_content = [processed_content]
-                    return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
-
-
-    @staticmethod
-    @apply_charfix
-    @tr_lowercase
-    def is_initial_parenthesis(word: str, lower_word: str) -> list:
-        result = check_regex(word, "initial_parenthesis")
-        if result:
-            parts = re.split(r"[)\]\}]", word)
-            if word[0] == "(":
-                parenthesis_content = parts[0] + ")"
-            elif word[0] == "[":
-                parenthesis_content = parts[0] + "]"
-            elif word[0] == "{":
-                parenthesis_content = parts[0] + "}"
-            if re.match(r'^[\(\[\{]\d{1,2}[\)\]\}]$', parenthesis_content) and "'" not in word:  # Matches "(1)", "(20)", etc.
-                numbered_title = [(parenthesis_content, "Numbered_Title")]
-                remaining_part = parts[1].strip()
-                processed_remaining = TokenProcessor.process_token(remaining_part) if remaining_part else []
-                if isinstance(processed_remaining, tuple):
-                    processed_remaining = [processed_remaining]
-                return [(numbered_title + processed_remaining)] if processed_remaining else None
-
-            processed_parenthesis = TokenPreProcess.is_in_parenthesis(parenthesis_content)
-            remaining_part = parts[1].strip()
-            processed_remaining = TokenProcessor.process_token(remaining_part) if remaining_part else []
-            if isinstance(processed_remaining, tuple):
-                processed_remaining = [processed_remaining]
-
-            # Ensure processed_parenthesis is not None
-            return [(processed_parenthesis or []) + processed_remaining] if processed_remaining else None
+                initial_parenthesis = word[0]
+                final_parenthesis = word[-1]
+                content = word[1:-1]
+                if all(char.isalpha() or char in ['.', '-'] for char in content):
+                    return [(word[0], "Punc"), TokenProcessor.process_token(content), (word[-1], "Punc")]
+                processed_content = TokenProcessor.process_token(content)
+                if isinstance(processed_content, tuple):
+                    processed_content = [processed_content]
+                return [(initial_parenthesis, "Punc")] + processed_content + [(final_parenthesis, "Punc")]
+        return None
 
     @staticmethod
     def is_date_range(word: str) -> list:
-        result = check_regex(word, "date_range")
+        result = check_regex(word, "date_range") or check_regex(word, "year_range")
         if result:
             return [(result, "Date_Range")] if result else None
 
     @staticmethod
     @apply_charfix
-    def is_complex_punc(word: str) -> tuple:
+    def is_complex_punc(word: str):
         # Check if the token starts and ends with punctuation
         if punc_count(word) > 3 and word[0] in puncs and word[-1] in puncs:
             # Ensure there's meaningful content inside the punctuation
             inner_content = word[1:-1]
             if inner_content and not all(char in puncs for char in inner_content):
-                return (word, "Complex_Punc")
+                return word, "Complex_Punc"
         return None
 
     @staticmethod
-    def is_date(word: str) -> tuple:
+    def is_date(word: str):
         result = DateCheck.is_date(word)
         return (word, "Date") if result else None
 
@@ -355,7 +305,7 @@ class TokenPreProcess:
             for sep in separators:
                 if sep in word:
                     parts = word.split(sep)
-                    print(len(parts), parts)
+                    # print(len(parts), parts)
 
                     if len(parts) == 2:
                         initial = TokenProcessor.process_token(parts[0])
@@ -425,7 +375,7 @@ class TokenPreProcess:
     @staticmethod
     def is_multiple_smiley(word):
         if SmileyParser.consecutive_smiley(word) and not str(word[0:-1]).isalnum():
-            return (word, "Multiple_Smiley")
+            return word, "Multiple_Smiley"
         return None
 
     @staticmethod
@@ -443,10 +393,11 @@ class TokenPreProcess:
         return (word, "Number") if word.isdigit() else None
 
     @staticmethod
-    def is_fsp(word: str) -> list:
-        if word[-1] in puncs and punc_count(word) == 1:
+    @apply_charfix
+    def is_fsp(word: str):
+        if punc_count(word) == 1 and word[-1] in puncs:
             final_punc = word[-1]
-            remaining_word = word[:-1]
+            remaining_word = word[0:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
             if isinstance(processed_word, tuple):
                 processed_word = [processed_word]
@@ -454,10 +405,9 @@ class TokenPreProcess:
         else:
             return None
 
-
     @staticmethod
     @apply_charfix
-    def is_isp(word: str) -> list:
+    def is_isp(word: str):
         if len(word) > 1 and word[0] in puncs:
             initial_punc = word[0]
             remaining_word = word[1:]
@@ -472,11 +422,10 @@ class TokenPreProcess:
         else:
             return None
 
-
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_mssp(word: str, lower_word: str) -> list:
+    def is_mssp(word: str, lower_word: str):
         if len(word) > 2 and word[0] in puncs and word[-1] in puncs:
             initial_punc = word[0]
             final_punc = word[-1]
@@ -497,7 +446,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_msp(word: str, lower_word: str) -> list:
+    def is_msp(word: str, lower_word: str):
         if len(word) > 2 and word not in exception_list:
             start_punc_count = 0
             end_punc_count = 0
@@ -524,14 +473,15 @@ class TokenPreProcess:
                 processed_word = TokenProcessor.process_token(remaining_word)
                 if isinstance(processed_word, tuple):
                     processed_word = [processed_word]
-                return [TokenProcessor.process_token(initial_punc)] + processed_word + [TokenProcessor.process_token(final_punc)]
+                return [TokenProcessor.process_token(initial_punc)] + processed_word + [
+                    TokenProcessor.process_token(final_punc)]
         else:
             return None
 
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_imp(word: str, lower_word: str) -> list:
+    def is_imp(word: str, lower_word: str):
         if len(word) > 1 and word not in exception_list:
             start_punc_count = 0
             for char in word:
@@ -552,7 +502,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_fmp(word: str, lower_word: str) -> list:
+    def is_fmp(word: str, lower_word: str):
         if punc_count(word) >= 2 and word[0] not in puncs:
             # Check for exceptions
             for exception in exception_list:
@@ -568,7 +518,6 @@ class TokenPreProcess:
                         else:
                             tokens.append(TokenProcessor.process_token(after_exception))
                     return tokens
-
 
         # Condition to check if all punctuation marks are the same
         fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
@@ -620,8 +569,8 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_midp(word: str, lower_word: str) -> list:
-        if len(word) > 2 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2 and "_" not in word and  "-" not in word:
+    def is_midp(word: str, lower_word: str):
+        if len(word) > 2 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2 and "_" not in word and "-" not in word:
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
 
             if len(mid_punc_pos) == 1:
@@ -644,18 +593,16 @@ class TokenPreProcess:
         else:
             return None
 
-
     @staticmethod
     def is_punc(word):
         if word in exception_list:
             return [(word, "Punc")]
         return [(word, "Punc")] if all(char in puncs for char in word) else None
 
-
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_underscored(word: str, lower_word: str) -> list:
+    def is_underscored(word: str, lower_word: str):
         if "_" in word and len(word) > 3 and word[0] != "_" and word[-1] != "_":
             parts = lower_word.split("_")
             processed_parts = [TokenProcessor.process_token(part) for part in parts]
@@ -667,7 +614,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_hyphenated(word: str, lower_word: str) -> list:
+    def is_hyphenated(word: str, lower_word: str):
         if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
             parts = lower_word.split("-")
             processed_parts = [TokenProcessor.process_token(part) for part in parts]
@@ -675,7 +622,6 @@ class TokenPreProcess:
                 return [(word, "Hyphenated")]
         else:
             return None
-
 
     @staticmethod
     @apply_charfix
@@ -686,7 +632,6 @@ class TokenPreProcess:
         result = check_regex(word, "three_or_more")
         if result:
             return [(word, "Three_Or_More")] if result else None
-
 
     @staticmethod
     @apply_charfix
@@ -705,24 +650,26 @@ class TokenPreProcess:
 
     @staticmethod
     @tr_lowercase
-    def is_one_char_fixable(word:str, lower_word: str):
-        extra_chars = ["¬","º", "0", "1"]
+    def is_one_char_fixable(word: str, lower_word: str):
+        extra_chars = ["¬", "º", "0", "1"]
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
-                fixed_word = word.replace(extra, "")
+                fixed_word = lower_word.replace(extra, "")
                 if TokenPreProcess.is_in_lexicon(fixed_word):
                     return fixed_word, "One_Char_Fixed"
         return None
 
 
-# Lexicon-Based Matches
+xml_control = [
+    TokenPreProcess.is_xml,
+]
+
 lexicon_based_methods = [
     TokenPreProcess.is_abbr,
     TokenPreProcess.is_in_exceptions,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
     TokenPreProcess.is_emoticon,
-    TokenPreProcess.is_number,
     TokenPreProcess.is_smiley,
     TokenPreProcess.is_multiple_smiley,
     TokenPreProcess.is_multiple_smiley_in,
@@ -731,33 +678,39 @@ lexicon_based_methods = [
     TokenPreProcess.is_one_char_fixable
 ]
 
-# Regex-Based Matches
-regex_based_methods = [
-    TokenPreProcess.is_xml,
-    TokenPreProcess.is_punc,
-    TokenPreProcess.is_complex_punc,
-    TokenPreProcess.is_in_quotes,
-    TokenPreProcess.is_in_parenthesis,
-    TokenPreProcess.is_apostrophed,
+strict_regex_methods = [
     TokenPreProcess.is_url,
-    TokenPreProcess.is_underscored,
-    TokenPreProcess.is_hyphenated,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_email,
-    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
     TokenPreProcess.is_trademark,
     TokenPreProcess.is_currency,
-    TokenPreProcess.is_percentage_numbers_chars,
-    TokenPreProcess.is_percentage_numbers,
-    TokenPreProcess.is_imp,
+    TokenPreProcess.is_numbered_title,
+    TokenPreProcess.is_number,
+]
+
+single_punc_methods = [
+    TokenPreProcess.is_punc,
     TokenPreProcess.is_isp,
     TokenPreProcess.is_fsp,
+    TokenPreProcess.is_apostrophed,
+    TokenPreProcess.is_underscored,
+    TokenPreProcess.is_hyphenated,
+    TokenPreProcess.is_email_punc,
+    TokenPreProcess.is_percentage_numbers_chars,
+    TokenPreProcess.is_percentage_numbers
+]
+
+multi_punc_methods = [
+    TokenPreProcess.is_in_quotes,
+    TokenPreProcess.is_in_parenthesis,
+    TokenPreProcess.is_complex_punc,
+    TokenPreProcess.is_imp,
     TokenPreProcess.is_fmp,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
@@ -785,26 +738,41 @@ class TokenProcessor:
 
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
+        if token[0] == "<" and token[-1] == ">":
+            for check in xml_control:
+                result = check_regex(token, check)
+                if result:
+                    return TokenProcessor.format_output(token, output_format)
+                continue
         try:
-            # First, check against lexicon-based methods
             for check in lexicon_based_methods:
                 result = check(token)
                 if result:
                     return TokenProcessor.format_output(result, output_format) if result else None
-            # Then, check against regex-based methods
-            for check in regex_based_methods:
+
+            for check in strict_regex_methods:
                 result = check(token)
                 if result:
                     return TokenProcessor.format_output(result, output_format) if result else None
 
-        except Exception as e:
+            if punc_count(token) == 1:
+                for check in single_punc_methods:
+                    result = check(token)
+                    if result:
+                        return TokenProcessor.format_output(result, output_format) if result else None
+
+            elif punc_count(token) >= 2:
+                for check in multi_punc_methods:
+                    result = check(token)
+                    if result:
+                        return TokenProcessor.format_output(result, output_format) if result else None
+
+            else:
+                return TokenProcessor.format_output((token, "OOV"), output_format)
+
+        except:
             pass
-#            print(f"Error processing token '{token}': {e}")
+        #            print(f"Error processing token '{token}': {e}")
 
         # No match found: return OOV
         return TokenProcessor.format_output((token, "OOV"), output_format)
-
-
-
-
-
