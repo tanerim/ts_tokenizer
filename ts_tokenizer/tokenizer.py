@@ -1,68 +1,79 @@
+import re
 import sys
 import multiprocessing
 from tqdm import tqdm
 import json
+import re
 from concurrent.futures import ProcessPoolExecutor
 from ts_tokenizer.token_handler import TokenProcessor, TokenPreProcess
 from ts_tokenizer.char_fix import CharFix
 
 
+import re
+
 def tokenize(line, return_format, output=False):
     """
     Tokenizes a single line and returns the result based on the specified return format.
     """
-    try:
-        # Strip whitespace and remove any invisible characters
-        line = line.strip().replace('\u200b', '').replace('\ufeff', '')  # Remove zero-width spaces and BOM markers
+    processed_tokens = []
+    # Strip whitespace and remove any invisible characters
+    line = line.strip().replace('\u200b', '').replace('\ufeff', '')
 
-        if not line:  # Skip processing if the line is empty or contains only invisible characters
-            return None
+    # Skip processing if the line is empty or contains only invisible characters
+    if not line:
+        return None
 
-        # First check if the line is an XML tag
-        xml_tag = TokenPreProcess.is_xml(line)
+    # Updated regex patterns to capture the tag name
+    xml_open_tag = re.match(r'^<\s*/?\s*(\w+)(?:\s+\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'))*\s*/?>$', line)
+    xml_close_tag = re.match(r'^</\s*(\w+)\s*>$', line)
 
-        if xml_tag:
-            if return_format == 'tagged':
-                return json.dumps(xml_tag, ensure_ascii=False) if output else "\t".join(xml_tag)
+    if xml_open_tag:
+        xml_tag = (line.strip(), "XML_Tag")
+    elif xml_close_tag:
+        xml_tag = (line.strip(), "XML_Tag")
+    else:
+        xml_tag = None
+
+    if xml_tag:
+        # Return the XML tag immediately in the specified format without further tokenization
+        if return_format == 'tagged':
+            return json.dumps({"token": xml_tag[0], "tag": xml_tag[1]},
+                              ensure_ascii=False) if output else "\t".join(xml_tag)
+        else:
+            return line  # Return the original XML line unchanged if not in 'tagged' format
+    else:
+        # Proceed with tokenization only if the line is not an XML tag
+        tokens = line.split()
+        for token in tokens:
+            # Process each non-XML token normally
+            processed_token = TokenProcessor.process_token(token)
+            if isinstance(processed_token, list):
+                processed_tokens.extend(processed_token)
             else:
-                return line  # Return the original line (XML tag) unchanged
+                processed_tokens.append(processed_token)
 
-        # Proceed with tokenization if the line is not XML
-        processed_tokens = [TokenProcessor.process_token(token) for token in line.split() if token]
-        flat_tokens = []
-        for token_list in processed_tokens:
-            if isinstance(token_list, list):
-                flat_tokens.extend(token_list)
-            else:
-                flat_tokens.append(token_list)
-
-        # Handle output formats
+        # Handle output formats for non-XML tokens
         if return_format == 'tokenized':
-            # Do not apply JSON formatting for 'tokenized'
-            return '\n'.join([token[0] for token in flat_tokens])
+            return '\n'.join([token[0] for token in processed_tokens])
 
         elif return_format == 'tagged':
             if output:
-                return json.dumps([{"token": token[0], "tag": token[1]} for token in flat_tokens], ensure_ascii=False)
-            return '\n'.join([f"{token[0]}\t{token[1]}" for token in flat_tokens])
+                return json.dumps([{"token": token[0], "tag": token[1]} for token in processed_tokens],
+                                  ensure_ascii=False)
+            return '\n'.join([f"{token[0]}\t{token[1]}" for token in processed_tokens])
 
         elif return_format == 'lines':
             if output:
-                return json.dumps({"tokens": [token[0] for token in flat_tokens]}, ensure_ascii=False)
-            return ' '.join([token[0] for token in flat_tokens])
+                return json.dumps({"tokens": [token[0] for token in processed_tokens]}, ensure_ascii=False)
+            return ' '.join([token[0] for token in processed_tokens])
 
         elif return_format == 'tagged_lines':
             if output:
                 return json.dumps(
-                    [{"token": token[0], "tag": token[1] if len(token) > 1 else None} for token in flat_tokens],
+                    [{"token": token[0], "tag": token[1] if len(token) > 1 else None} for token in processed_tokens],
                     ensure_ascii=False)
-            return [(token[0], token[1] if len(token) > 1 else None) for token in
-                    flat_tokens]  # Return a list of tuples
+            return [(token[0], token[1] if len(token) > 1 else None) for token in processed_tokens]
 
-    except (IndexError, TypeError):
-        # Handle any string index out of range or type errors gracefully
-        # print(f"Error processing line: {line}\nException: {e}", file=sys.stderr)
-        return None  # Return None to indicate an error occurred
 
 
 class TSTokenizer:
@@ -97,12 +108,8 @@ class TSTokenizer:
 
                     # Process the file line by line
                     for line in in_file:
-                        # Only strip spaces for non-XML tags and apply character fixes
-                        if not TokenPreProcess.is_xml(line):
-                            line = CharFix.fix(line.strip())  # Strip and fix characters for non-XML lines
-                        else:
-                            print(line)
-                            line = CharFix.fix(line)  # Apply CharFix without stripping spaces for XML tags
+
+                        line = CharFix.fix(line)  # Apply CharFix without stripping spaces for XML tags
 
                         if line:  # Only process non-empty lines. Do not change
                             batch.append(line)

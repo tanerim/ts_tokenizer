@@ -16,10 +16,6 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 # Create a dict of RegExps
 REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
-    # "xml_tag": re.compile(r"^<\s*/?\s*\w+(\s+\w+\s*=\s*\"[^\"]*\")*\s*/?\s*>$"),
-    # "xml_tag": re.compile(r"<\s*/?\s*\w+(\s+\w+\s*=\s*\"[^\"]*\")*\s*/?\s*>"),
-    # "xml_tag": re.compile(r"<\s*/?\s*\w+(\s+\w+\s*=\s*\"([^\"]*)\")*\s*/?\s*>"),
-    "xml_tag": re.compile(r"<\s*/?\s*\w+(\s+\w+\s*=\s*\"[^\"]*\")*\s*/?\s*>"),
     "hashtag": re.compile(r'^#[^#]{1,143}$'),
     "mention": re.compile(r'^@[^@]{1,143}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
@@ -86,16 +82,7 @@ class TokenPreProcess:
     # Regex Based Tokens
     # These functions get the input token, checks against to regular expressions defined above and
     # return word, tag as tuple
-    @staticmethod
-    def is_xml(word: str) -> tuple:
-        # Check if the word starts with '<' and ends with '>', and there are no other '<' or '>' inside the word
-        if word.startswith("<") and word.endswith(">") and (word.count("<") == 1 and word.count(">") == 1):
-            if "/" not in word and " " in word:
-                result = check_regex(word, "xml_tag")
-                return (result, "XML_Tag") if result else None
-            elif " " not in word and "/" in word:
-                result = check_regex(word, "xml_tag")
-                return (result, "XML_Tag") if result else None
+
 
     @staticmethod
     @apply_charfix
@@ -660,10 +647,6 @@ class TokenPreProcess:
         return None
 
 
-xml_control = [
-    TokenPreProcess.is_xml,
-]
-
 lexicon_based_methods = [
     TokenPreProcess.is_abbr,
     TokenPreProcess.is_in_exceptions,
@@ -738,41 +721,38 @@ class TokenProcessor:
 
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
-        if token[0] == "<" and token[-1] == ">":
-            for check in xml_control:
-                result = check_regex(token, check)
-                if result:
-                    return TokenProcessor.format_output(token, output_format)
-                continue
+
         try:
-            for check in lexicon_based_methods:
-                result = check(token)
-                if result:
-                    return TokenProcessor.format_output(result, output_format) if result else None
-
-            for check in strict_regex_methods:
-                result = check(token)
-                if result:
-                    return TokenProcessor.format_output(result, output_format) if result else None
-
-            if punc_count(token) == 1:
-                for check in single_punc_methods:
+            # Use lexicon-based methods if the token has no punctuation
+            if punc_count(token) == 0:
+                for check in lexicon_based_methods:
                     result = check(token)
                     if result:
-                        return TokenProcessor.format_output(result, output_format) if result else None
+                        return TokenProcessor.format_output(result, output_format)
 
-            elif punc_count(token) >= 2:
-                for check in multi_punc_methods:
-                    result = check(token)
-                    if result:
-                        return TokenProcessor.format_output(result, output_format) if result else None
-
+            # For tokens with punctuation, apply strict regex or punctuation checks
             else:
-                return TokenProcessor.format_output((token, "OOV"), output_format)
+                for check in strict_regex_methods:
+                    result = check(token)
+                    if result:
+                        return TokenProcessor.format_output(result, output_format)
 
-        except:
-            pass
-        #            print(f"Error processing token '{token}': {e}")
+                # Single punctuation
+                if punc_count(token) == 1:
+                    for check in single_punc_methods:
+                        result = check(token)
+                        if result:
+                            return TokenProcessor.format_output(result, output_format)
 
-        # No match found: return OOV
+                # Multiple punctuation
+                elif punc_count(token) >= 2:
+                    for check in multi_punc_methods:
+                        result = check(token)
+                        if result:
+                            return TokenProcessor.format_output(result, output_format)
+
+        except Exception as e:
+            print(f"Error processing token '{token}': {e}")
+
+        # Default case: return OOV if no match found
         return TokenProcessor.format_output((token, "OOV"), output_format)
