@@ -28,7 +28,7 @@ REGEX_PATTERNS = {
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[(\[{][^()\[\]{}]*[)\]}]$'),
-    "numbered_title": re.compile(r'^[\[({]\d{1,}[])}]$'),
+    "numbered_title": re.compile(r'^[\[({]\d+[])}]$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(^©[a-zA-Z0-9]+$)|(^[a-zA-Z0-9]+©$)'),
     "registered": re.compile(r'(^®[a-zA-Z]+$)|(^[a-zA-Z]+®$)'),
@@ -57,11 +57,6 @@ def punc_count(word: str) -> int:
 def punc_pos(word: str) -> list:
     return [i for i, char in enumerate(word) if char in puncs]
 
-def first_punc_index(word):
-    for punc in puncs:
-        punc_index = next((i for i, ch in enumerate(word) if ch in punc), None)
-        if punc_index is not None:
-            return punc_index
 
 def apply_charfix(func):
     def wrapper(word, *args, **kwargs):
