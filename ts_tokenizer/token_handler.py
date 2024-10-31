@@ -83,7 +83,6 @@ class TokenPreProcess:
     # These functions get the input token, checks against to regular expressions defined above and
     # return word, tag as tuple
 
-
     @staticmethod
     @apply_charfix
     def is_mention(word: str) -> list:
@@ -395,7 +394,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_isp(word: str):
-        if len(word) > 1 and word[0] in puncs:
+        if len(word) > 1 and word[0] in puncs and (word[0] != "@" or word[0] != "#"):
             initial_punc = word[0]
             remaining_word = word[1:]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -490,67 +489,69 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str):
-        if punc_count(word) >= 2 and word[0] not in puncs:
-            # Check for exceptions
-            for exception in exception_list:
-                if exception in word:
-                    before_exception, exception_part, after_exception = word.partition(exception)
-                    tokens = []
-                    if before_exception:
-                        tokens.append(TokenProcessor.process_token(before_exception))
-                    tokens.append((exception_part, "Punc"))
-                    if after_exception:
-                        if after_exception in puncs:
-                            tokens.append((after_exception, "Punc"))
-                        else:
-                            tokens.append(TokenProcessor.process_token(after_exception))
-                    return tokens
+        tokens = []
 
-        # Condition to check if all punctuation marks are the same
-        fmp_regex = re.compile(rf"[{puncs}]{{2,}}$")
-        if fmp_regex.search(word):
-            first_punc_index = next((i for i, char in enumerate(word) if char in puncs), None)
-            before_punc = word[:first_punc_index]
-            from_punc = word[first_punc_index:]
+        # Step 1: Check if word ends with any string in the exception list
+        for exception in exception_list:
+            if word.endswith(exception):
+                first_part, _ = word.rsplit(exception, 1)
 
-            if from_punc in exception_list:
-                return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+                # Process `first_part` and add exception
+                if first_part:
+                    tokens.append(TokenProcessor.process_token(first_part))
+                tokens.append((exception, "Punc"))
+                return tokens
 
-            # Handle identical punctuation characters
-            if len(set(from_punc)) == 1:  # All punctuation marks are the same
-                if before_punc:
-                    return [TokenProcessor.process_token(before_punc), (from_punc, "Punc")]
+        # Step 2: Check for complex punctuation patterns and prevent character splitting
+        if re.fullmatch(rf"[{re.escape(''.join(puncs))}]+", word):
+            # If the whole word is a punctuation sequence (like "...", "!!"), treat as one token
+            tokens.append((word, "Punc"))
+            return tokens
+
+        # Step 3: If no exception match, check for initial punctuation sequence
+        match = re.search(r'([{}]+)'.format(re.escape("".join(puncs))), word)
+        if match:
+            before_punc = word[:match.start()]
+            punc_seq = word[match.start():]
+
+            # Process before_punc and add as a single token if valid
+            if before_punc:
+                tokens.append(TokenProcessor.process_token(before_punc))
+
+            # Add the punctuation sequence as a single token if it’s consistent
+            tokens.append((punc_seq, "Punc"))
+            return tokens
+
+        # Step 4: Handle trailing punctuation sequence by keeping it together if it’s repeated or consistent
+        if len(word) > 1 and word not in exception_list:
+            end_punc_count = 0
+            for char in reversed(word):
+                if char in puncs:
+                    end_punc_count += 1
                 else:
-                    return [(from_punc, "Punc")]
+                    break
 
-            if len(word) > 1 and word not in exception_list:
-                end_punc_count = 0
-                for char in word[::-1]:
-                    if char in puncs:
-                        end_punc_count += 1
+            if end_punc_count >= 2:
+                remaining_word = word[:-end_punc_count]
+                final_punc = word[-end_punc_count:]
 
-                if end_punc_count >= 2 and all(char not in puncs for char in word[:-end_punc_count]):
-                    final_punc = word[-end_punc_count:]
-                    remaining_word = word[:-end_punc_count]
-                    lower_remaining_word = lower_word[:-end_punc_count]
-                    processed_word = TokenProcessor.process_token(lower_remaining_word)
-                    if isinstance(processed_word, tuple):
-                        processed_word = [processed_word]
-                    if processed_word:
-                        processed_word[0] = (remaining_word, processed_word[0][1])
-                    separated_puncs = [(char, "Punc") for char in final_punc]
-                    return [processed_word + separated_puncs]
+                # Process remaining_word if it’s non-empty
+                if remaining_word:
+                    tokens.append(TokenProcessor.process_token(remaining_word))
 
-            return [TokenProcessor.process_token(word)]
+                # Add final punctuation as a single token
+                tokens.append((final_punc, "Punc"))
+                return tokens
+
+        # If none of the special cases apply, process the entire word
+        return [TokenProcessor.process_token(word)]
 
     @staticmethod
     @apply_charfix
     def is_apostrophed(word: str) -> list:
-        result = check_regex(word, "apostrophed")
-        if result:
-            if word[-1] in puncs:
-                return [(word[:-1], "Apostrophed"), (word[-1], "Punc")]
-            else:
+        if punc_count(word) == 1:
+            result = check_regex(word, "apostrophed")
+            if result:
                 return [(word, "Apostrophed")] if result else None
 
     @staticmethod
@@ -576,7 +577,7 @@ class TokenPreProcess:
 
                 return processed_initial + [(mid_punc, "Punc")] + processed_remaining
             else:
-                return [TokenProcessor.process_token(word)]
+                return None
         else:
             return None
 
@@ -657,34 +658,33 @@ lexicon_based_methods = [
     TokenPreProcess.is_multiple_smiley,
     TokenPreProcess.is_multiple_smiley_in,
     TokenPreProcess.is_multiple_emoticon,
-    TokenPreProcess.is_non_latin,
-    TokenPreProcess.is_one_char_fixable
+    # TokenPreProcess.is_non_latin,
+    TokenPreProcess.is_one_char_fixable,
+    TokenPreProcess.is_mention,
+    TokenPreProcess.is_hashtag,
 ]
 
 strict_regex_methods = [
-    TokenPreProcess.is_url,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
-    TokenPreProcess.is_email,
-    TokenPreProcess.is_mention,
-    TokenPreProcess.is_hashtag,
-    TokenPreProcess.is_copyright,
-    TokenPreProcess.is_registered,
-    TokenPreProcess.is_trademark,
     TokenPreProcess.is_currency,
     TokenPreProcess.is_numbered_title,
+    TokenPreProcess.is_punc,
     TokenPreProcess.is_number,
 ]
 
 single_punc_methods = [
-    TokenPreProcess.is_punc,
+    TokenPreProcess.is_email,
+    TokenPreProcess.is_apostrophed,
+    TokenPreProcess.is_copyright,
+    TokenPreProcess.is_registered,
+    TokenPreProcess.is_trademark,
     TokenPreProcess.is_isp,
     TokenPreProcess.is_fsp,
-    TokenPreProcess.is_apostrophed,
+    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_underscored,
     TokenPreProcess.is_hyphenated,
-    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_percentage_numbers_chars,
     TokenPreProcess.is_percentage_numbers
 ]
@@ -692,23 +692,21 @@ single_punc_methods = [
 multi_punc_methods = [
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_in_parenthesis,
-    TokenPreProcess.is_complex_punc,
-    TokenPreProcess.is_imp,
-    TokenPreProcess.is_fmp,
-    TokenPreProcess.is_mssp,
-    TokenPreProcess.is_msp,
-    TokenPreProcess.is_midp,
+    TokenPreProcess.is_url,
+    # TokenPreProcess.is_fmp,
+    # TokenPreProcess.is_imp,
+    # TokenPreProcess.is_mssp,
+    # TokenPreProcess.is_msp,
+    # TokenPreProcess.is_midp,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_bullet_list,
     TokenPreProcess.is_num_char_sequence,
-    TokenPreProcess.is_three_or_more
+    TokenPreProcess.is_three_or_more,
+    TokenPreProcess.is_complex_punc,
 ]
 
 
 class TokenProcessor:
-
-    def __init__(self):
-        pass
 
     @staticmethod
     def format_output(result, output_format):
@@ -722,37 +720,32 @@ class TokenProcessor:
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
 
-        try:
-            # Use lexicon-based methods if the token has no punctuation
-            if punc_count(token) == 0:
-                for check in lexicon_based_methods:
-                    result = check(token)
-                    if result:
-                        return TokenProcessor.format_output(result, output_format)
+        # Use lexicon-based methods if the token has no punctuation
+        for check in lexicon_based_methods:
+            result = check(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format)
 
+        for check in strict_regex_methods:
+            result = check(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format)
+
+        # Single punctuation
+        if punc_count(token) <= 2:
+            for check in single_punc_methods:
+                result = check(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format)
+
+        # Multiple punctuation
+        if punc_count(token) > 2:
             # For tokens with punctuation, apply strict regex or punctuation checks
-            else:
-                for check in strict_regex_methods:
-                    result = check(token)
-                    if result:
-                        return TokenProcessor.format_output(result, output_format)
+            for check in multi_punc_methods:
+                result = check(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format)
 
-                # Single punctuation
-                if punc_count(token) == 1:
-                    for check in single_punc_methods:
-                        result = check(token)
-                        if result:
-                            return TokenProcessor.format_output(result, output_format)
-
-                # Multiple punctuation
-                elif punc_count(token) >= 2:
-                    for check in multi_punc_methods:
-                        result = check(token)
-                        if result:
-                            return TokenProcessor.format_output(result, output_format)
-
-        except Exception as e:
-            print(f"Error processing token '{token}': {e}")
-
-        # Default case: return OOV if no match found
-        return TokenProcessor.format_output((token, "OOV"), output_format)
+        else:
+            # Default case: return OOV if no match found
+            return TokenProcessor.format_output((token, "OOV"), output_format)

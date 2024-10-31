@@ -4,15 +4,6 @@ from ts_tokenizer.token_handler import TokenPreProcess
 
 class TestTokenPreProcess(unittest.TestCase):
 
-    def test_is_xml(self):
-        words = ['<text id="001">', "<test>", "</text>"]
-        expected_results = ['<text id="001">', None, '</text>']
-        for word, expected in zip(words, expected_results):
-            result = TokenPreProcess.is_xml(word)
-            if result:
-                result = result[0]  # Extract the XML tag string from the tuple
-            self.assertEqual(result, expected)
-
     def test_is_mention(self):
         words = ['@tanerim', 'user', '@tscorpus', 'invalid']
         expected_results = [('@tanerim', 'Mention'), None, ('@tscorpus', 'Mention'), None]
