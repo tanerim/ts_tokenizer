@@ -57,6 +57,11 @@ def punc_count(word: str) -> int:
 def punc_pos(word: str) -> list:
     return [i for i, char in enumerate(word) if char in puncs]
 
+def first_punc_index(word):
+    for punc in puncs:
+        punc_index = next((i for i, ch in enumerate(word) if ch in punc), None)
+        if punc_index is not None:
+            return punc_index
 
 def apply_charfix(func):
     def wrapper(word, *args, **kwargs):
@@ -490,23 +495,15 @@ class TokenPreProcess:
     @tr_lowercase
     def is_fmp(word: str, lower_word: str):
         tokens = []
-
         # Step 1: Check if word ends with any string in the exception list
         for exception in exception_list:
             if word.endswith(exception):
                 first_part, _ = word.rsplit(exception, 1)
-
                 # Process `first_part` and add exception
                 if first_part:
                     tokens.append(TokenProcessor.process_token(first_part))
                 tokens.append((exception, "Punc"))
                 return tokens
-
-        # Step 2: Check for complex punctuation patterns and prevent character splitting
-        if re.fullmatch(rf"[{re.escape(''.join(puncs))}]+", word):
-            # If the whole word is a punctuation sequence (like "...", "!!"), treat as one token
-            tokens.append((word, "Punc"))
-            return tokens
 
         # Step 3: If no exception match, check for initial punctuation sequence
         match = re.search(r'([{}]+)'.format(re.escape("".join(puncs))), word)
@@ -521,27 +518,6 @@ class TokenPreProcess:
             # Add the punctuation sequence as a single token if it’s consistent
             tokens.append((punc_seq, "Punc"))
             return tokens
-
-        # Step 4: Handle trailing punctuation sequence by keeping it together if it’s repeated or consistent
-        if len(word) > 1 and word not in exception_list:
-            end_punc_count = 0
-            for char in reversed(word):
-                if char in puncs:
-                    end_punc_count += 1
-                else:
-                    break
-
-            if end_punc_count >= 2:
-                remaining_word = word[:-end_punc_count]
-                final_punc = word[-end_punc_count:]
-
-                # Process remaining_word if it’s non-empty
-                if remaining_word:
-                    tokens.append(TokenProcessor.process_token(remaining_word))
-
-                # Add final punctuation as a single token
-                tokens.append((final_punc, "Punc"))
-                return tokens
 
         # If none of the special cases apply, process the entire word
         return [TokenProcessor.process_token(word)]
@@ -658,7 +634,7 @@ lexicon_based_methods = [
     TokenPreProcess.is_multiple_smiley,
     TokenPreProcess.is_multiple_smiley_in,
     TokenPreProcess.is_multiple_emoticon,
-    # TokenPreProcess.is_non_latin,
+    TokenPreProcess.is_non_latin,
     TokenPreProcess.is_one_char_fixable,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
@@ -693,7 +669,7 @@ multi_punc_methods = [
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_url,
-    # TokenPreProcess.is_fmp,
+    TokenPreProcess.is_fmp,
     # TokenPreProcess.is_imp,
     # TokenPreProcess.is_mssp,
     # TokenPreProcess.is_msp,
@@ -732,7 +708,7 @@ class TokenProcessor:
                 return TokenProcessor.format_output(result, output_format)
 
         # Single punctuation
-        if punc_count(token) <= 2:
+        if punc_count(token) <= 1:
             for check in single_punc_methods:
                 result = check(token)
                 if result:

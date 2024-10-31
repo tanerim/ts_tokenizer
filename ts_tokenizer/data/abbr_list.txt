@@ -1117,3 +1117,6 @@ visa
 TWA
 TAİ
 dB
+s.a.v.
+S.A.V.
+s.a.s.
