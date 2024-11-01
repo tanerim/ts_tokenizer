@@ -1,6 +1,10 @@
 from ts_tokenizer.data import word_list
 from ts_tokenizer.char_fix import CharFix
 from ts_tokenizer.tokenizer import tokenize
+from ts_tokenizer.token_handler import TokenPreProcess
+
+x = TokenPreProcess.is_msp("-yeni-")
+print(x)
 
 line = "A_a1daki maddeyi okuyun! FEN kurallar1na ayk1r1 olarak yap1lm1_ binalara Yap1 Kay1t Belgesi verildi + Yap1 depreme dayan1ks1zsa, sorumluluk malikte denildi¶ 0ktidar, y1k1l1rsa sorumlu sizsiniz dedi ve ~5 milyar$ tahsil etti+2018 seçimlerinde oy için yap1ld1"
 

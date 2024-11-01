@@ -16,8 +16,8 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 # Create a dict of RegExps
 REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
-    "hashtag": re.compile(r'^#[^#]{1,143}$'),
-    "mention": re.compile(r'^@[^@]{1,143}$'),
+    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,139}$'),
+    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,15}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
     "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
@@ -710,7 +710,7 @@ class TokenProcessor:
                     return TokenProcessor.format_output(result, output_format)
 
         # Multiple punctuation
-        if punc_count(token) > 2:
+        if punc_count(token) > 2 and punc_count(token) < 5:
             # For tokens with punctuation, apply strict regex or punctuation checks
             for check in multi_punc_methods:
                 result = check(token)
