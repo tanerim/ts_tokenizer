@@ -28,7 +28,7 @@ REGEX_PATTERNS = {
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[(\[{][^()\[\]{}]*[)\]}]$'),
-    "numbered_title": re.compile(r'^[\[({]\d+[])}]$'),
+    "numbered_title": re.compile(r'^[\[({]\d{1,2}[])}]$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(^©[a-zA-Z0-9]+$)|(^[a-zA-Z0-9]+©$)'),
     "registered": re.compile(r'(^®[a-zA-Z]+$)|(^[a-zA-Z]+®$)'),
@@ -132,7 +132,7 @@ class TokenPreProcess:
     def is_numbered_title(word: str) -> list:
         result = check_regex(word, "numbered_title")
         if result:
-            return [(result, "Numbered Title")] if result else None
+            return [(result, "Numbered_Title")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -314,8 +314,6 @@ class TokenPreProcess:
 
                 return processed_word + [(final_punc, "Punc")]
 
-            return [(result, "Number")]
-
         return [(word, "OOV")]
 
     # Lexicon Based Tokens
@@ -376,6 +374,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_number(word):
+        # Check if the word consists only of digits
         return (word, "Number") if word.isdigit() else None
 
     @staticmethod
@@ -635,6 +634,7 @@ lexicon_based_methods = [
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_email,
     TokenPreProcess.is_in_quotes,
+    TokenPreProcess.is_number,
 
 ]
 
@@ -645,7 +645,6 @@ strict_regex_methods = [
     TokenPreProcess.is_currency,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_punc,
-    TokenPreProcess.is_number,
     TokenPreProcess.is_imp,
     TokenPreProcess.is_fmp,
 ]
