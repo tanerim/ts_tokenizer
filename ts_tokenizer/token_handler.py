@@ -9,15 +9,15 @@ from .emoticon_check import EmoticonParser
 from .punctuation_process import PuncMatcher
 
 puncs = re.escape(string.punctuation)
-extra_puncs = ["–", "°", "—", "(", ")", "@"]
+extra_puncs = ["–", "°", "—"]
 puncs += re.escape(''.join(extra_puncs))
-domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])  # Escaping only necessary parts
+domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])
 
 # Create a dict of RegExps
 REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
-    "hashtag": re.compile(r'^#[^#]{1,143}$'),
-    "mention": re.compile(r'^@[^@]{1,143}$'),
+    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,139}$'),
+    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,15}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
     "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
@@ -28,7 +28,7 @@ REGEX_PATTERNS = {
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[(\[{][^()\[\]{}]*[)\]}]$'),
-    "numbered_title": re.compile(r'^[\[({]\d+[])}]$'),
+    "numbered_title": re.compile(r'^[\[({]\d{1,2}[])}]$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(^©[a-zA-Z0-9]+$)|(^[a-zA-Z0-9]+©$)'),
     "registered": re.compile(r'(^®[a-zA-Z]+$)|(^[a-zA-Z]+®$)'),
@@ -132,7 +132,7 @@ class TokenPreProcess:
     def is_numbered_title(word: str) -> list:
         result = check_regex(word, "numbered_title")
         if result:
-            return [(result, "Numbered Title")] if result else None
+            return [(result, "Numbered_Title")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -314,8 +314,6 @@ class TokenPreProcess:
 
                 return processed_word + [(final_punc, "Punc")]
 
-            return [(result, "Number")]
-
         return [(word, "OOV")]
 
     # Lexicon Based Tokens
@@ -376,6 +374,7 @@ class TokenPreProcess:
 
     @staticmethod
     def is_number(word):
+        # Check if the word consists only of digits
         return (word, "Number") if word.isdigit() else None
 
     @staticmethod
@@ -475,47 +474,47 @@ class TokenPreProcess:
                     start_punc_count += 1
                 else:
                     break
-            if start_punc_count >= 2 and all(char not in puncs for char in word[start_punc_count:]):
+            if start_punc_count > 0:
                 initial_punc = [(word[:start_punc_count], "Punc")]
                 remaining_word = lower_word[start_punc_count:]
-                processed_word = TokenProcessor.process_token(remaining_word)
-                if isinstance(processed_word, tuple):
-                    processed_word = [processed_word]
-                return initial_punc + processed_word
-        else:
-            return None
+                if remaining_word:
+                    processed_word = TokenProcessor.process_token(remaining_word)
+                    if isinstance(processed_word, tuple):
+                        processed_word = [processed_word]
+                    return initial_punc + processed_word
+                else:
+                    return initial_punc
+        return None
 
     @staticmethod
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str):
-        tokens = []
-        # Step 1: Check if word ends with any string in the exception list
-        for exception in exception_list:
-            if word.endswith(exception):
-                first_part, _ = word.rsplit(exception, 1)
-                # Process `first_part` and add exception
-                if first_part:
-                    tokens.append(TokenProcessor.process_token(first_part))
-                tokens.append((exception, "Punc"))
-                return tokens
+        if len(word) > 2 and word not in exception_list:
+            # Find where the punctuation sequence at the end begins
+            end_punc_count = 0
+            for char in reversed(word):
+                if char in puncs:
+                    end_punc_count += 1
+                else:
+                    break
 
-        # Step 3: If no exception match, check for initial punctuation sequence
-        match = re.search(r'([{}]+)'.format(re.escape("".join(puncs))), word)
-        if match:
-            before_punc = word[:match.start()]
-            punc_seq = word[match.start():]
+            # If we have at least one punctuation at the end, split the word
+            if end_punc_count >= 2:
+                # Separate trailing punctuation and the main word
+                main_word = lower_word[:-end_punc_count]
+                final_punc = [(word[-end_punc_count:], "Punc")]
 
-            # Process before_punc and add as a single token if valid
-            if before_punc:
-                tokens.append(TokenProcessor.process_token(before_punc))
-
-            # Add the punctuation sequence as a single token if it’s consistent
-            tokens.append((punc_seq, "Punc"))
-            return tokens
-
-        # If none of the special cases apply, process the entire word
-        return [TokenProcessor.process_token(word)]
+                # Process the main word if it exists
+                if main_word:
+                    processed_word = TokenProcessor.process_token(main_word)
+                    if isinstance(processed_word, tuple):
+                        processed_word = [processed_word]
+                    return processed_word + final_punc
+                else:
+                    # If no main word, return only punctuation
+                    return final_punc
+        return None
 
     @staticmethod
     @apply_charfix
@@ -633,6 +632,10 @@ lexicon_based_methods = [
     TokenPreProcess.is_one_char_fixable,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
+    TokenPreProcess.is_email,
+    TokenPreProcess.is_in_quotes,
+    TokenPreProcess.is_number,
+
 ]
 
 strict_regex_methods = [
@@ -642,18 +645,17 @@ strict_regex_methods = [
     TokenPreProcess.is_currency,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_punc,
-    TokenPreProcess.is_number,
+    TokenPreProcess.is_imp,
+    TokenPreProcess.is_fmp,
 ]
 
 single_punc_methods = [
-    TokenPreProcess.is_email,
     TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
     TokenPreProcess.is_trademark,
     TokenPreProcess.is_isp,
     TokenPreProcess.is_fsp,
-    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_underscored,
     TokenPreProcess.is_hyphenated,
     TokenPreProcess.is_percentage_numbers_chars,
@@ -661,14 +663,12 @@ single_punc_methods = [
 ]
 
 multi_punc_methods = [
-    TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_url,
-    TokenPreProcess.is_fmp,
-    # TokenPreProcess.is_imp,
-    # TokenPreProcess.is_mssp,
-    # TokenPreProcess.is_msp,
-    # TokenPreProcess.is_midp,
+    TokenPreProcess.is_email_punc,
+    TokenPreProcess.is_mssp,
+    TokenPreProcess.is_msp,
+    TokenPreProcess.is_midp,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_bullet_list,
     TokenPreProcess.is_num_char_sequence,
@@ -710,7 +710,7 @@ class TokenProcessor:
                     return TokenProcessor.format_output(result, output_format)
 
         # Multiple punctuation
-        if punc_count(token) > 2:
+        if punc_count(token) > 2 and punc_count(token) < 5:
             # For tokens with punctuation, apply strict regex or punctuation checks
             for check in multi_punc_methods:
                 result = check(token)
