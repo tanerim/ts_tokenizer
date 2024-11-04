@@ -711,6 +711,7 @@ class TokenProcessor:
 
         # Multiple punctuation
         if punc_count(token) > 2 and punc_count(token) < 5:
+            print("The Token: ", token)
             # For tokens with punctuation, apply strict regex or punctuation checks
             for check in multi_punc_methods:
                 result = check(token)
