@@ -20,7 +20,8 @@ REGEX_PATTERNS = {
     "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,15}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
-    "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
+    # "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z0-9]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
+    "url_pattern": re.compile(r'((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?$"),
     "percentage_numbers_chars": re.compile(r'%(\d+\D+)'),
     "percentage_numbers": re.compile(r'(%\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d{1,3}(?:\.\d{3})*(?:,\d+)?%)'),
@@ -44,6 +45,7 @@ REGEX_PATTERNS = {
 
 exception_list = ["(!)", "...", "[...]"]
 
+MATH_OPERATORS = set(['+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=','+=', '-=', '*=', '/=', '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'])
 
 def check_regex(word, pattern):
     # print(f"Checking {pattern} for word: {word}")
@@ -255,7 +257,7 @@ class TokenPreProcess:
         if any(dne in word for dne in LocalData.domains()) and "@" not in word and word[0] not in puncs and word[-1] not in [")", "(", "[", "]"]:
             result = check_regex(word, "url_pattern")
             if "'" in word:
-                word.split("'")
+                #word.split("'")
                 return (result, "URL_Suffix") if result else None
             else:
                 return (result, "URL") if result else None
@@ -617,6 +619,13 @@ class TokenPreProcess:
                     return fixed_word, "One_Char_Fixed"
         return None
 
+    @staticmethod
+    def is_math(word: str) -> tuple:
+        # Check if the word contains any mathematical operator
+        if any(op in word for op in MATH_OPERATORS):
+            return (word, "Math_Operator")
+        return None
+
 
 lexicon_based_methods = [
     TokenPreProcess.is_abbr,
@@ -671,6 +680,7 @@ multi_punc_methods = [
     TokenPreProcess.is_midp,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_bullet_list,
+    TokenPreProcess.is_math,
     TokenPreProcess.is_num_char_sequence,
     TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
@@ -710,8 +720,7 @@ class TokenProcessor:
                     return TokenProcessor.format_output(result, output_format)
 
         # Multiple punctuation
-        if punc_count(token) > 2 and punc_count(token) < 5:
-            print("The Token: ", token)
+        if punc_count(token) > 2:
             # For tokens with punctuation, apply strict regex or punctuation checks
             for check in multi_punc_methods:
                 result = check(token)
@@ -719,5 +728,5 @@ class TokenProcessor:
                     return TokenProcessor.format_output(result, output_format)
 
         else:
-            # Default case: return OOV if no match found
+            print("The Token: ", token)
             return TokenProcessor.format_output((token, "OOV"), output_format)

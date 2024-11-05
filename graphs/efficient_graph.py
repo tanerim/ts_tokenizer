@@ -90,7 +90,7 @@ all_features_scaled = scaler.fit_transform(all_features)
 
 # Perform MiniBatchKMeans (more efficient for large data)
 n_clusters = 7
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100_000_000)
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1000000)
 kmeans.fit(all_features_scaled)
 
 # Use t-SNE for dimensionality reduction (for a sample of the data)
