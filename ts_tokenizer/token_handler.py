@@ -728,5 +728,5 @@ class TokenProcessor:
                     return TokenProcessor.format_output(result, output_format)
 
         else:
-            print("The Token: ", token)
+            # print("The Token: ", token)
             return TokenProcessor.format_output((token, "OOV"), output_format)
