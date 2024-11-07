@@ -14,6 +14,7 @@ puncs += re.escape(''.join(extra_puncs))
 domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])
 
 # Create a dict of RegExps
+# noinspection RegExpRedundantEscape
 REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
     "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,139}$'),
@@ -45,7 +46,8 @@ REGEX_PATTERNS = {
 
 exception_list = ["(!)", "...", "[...]"]
 
-MATH_OPERATORS = set(['+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=','+=', '-=', '*=', '/=', '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'])
+MATH_OPERATORS = set(['+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=', '+=', '-=', '*=', '/=', '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'])
+
 
 def check_regex(word, pattern):
     # print(f"Checking {pattern} for word: {word}")
@@ -132,20 +134,9 @@ class TokenPreProcess:
 
     @staticmethod
     def is_numbered_title(word: str) -> list:
-        # Check if the word matches the numbered_title regex pattern
         result = check_regex(word, "numbered_title")
         if result:
             return [(result, "Numbered_Title")]
-
-        # Define potential starting patterns that may indicate a numbered title
-        start_patterns = [word[0:2], word[0:3]]
-
-        # Check if the word starts with any of the patterns
-        for pattern in start_patterns:
-            if word.startswith(pattern):
-                return [(word, "Numbered_Title_With_Word")]
-
-        return None
 
     @staticmethod
     @apply_charfix
@@ -268,7 +259,7 @@ class TokenPreProcess:
         if any(dne in word for dne in LocalData.domains()) and "@" not in word and word[0] not in puncs and word[-1] not in [")", "(", "[", "]"]:
             result = check_regex(word, "url_pattern")
             if "'" in word:
-                #word.split("'")
+                # word.split("'")
                 return (result, "URL_Suffix") if result else None
             else:
                 return (result, "URL") if result else None
@@ -391,7 +382,6 @@ class TokenPreProcess:
         if word.isdigit():
             return [(word, "Number")]
 
-        # Check for a number followed by specific units: °C (Celsius), °F (Fahrenheit), or K (Kelvin)
         if punc_count(word) == 1 and word[0:-1].isdigit():
             if word[-1] == "K":
                 return [(word[0:-1], "Number"), ("K", "Kelvin")]
@@ -414,7 +404,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str):
-        if punc_count(word) ==1 and word[-1] in puncs:
+        if punc_count(word) == 1 and word[-1] in puncs:
             final_punc = word[-1]
             remaining_word = word[0:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -559,33 +549,6 @@ class TokenPreProcess:
                 return [(word, "Apostrophed")] if result else None
 
     @staticmethod
-    @apply_charfix
-    @tr_lowercase
-    def is_midp(word: str, lower_word: str):
-        if len(word) > 2 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and punc_count(word) >= 2 and "_" not in word and "-" not in word:
-            mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
-
-            if len(mid_punc_pos) == 1:
-                mid_punc_idx = mid_punc_pos[0]
-                initial_part = lower_word[:mid_punc_idx]
-                mid_punc = word[mid_punc_idx]
-                remaining_part = lower_word[mid_punc_idx + 1:]
-
-                processed_initial = TokenProcessor.process_token(initial_part)
-                processed_remaining = TokenProcessor.process_token(remaining_part)
-
-                if isinstance(processed_initial, tuple):
-                    processed_initial = [processed_initial]
-                if isinstance(processed_remaining, tuple):
-                    processed_remaining = [processed_remaining]
-
-                return processed_initial + [(mid_punc, "Punc")] + processed_remaining
-            else:
-                return None
-        else:
-            return None
-
-    @staticmethod
     def is_punc(word):
         if word in exception_list:
             return [(word, "Punc")]
@@ -655,8 +618,7 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_midsp(word: str, lower_word: str):
-        if len(word) >= 3 and word not in exception_list and word[0] not in puncs and word[
-            -1] not in puncs and "_" not in word and "-" not in word:
+        if len(word) >= 3 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and "_" not in word and "-" not in word:
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
 
             if len(mid_punc_pos) == 1:
@@ -733,7 +695,7 @@ class TokenPreProcess:
     def is_math(word: str) -> tuple:
         # Check if the word contains any mathematical operator
         if any(op in word for op in MATH_OPERATORS):
-            return (word, "Math_Operator")
+            return word, "Math_Operator"
         return None
 
 
@@ -742,11 +704,11 @@ lexicon_based_methods = [
     TokenPreProcess.is_in_exceptions,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
-    TokenPreProcess.is_emoticon
+    TokenPreProcess.is_emoticon,
+    TokenPreProcess.is_smiley,
 ]
 
 strict_regex_methods = [
-    TokenPreProcess.is_smiley,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_multiple_smiley,
@@ -758,6 +720,7 @@ strict_regex_methods = [
     TokenPreProcess.is_number,
     TokenPreProcess.is_email_punc,
     TokenPreProcess.is_roman_number,
+    TokenPreProcess.is_url,
 ]
 
 loose_regex_methods = [
@@ -765,11 +728,9 @@ loose_regex_methods = [
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_currency,
-    TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_punc,
     TokenPreProcess.is_imp,
     TokenPreProcess.is_fmp,
-    TokenPreProcess.is_midmp
 ]
 
 single_punc_methods = [
@@ -790,12 +751,12 @@ single_punc_methods = [
 
 multi_punc_methods = [
     TokenPreProcess.is_in_parenthesis,
-    TokenPreProcess.is_url,
+    TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
-    TokenPreProcess.is_midp,
     TokenPreProcess.is_math,
     TokenPreProcess.is_num_char_sequence,
+    TokenPreProcess.is_midmp,
     TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
 ]
@@ -804,13 +765,13 @@ multi_punc_methods = [
 class TokenProcessor:
 
     @staticmethod
-    def format_output(result, output_format):
+    def format_output(output, output_format):
         if output_format == 'tuple':
-            return result
+            return output
         elif output_format == 'list':
-            return list(result)
+            return list(output)
         elif output_format == 'string':
-            return f"{result[0]}\t{result[1]}"
+            return f"{output[0]}\t{output[1]}"
 
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
@@ -819,42 +780,31 @@ class TokenProcessor:
         for check in lexicon_based_methods:
             result = check(token)
             if result:
-                # print(f"Processing token: {token} with method {check.__name__}")
                 return TokenProcessor.format_output(result, output_format)
-                # f"Processing token: {token} with method {check.__name__} - LEXICON BASED"
 
         for check in strict_regex_methods:
             result = check(token)
             if result:
-                # print(f"Processing token: {token} with method {check.__name__}")
                 return TokenProcessor.format_output(result, output_format)
-                # f"Processing token: {token} with method {check.__name__} - STRICT REGEX"
 
         for check in loose_regex_methods:
             result = check(token)
             if result:
-                # print(f"Processing token: {token} with method {check.__name__}")
                 return TokenProcessor.format_output(result, output_format)
-                # f"Processing token: {token} with method {check.__name__} - LOOSE REGEX"
 
         # Single punctuation
         if punc_count(token) <= 1:
             for check in single_punc_methods:
                 result = check(token)
-                # print(f"Processing token: {token} with method {check.__name__}")
                 if result:
                     return TokenProcessor.format_output(result, output_format)
-                    # f"Processing token: {token} with method {check.__name__} - SINGLE PUNC REGEX"
 
         # Multiple punctuation
         if punc_count(token) > 2:
-            # For tokens with punctuation, apply strict regex or punctuation checks
             for check in multi_punc_methods:
                 result = check(token)
                 if result:
-                    # print(f"Processing token: {token} with method {check.__name__}")
                     return TokenProcessor.format_output(result, output_format)
-                    # f"Processing token: {token} with method {check.__name__} - MULTI PUNC REGEX"
 
         else:
             # print("The Token: ", token)
