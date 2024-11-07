@@ -1120,3 +1120,8 @@ dB
 s.a.v.
 S.A.V.
 s.a.s.
+Ltd
+Ltd.
+Şti
+ŞTİ
+Şti.
