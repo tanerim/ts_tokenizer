@@ -652,6 +652,84 @@ class TokenPreProcess:
         return None
 
     @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_midsp(word: str, lower_word: str):
+        if len(word) >= 3 and word not in exception_list and word[0] not in puncs and word[
+            -1] not in puncs and "_" not in word and "-" not in word:
+            mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
+
+            if len(mid_punc_pos) == 1:
+                mid_punc_idx = mid_punc_pos[0]
+                initial_part = lower_word[:mid_punc_idx]
+                mid_punc = word[mid_punc_idx]
+                remaining_part = lower_word[mid_punc_idx + 1:]
+
+                processed_initial = TokenProcessor.process_token(initial_part)
+                processed_remaining = TokenProcessor.process_token(remaining_part)
+
+                if isinstance(processed_initial, tuple):
+                    processed_initial = [processed_initial]
+                if isinstance(processed_remaining, tuple):
+                    processed_remaining = [processed_remaining]
+
+                return processed_initial + [(mid_punc, "Punc")] + processed_remaining
+            else:
+                return None
+        else:
+            return None
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_midmp(word: str, lower_word: str):
+        if (
+                len(word) > 2
+                and word not in exception_list
+                and lower_word not in LocalData.exception_words()
+                and word not in LocalData.abbrs()
+                and word[0] not in puncs
+                and word[-1] not in puncs
+                and punc_count(word) >= 2
+                and "_" not in word
+                and "-" not in word
+        ):
+            mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
+
+            if mid_punc_pos:
+                tokens_with_puncs = []
+                start_idx = 0
+
+                for punc_idx in mid_punc_pos:
+                    initial_part = lower_word[start_idx:punc_idx]
+                    mid_punc = word[punc_idx]
+
+                    if initial_part:
+                        processed_initial = TokenProcessor.process_token(initial_part)
+                        if isinstance(processed_initial, tuple):
+                            tokens_with_puncs.append(processed_initial)
+                        else:
+                            tokens_with_puncs.extend(processed_initial)
+
+                    tokens_with_puncs.append((mid_punc, "Punc"))
+
+                    start_idx = punc_idx + 1
+
+                remaining_part = lower_word[start_idx:]
+                if remaining_part:
+                    processed_remaining = TokenProcessor.process_token(remaining_part)
+                    if isinstance(processed_remaining, tuple):
+                        tokens_with_puncs.append(processed_remaining)
+                    else:
+                        tokens_with_puncs.extend(processed_remaining)
+
+                return tokens_with_puncs
+            else:
+                return None
+        else:
+            return None
+
+    @staticmethod
     def is_math(word: str) -> tuple:
         # Check if the word contains any mathematical operator
         if any(op in word for op in MATH_OPERATORS):
@@ -691,6 +769,7 @@ loose_regex_methods = [
     TokenPreProcess.is_punc,
     TokenPreProcess.is_imp,
     TokenPreProcess.is_fmp,
+    TokenPreProcess.is_midmp
 ]
 
 single_punc_methods = [
@@ -700,6 +779,7 @@ single_punc_methods = [
     TokenPreProcess.is_trademark,
     TokenPreProcess.is_isp,
     TokenPreProcess.is_fsp,
+    TokenPreProcess.is_midsp,
     TokenPreProcess.is_underscored,
     TokenPreProcess.is_hyphenated,
     TokenPreProcess.is_percentage_numbers_chars,
