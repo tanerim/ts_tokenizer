@@ -57,10 +57,10 @@ def tokenize(line, return_format, output=False):
                     for subtoken in processed_token:
                         if isinstance(subtoken, tuple) and len(subtoken) >= 2:
                             processed_tokens.append(subtoken)
-                        else:
-                            logging.error(f"Malformed subtoken detected: {subtoken}")
-                else:
-                    logging.error(f"Malformed token detected: {processed_token}")
+                        #else:
+                        #    logging.error(f"Malformed subtoken detected: {subtoken}")
+                #else:
+                    #logging.error(f"Malformed token detected: {processed_token}")
             except Exception as e:
                 logging.error(f"Error processing token '{token}': {e}", exc_info=True)
 

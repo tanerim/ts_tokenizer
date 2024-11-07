@@ -16,8 +16,8 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 # Create a dict of RegExps
 REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
-    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,139}$'),
-    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_]{1,15}$'),
+    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,139}$'),
+    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,15}$'),
     "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
     # "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z0-9]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
@@ -102,20 +102,16 @@ class TokenPreProcess:
                 return [(result, "Mention")] if result else None
 
     @staticmethod
-    @apply_charfix
     def is_hashtag(word: str) -> list:
-        p_count = PuncMatcher.punc_count(word)
-        if p_count == 2:
-            punc = word[-1]
-            word_parts = word.rsplit(word[-1], 1)
-            if len(word_parts) == 2:
-                result = check_regex(word_parts[0], "hashtag")
-                if result:
-                    return [("".join(word_parts[:-1]), "Hashtag"), (punc, "Punc")] if result else None
-        elif p_count == 1:
+        if punc_count(word) <= 2:
             result = check_regex(word, "hashtag")
             if result:
-                return [(result, "Hashtag")] if result else None
+                 return [(word, "Hashtag")] if result else None
+        elif punc_count(word) >= 2 and word[-1] in puncs:
+            first_punc_index = next((i for i in range(len(word) - 1, -1, -1) if word[i] not in string.punctuation), None) + 1
+            main_token = word[:first_punc_index]
+            trailing_punctuation = word[first_punc_index:]
+            return [(main_token, "Hashtag"), TokenProcessor.process_token(trailing_punctuation)]
 
     @staticmethod
     @apply_charfix
@@ -382,7 +378,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str):
-        if punc_count(word) == 1 and word[-1] in puncs:
+        if punc_count(word) ==1 and word[-1] in puncs:
             final_punc = word[-1]
             remaining_word = word[0:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -632,22 +628,25 @@ lexicon_based_methods = [
     TokenPreProcess.is_in_exceptions,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
-    TokenPreProcess.is_emoticon,
+    TokenPreProcess.is_emoticon
+]
+
+strict_regex_methods = [
     TokenPreProcess.is_smiley,
+    TokenPreProcess.is_mention,
+    TokenPreProcess.is_hashtag,
     TokenPreProcess.is_multiple_smiley,
     TokenPreProcess.is_multiple_smiley_in,
     TokenPreProcess.is_multiple_emoticon,
     TokenPreProcess.is_non_latin,
     TokenPreProcess.is_one_char_fixable,
-    TokenPreProcess.is_mention,
-    TokenPreProcess.is_hashtag,
     TokenPreProcess.is_email,
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_number,
-
+    TokenPreProcess.is_email_punc,
 ]
 
-strict_regex_methods = [
+loose_regex_methods = [
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
@@ -674,7 +673,6 @@ single_punc_methods = [
 multi_punc_methods = [
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_url,
-    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
     TokenPreProcess.is_midp,
@@ -705,17 +703,26 @@ class TokenProcessor:
         for check in lexicon_based_methods:
             result = check(token)
             if result:
+                #print(f"Processing token: {token} with method {check.__name__}")
                 return TokenProcessor.format_output(result, output_format)
 
         for check in strict_regex_methods:
             result = check(token)
             if result:
+                #print(f"Processing token: {token} with method {check.__name__}")
+                return TokenProcessor.format_output(result, output_format)
+
+        for check in loose_regex_methods:
+            result = check(token)
+            if result:
+                #print(f"Processing token: {token} with method {check.__name__}")
                 return TokenProcessor.format_output(result, output_format)
 
         # Single punctuation
         if punc_count(token) <= 1:
             for check in single_punc_methods:
                 result = check(token)
+                #print(f"Processing token: {token} with method {check.__name__}")
                 if result:
                     return TokenProcessor.format_output(result, output_format)
 
@@ -725,6 +732,7 @@ class TokenProcessor:
             for check in multi_punc_methods:
                 result = check(token)
                 if result:
+                    #print(f"Processing token: {token} with method {check.__name__}")
                     return TokenProcessor.format_output(result, output_format)
 
         else:
