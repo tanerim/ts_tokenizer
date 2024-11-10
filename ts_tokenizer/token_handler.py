@@ -30,7 +30,7 @@ REGEX_PATTERNS = {
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[(\[{][^()\[\]{}]*[)\]}]$'),
-    "numbered_title": re.compile(r'^[\[({]\d{1,2}[])}]$'),
+    "numbered_title": re.compile(r'^\((\d{1,2})\)$|^\[(\d{1,2})\]$|^{(\d{1,2})}$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(^©[a-zA-Z0-9]+$)|(^[a-zA-Z0-9]+©$)'),
     "registered": re.compile(r'(^®[a-zA-Z]+$)|(^[a-zA-Z]+®$)'),
@@ -44,7 +44,7 @@ REGEX_PATTERNS = {
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$")
 }
 
-exception_list = ["(!)", "...", "[...]"]
+exception_list = ["(!)", "..."]
 
 MATH_OPERATORS = set(['+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=', '+=', '-=', '*=', '/=', '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'])
 
@@ -136,7 +136,7 @@ class TokenPreProcess:
     def is_numbered_title(word: str) -> list:
         result = check_regex(word, "numbered_title")
         if result:
-            return [(result, "Numbered_Title")]
+            return [(result, "Numbered_Title")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -550,8 +550,28 @@ class TokenPreProcess:
 
     @staticmethod
     def is_punc(word):
-        if word in exception_list:
-            return [(word, "Punc")]
+        # Check if the token contains any of the exceptions as a substring
+        for exception in exception_list:
+            if exception in word:
+                # Split the token around the exception and process the parts
+                parts = word.split(exception)
+                result = []
+
+                # Process the parts before, between, and after the exception
+                for i, part in enumerate(parts):
+                    if part:
+                        processed_part = TokenProcessor.process_token(part)
+                        if isinstance(processed_part, tuple):
+                            processed_part = [processed_part]
+                        result.extend(processed_part)
+
+                    # Add the exception tag only if it is not the last split
+                    if i < len(parts) - 1:
+                        result.append((exception, "Punc"))
+
+                return result if result else None
+
+        # Default case: check if the entire token is made of punctuation
         return [(word, "Punc")] if all(char in puncs for char in word) else None
 
     @staticmethod
@@ -693,22 +713,26 @@ class TokenPreProcess:
 
     @staticmethod
     def is_math(word: str) -> tuple:
-        # Check if the word contains any mathematical operator
-        if any(op in word for op in MATH_OPERATORS):
+        # Count the number of distinct mathematical operators in the word
+        operator_count = sum(1 for op in MATH_OPERATORS if op in word)
+
+        # Return the token as "Math_Operator" only if there are at least two distinct operators
+        if operator_count >= 2:
             return word, "Math_Operator"
         return None
 
 
-lexicon_based_methods = [
+lexicon_based = [
     TokenPreProcess.is_abbr,
     TokenPreProcess.is_in_exceptions,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
     TokenPreProcess.is_emoticon,
     TokenPreProcess.is_smiley,
+    TokenPreProcess.is_roman_number,
 ]
 
-strict_regex_methods = [
+regex = [
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_multiple_smiley,
@@ -719,21 +743,14 @@ strict_regex_methods = [
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_number,
     TokenPreProcess.is_email_punc,
-    TokenPreProcess.is_roman_number,
     TokenPreProcess.is_url,
-]
-
-loose_regex_methods = [
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_currency,
-    TokenPreProcess.is_punc,
-    TokenPreProcess.is_imp,
-    TokenPreProcess.is_fmp,
 ]
 
-single_punc_methods = [
+single_punc = [
     TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
@@ -746,19 +763,22 @@ single_punc_methods = [
     TokenPreProcess.is_percentage_numbers_chars,
     TokenPreProcess.is_percentage_numbers,
     TokenPreProcess.is_bullet_list,
-    TokenPreProcess.is_non_latin,
 ]
 
-multi_punc_methods = [
-    TokenPreProcess.is_in_parenthesis,
+multi_punc = [
+    TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_numbered_title,
+    TokenPreProcess.is_in_parenthesis,
+    TokenPreProcess.is_midmp,
+    TokenPreProcess.is_punc,
+    TokenPreProcess.is_imp,
+    TokenPreProcess.is_fmp,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
-    TokenPreProcess.is_math,
+    # TokenPreProcess.is_math,
     TokenPreProcess.is_num_char_sequence,
-    TokenPreProcess.is_midmp,
-    TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
+    TokenPreProcess.is_non_latin,
 ]
 
 
@@ -775,37 +795,36 @@ class TokenProcessor:
 
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
+        # Count punctuation
+        punctuation_count = punc_count(token)
 
         # Use lexicon-based methods if the token has no punctuation
-        for check in lexicon_based_methods:
-            result = check(token)
+        for CHECK in lexicon_based:
+            result = CHECK(token)
             if result:
-                return TokenProcessor.format_output(result, output_format)
+                return TokenProcessor.format_output(result, output_format) if result else None
 
-        for check in strict_regex_methods:
-            result = check(token)
-            if result:
-                return TokenProcessor.format_output(result, output_format)
+        #for CHECK in regex:
+        #    result = CHECK(token)
+        #    if result:
+        #        return TokenProcessor.format_output(result, output_format) if result else None
 
-        for check in loose_regex_methods:
-            result = check(token)
-            if result:
-                return TokenProcessor.format_output(result, output_format)
-
-        # Single punctuation
-        if punc_count(token) <= 1:
-            for check in single_punc_methods:
-                result = check(token)
+        # Check single punctuation methods
+        if punctuation_count == 1:
+            for CHECK in single_punc:
+                result = CHECK(token)
                 if result:
-                    return TokenProcessor.format_output(result, output_format)
+                    return TokenProcessor.format_output(result, output_format) if result else None
 
-        # Multiple punctuation
-        if punc_count(token) > 2:
-            for check in multi_punc_methods:
-                result = check(token)
+        # Check multiple punctuation methods
+        if punctuation_count >= 2:
+            for CHECK in multi_punc:
+                result = CHECK(token)
                 if result:
-                    return TokenProcessor.format_output(result, output_format)
+                    return TokenProcessor.format_output(result, output_format) if result else None
 
-        else:
-            # print("The Token: ", token)
-            return TokenProcessor.format_output((token, "OOV"), output_format)
+
+
+        # Default case: Out-Of-Vocabulary (OOV)
+        return TokenProcessor.format_output((token, "OOV"), output_format)
+
