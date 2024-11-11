@@ -1,7 +1,7 @@
 import re
 import string
 
-from .data import LocalData
+from .data import LocalData, word_list
 from .char_fix import CharFix
 from .date_check import DateCheck
 from .smiley_check import SmileyParser
@@ -422,7 +422,7 @@ class TokenPreProcess:
             remaining_word = word[1:]
             processed_word = TokenProcessor.process_token(remaining_word)
 
-            result = [(initial_punc, "Punc")]
+            result = [(initial_punc, "Punc"), processed_word]
             if isinstance(processed_word, list):
                 result.extend(processed_word)
             elif isinstance(processed_word, tuple):
@@ -728,7 +728,6 @@ lexicon_based = [
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
     TokenPreProcess.is_emoticon,
-    TokenPreProcess.is_smiley,
     TokenPreProcess.is_roman_number,
 ]
 
@@ -740,14 +739,16 @@ regex = [
     TokenPreProcess.is_multiple_emoticon,
     TokenPreProcess.is_one_char_fixable,
     TokenPreProcess.is_email,
+    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_number,
-    TokenPreProcess.is_email_punc,
     TokenPreProcess.is_url,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_currency,
+    TokenPreProcess.is_isp,
+    TokenPreProcess.is_fsp,
 ]
 
 single_punc = [
@@ -755,8 +756,6 @@ single_punc = [
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
     TokenPreProcess.is_trademark,
-    TokenPreProcess.is_isp,
-    TokenPreProcess.is_fsp,
     TokenPreProcess.is_midsp,
     TokenPreProcess.is_underscored,
     TokenPreProcess.is_hyphenated,
@@ -766,6 +765,7 @@ single_punc = [
 ]
 
 multi_punc = [
+    TokenPreProcess.is_smiley,
     TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_in_parenthesis,
@@ -804,14 +804,14 @@ class TokenProcessor:
             if result:
                 return TokenProcessor.format_output(result, output_format) if result else None
 
-        #for CHECK in regex:
-        #    result = CHECK(token)
-        #    if result:
-        #        return TokenProcessor.format_output(result, output_format) if result else None
+        # Regex based methods
+        for CHECK in regex:
+            result = CHECK(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format) if result else None
 
-        # Check single punctuation methods
-        if punctuation_count == 1:
-            for CHECK in single_punc:
+        if token[0] in puncs:
+            for CHECK in regex:
                 result = CHECK(token)
                 if result:
                     return TokenProcessor.format_output(result, output_format) if result else None
@@ -823,6 +823,12 @@ class TokenProcessor:
                 if result:
                     return TokenProcessor.format_output(result, output_format) if result else None
 
+        # Check single punctuation methods
+        if punctuation_count == 1:
+            for CHECK in single_punc:
+                result = CHECK(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format) if result else None
 
 
         # Default case: Out-Of-Vocabulary (OOV)
