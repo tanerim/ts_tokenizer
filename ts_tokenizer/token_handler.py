@@ -39,7 +39,7 @@ REGEX_PATTERNS = {
     # "initial_parenthesis": re.compile(r"^([\(\[\{]+)([^\)]+)([\)\]\}]+)(.*)$"),
     "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
-    "roman_number": re.compile(r'^(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
+    "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"\b\w+'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+\b"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$")
 }
@@ -206,7 +206,8 @@ class TokenPreProcess:
     @staticmethod
     def is_roman_number(word: str) -> tuple:
         result = check_regex(word, "roman_number")
-        return (result, "Roman_Number") if result else None
+        if result:
+            return (result, "Roman_Number") if result else None
 
     @staticmethod
     def is_bullet_list(word: str) -> tuple:
@@ -723,61 +724,61 @@ class TokenPreProcess:
 
 
 lexicon_based = [
-    TokenPreProcess.is_abbr,
     TokenPreProcess.is_in_exceptions,
+    TokenPreProcess.is_emoticon,
+    TokenPreProcess.is_smiley,
+    TokenPreProcess.is_abbr,
+    TokenPreProcess.is_roman_number,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
-    TokenPreProcess.is_emoticon,
-    TokenPreProcess.is_roman_number,
 ]
 
 regex = [
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
-    TokenPreProcess.is_multiple_smiley,
-    TokenPreProcess.is_multiple_smiley_in,
-    TokenPreProcess.is_multiple_emoticon,
-    TokenPreProcess.is_one_char_fixable,
-    TokenPreProcess.is_email,
-    TokenPreProcess.is_email_punc,
-    TokenPreProcess.is_in_quotes,
-    TokenPreProcess.is_number,
     TokenPreProcess.is_url,
+    TokenPreProcess.is_email,
+    TokenPreProcess.is_number,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_currency,
-    TokenPreProcess.is_isp,
-    TokenPreProcess.is_fsp,
+    TokenPreProcess.is_in_quotes,
+    TokenPreProcess.is_multiple_smiley,
+    TokenPreProcess.is_multiple_smiley_in,
+    TokenPreProcess.is_multiple_emoticon,
+    TokenPreProcess.is_one_char_fixable,
+    TokenPreProcess.is_email_punc,
 ]
 
 single_punc = [
+    TokenPreProcess.is_isp,
+    TokenPreProcess.is_fsp,
     TokenPreProcess.is_apostrophed,
-    TokenPreProcess.is_copyright,
-    TokenPreProcess.is_registered,
-    TokenPreProcess.is_trademark,
-    TokenPreProcess.is_midsp,
-    TokenPreProcess.is_underscored,
     TokenPreProcess.is_hyphenated,
     TokenPreProcess.is_percentage_numbers_chars,
     TokenPreProcess.is_percentage_numbers,
+    TokenPreProcess.is_underscored,
+    TokenPreProcess.is_copyright,
+    TokenPreProcess.is_registered,
+    TokenPreProcess.is_trademark,
     TokenPreProcess.is_bullet_list,
+    TokenPreProcess.is_midsp,
 ]
 
 multi_punc = [
-    TokenPreProcess.is_smiley,
-    TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_midmp,
-    TokenPreProcess.is_punc,
-    TokenPreProcess.is_imp,
+    TokenPreProcess.is_num_char_sequence,
+    TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_fmp,
+    TokenPreProcess.is_imp,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
-    # TokenPreProcess.is_math,
-    TokenPreProcess.is_num_char_sequence,
+    TokenPreProcess.is_punc,
     TokenPreProcess.is_complex_punc,
+    # TokenPreProcess.is_math,
     TokenPreProcess.is_non_latin,
 ]
 
@@ -809,12 +810,6 @@ class TokenProcessor:
             result = CHECK(token)
             if result:
                 return TokenProcessor.format_output(result, output_format) if result else None
-
-        if token[0] in puncs:
-            for CHECK in regex:
-                result = CHECK(token)
-                if result:
-                    return TokenProcessor.format_output(result, output_format) if result else None
 
         # Check multiple punctuation methods
         if punctuation_count >= 2:
