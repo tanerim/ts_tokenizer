@@ -29,7 +29,7 @@ REGEX_PATTERNS = {
     "single_hyphen": re.compile(r'^(?!-)\w+-\w+(?!-)$'),
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
-    "in_parenthesis": re.compile(r'^[(\[{][^()\[\]{}]*[)\]}]$'),
+    "in_parenthesis": re.compile(r'^[(\[{]{1,}[^()\[\]{}]*[)\]}]{1,}$'),
     "numbered_title": re.compile(r'^\((\d{1,2})\)$|^\[(\d{1,2})\]$|^{(\d{1,2})}$'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
     "copyright": re.compile(r'(^©[a-zA-Z0-9]+$)|(^[a-zA-Z0-9]+©$)'),
@@ -515,8 +515,25 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_fmp(word: str, lower_word: str):
-        if len(word) > 2 and word not in exception_list:
-            # Find where the punctuation sequence at the end begins
+        # Check if the word matches any exception from the exception list
+        for exception in exception_list:
+            if word.endswith(exception):
+                # Split the word into the main part and the exception
+                main_word = word[:-len(exception)]
+                exception_token = (exception, "Punc")
+
+                # Process the main part if it exists
+                if main_word:
+                    processed_main_word = TokenProcessor.process_token(main_word)
+                    if isinstance(processed_main_word, tuple):
+                        processed_main_word = [processed_main_word]
+                    return processed_main_word + [exception_token]
+                else:
+                    # Return only the exception if no main word exists
+                    return [exception_token]
+
+        # Check for two or more trailing punctuations
+        if len(word) > 1 and word not in exception_list:
             end_punc_count = 0
             for char in reversed(word):
                 if char in puncs:
@@ -524,21 +541,25 @@ class TokenPreProcess:
                 else:
                     break
 
-            # If we have at least one punctuation at the end, split the word
-            if end_punc_count >= 2:
-                # Separate trailing punctuation and the main word
+            # Split the word if it has one or more trailing punctuations
+            if end_punc_count == 1:
                 main_word = lower_word[:-end_punc_count]
-                final_punc = [(word[-end_punc_count:], "Punc")]
+                trailing_punc = word[-end_punc_count:]
 
                 # Process the main word if it exists
-                if main_word:
-                    processed_word = TokenProcessor.process_token(main_word)
-                    if isinstance(processed_word, tuple):
-                        processed_word = [processed_word]
-                    return processed_word + final_punc
-                else:
-                    # If no main word, return only punctuation
-                    return final_punc
+                processed_main_word = TokenProcessor.process_token(main_word) if main_word else None
+                final_punc_token = (trailing_punc, "Punc")
+
+                result = []
+                if processed_main_word:
+                    if isinstance(processed_main_word, tuple):
+                        result.extend([processed_main_word])
+                    else:
+                        result.extend(processed_main_word)
+                result.append(final_punc_token)
+                return result
+
+        # If no conditions are met, return None
         return None
 
     @staticmethod
@@ -769,14 +790,14 @@ single_punc = [
 multi_punc = [
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_in_parenthesis,
-    TokenPreProcess.is_midmp,
-    TokenPreProcess.is_num_char_sequence,
-    TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_fmp,
     TokenPreProcess.is_imp,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
     TokenPreProcess.is_punc,
+    TokenPreProcess.is_midmp,
+    TokenPreProcess.is_num_char_sequence,
+    TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
     # TokenPreProcess.is_math,
     TokenPreProcess.is_non_latin,
