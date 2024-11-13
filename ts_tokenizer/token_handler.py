@@ -19,9 +19,10 @@ REGEX_PATTERNS = {
     # Precompiled regular expressions using re.compile()
     "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,139}$'),
     "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,15}$'),
-    "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
+    # "email": re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
+    # "email": re.compile(r'^[^re.escape(string_punctuation][a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b(?![.,!?;:])'),
+    "email": re.compile(rf'^[^{puncs}][a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?<![{puncs}])$'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
-    # "url_pattern": re.compile(fr'^(?:(?:http|https|ftp)://)?(?:www\.)?[-a-zA-Z0-9:%._\\+~#=]{{1,256}}({domains_pattern})(?:\.[a-zA-Z0-9]{{2,3}})?(?:/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)?\b(?![.,!?;:])'),
     "url_pattern": re.compile(r'((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?: ?[AP]M)?(?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)?$"),
     "percentage_numbers_chars": re.compile(r'%(\d+\D+)'),
@@ -804,6 +805,55 @@ multi_punc = [
 ]
 
 
+
+def process_lexicon_based(token: str, output_format: str = 'tuple') -> tuple:
+    """
+    Process token using lexicon-based methods only.
+    """
+    for CHECK in lexicon_based:
+        result = CHECK(token)
+        if result:
+            return TokenProcessor.format_output(result, output_format)
+    return TokenProcessor.format_output((token, "OOV"), output_format)
+
+
+def process_regex(token: str, output_format: str = 'tuple') -> tuple:
+    """
+    Process token using regex-based methods only.
+    """
+    for CHECK in regex:
+        result = CHECK(token)
+        if result:
+            return TokenProcessor.format_output(result, output_format)
+    return TokenProcessor.format_output((token, "OOV"), output_format)
+
+
+def process_single_punc(token: str, output_format: str = 'tuple') -> tuple:
+    """
+    Process token using single punctuation-based methods only.
+    """
+    punctuation_count = punc_count(token)
+    if punctuation_count == 1:
+        for CHECK in single_punc:
+            result = CHECK(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format)
+    return TokenProcessor.format_output((token, "OOV"), output_format)
+
+
+def process_multi_punc(token: str, output_format: str = 'tuple') -> tuple:
+    """
+    Process token using multiple punctuation-based methods only.
+    """
+    punctuation_count = punc_count(token)
+    if punctuation_count >= 2:
+        for CHECK in multi_punc:
+            result = CHECK(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format)
+    return TokenProcessor.format_output((token, "OOV"), output_format)
+
+
 class TokenProcessor:
 
     @staticmethod
@@ -817,36 +867,74 @@ class TokenProcessor:
 
     @staticmethod
     def process_token(token: str, output_format: str = 'tuple') -> tuple:
-        # Count punctuation
-        punctuation_count = punc_count(token)
+        """
+        Main method to process a token using lexicon-based, regex-based, single-punc, and multi-punc checks in order.
+        """
+        # Step 1: Lexicon-based checks
+        result = TokenProcessor.process_lexicon_based(token, output_format)
+        if result[1] != "OOV":
+            return result
 
-        # Use lexicon-based methods if the token has no punctuation
-        for CHECK in lexicon_based:
-            result = CHECK(token)
-            if result:
-                return TokenProcessor.format_output(result, output_format) if result else None
+        # Step 2: Regex-based checks
+        result = TokenProcessor.process_regex(token, output_format)
+        if result[1] != "OOV":
+            return result
 
-        # Regex based methods
-        for CHECK in regex:
-            result = CHECK(token)
-            if result:
-                return TokenProcessor.format_output(result, output_format) if result else None
+        # Step 3: Single punctuation checks
+        result = TokenProcessor.process_single_punc(token, output_format)
+        if result[1] != "OOV":
+            return result
 
-        # Check multiple punctuation methods
-        if punctuation_count >= 2:
-            for CHECK in multi_punc:
-                result = CHECK(token)
-                if result:
-                    return TokenProcessor.format_output(result, output_format) if result else None
-
-        # Check single punctuation methods
-        if punctuation_count == 1:
-            for CHECK in single_punc:
-                result = CHECK(token)
-                if result:
-                    return TokenProcessor.format_output(result, output_format) if result else None
-
+        # Step 4: Multi-punctuation checks
+        result = TokenProcessor.process_multi_punc(token, output_format)
+        if result[1] != "OOV":
+            return result
 
         # Default case: Out-Of-Vocabulary (OOV)
         return TokenProcessor.format_output((token, "OOV"), output_format)
 
+    @staticmethod
+    def process_lexicon_based(token: str, output_format: str = 'tuple') -> tuple:
+        """
+        Process token using lexicon-based methods only.
+        """
+        for CHECK in lexicon_based:
+            result = CHECK(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format)
+        return TokenProcessor.format_output((token, "OOV"), output_format)
+
+    @staticmethod
+    def process_regex(token: str, output_format: str = 'tuple') -> tuple:
+        """
+        Process token using regex-based methods only.
+        """
+        for CHECK in regex:
+            result = CHECK(token)
+            if result:
+                return TokenProcessor.format_output(result, output_format)
+        return TokenProcessor.format_output((token, "OOV"), output_format)
+
+    @staticmethod
+    def process_single_punc(token: str, output_format: str = 'tuple') -> tuple:
+        """
+        Process token using single punctuation-based methods only.
+        """
+        if punc_count(token) == 1:
+            for CHECK in single_punc:
+                result = CHECK(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format)
+        return TokenProcessor.format_output((token, "OOV"), output_format)
+
+    @staticmethod
+    def process_multi_punc(token: str, output_format: str = 'tuple') -> tuple:
+        """
+        Process token using multiple punctuation-based methods only.
+        """
+        if punc_count(token) >= 2:
+            for CHECK in multi_punc:
+                result = CHECK(token)
+                if result:
+                    return TokenProcessor.format_output(result, output_format)
+        return TokenProcessor.format_output((token, "OOV"), output_format)
