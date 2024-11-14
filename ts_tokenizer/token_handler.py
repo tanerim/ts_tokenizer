@@ -1,7 +1,7 @@
 import re
 import string
 
-from .data import LocalData, word_list
+from .data import LocalData
 from .char_fix import CharFix
 from .date_check import DateCheck
 from .smiley_check import SmileyParser
@@ -48,7 +48,8 @@ REGEX_PATTERNS = {
 
 exception_list = ["(!)", "..."]
 
-MATH_OPERATORS = set(['+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=', '+=', '-=', '*=', '/=', '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'])
+MATH_OPERATORS = {'+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=', '+=', '-=', '*=', '/=',
+                  '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'}
 
 
 def check_regex(word, pattern):
@@ -80,6 +81,7 @@ def tr_lowercase(func):
     return wrapper
 
 
+# noinspection PyTypeChecker
 class TokenPreProcess:
 
     def __init__(self):
@@ -185,11 +187,15 @@ class TokenPreProcess:
         return [(result, "Hour")] if result else None
 
     @staticmethod
-    def is_percentage_numbers(word: str) -> tuple:
+    def is_percentage_numbers(word: str) -> list:
         p_count = PuncMatcher.punc_count(word)
-        result = check_regex(word, "percentage_numbers") if p_count == 1 else None
-        if result:
-            return [(word, "Percentage_Numbers")] if result else None
+        if p_count == 1:
+            result_initial = check_regex(word, "percentage_numbers_initial")
+            result_final = check_regex(word, "percentage_numbers_final")
+            result = result_initial or result_final
+            if result:
+                return [(word, "Percentage_Numbers")]
+        return None
 
     @staticmethod
     @apply_charfix
@@ -417,16 +423,19 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_isp(word: str) -> list:
-        if len(word) > 1 and word[0] in puncs and (word[0] != "@" or word[0] != "#"):
+        if len(word) > 1 and word[0] in puncs and (word[0] != "@" and word[0] != "#"):
             initial_punc = word[0]
             remaining_word = word[1:]
             processed_word = TokenProcessor.process_token(remaining_word)
 
-            result = [(initial_punc, "Punc"), processed_word]
+            result = [(initial_punc, "Punc")]
             if isinstance(processed_word, list):
                 result.extend(processed_word)
             elif isinstance(processed_word, tuple):
                 result.append(processed_word)
+            elif processed_word is None:
+                return [(initial_punc, "Punc")]  # Return only the initial punctuation if no match was found
+
             return result
         else:
             return None
@@ -750,27 +759,26 @@ lexicon_based = [
     TokenPreProcess.is_in_eng_words,
     TokenPreProcess.is_single_punc,
     TokenPreProcess.is_roman_number,
-    TokenPreProcess.is_multi_punc,
-    TokenPreProcess.is_in_parenthesis,
-
 ]
 
 regex = [
-    TokenPreProcess.is_mention,
-    TokenPreProcess.is_hashtag,
     TokenPreProcess.is_url,
     TokenPreProcess.is_email,
-    TokenPreProcess.is_number,
-    TokenPreProcess.is_date_range,
-    TokenPreProcess.is_date,
-    TokenPreProcess.is_hour,
-    TokenPreProcess.is_currency,
+    TokenPreProcess.is_mention,
+    TokenPreProcess.is_hashtag,
     TokenPreProcess.is_in_quotes,
-    TokenPreProcess.is_multiple_smiley,
-    TokenPreProcess.is_multiple_smiley_in,
-    TokenPreProcess.is_multiple_emoticon,
-    TokenPreProcess.is_one_char_fixable,
-    TokenPreProcess.is_email_punc,
+    TokenPreProcess.is_apostrophed,
+    TokenPreProcess.is_numbered_title,
+    TokenPreProcess.is_in_parenthesis,
+    TokenPreProcess.is_roman_number,
+    TokenPreProcess.is_currency,
+    TokenPreProcess.is_percentage_numbers,
+    TokenPreProcess.is_date_range,
+    TokenPreProcess.is_hour,
+    TokenPreProcess.is_copyright,
+    TokenPreProcess.is_registered,
+    TokenPreProcess.is_trademark,
+    TokenPreProcess.is_bullet_list,
 ]
 
 single_punc = [
@@ -790,6 +798,7 @@ single_punc = [
 
 multi_punc = [
     TokenPreProcess.is_numbered_title,
+    TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_fmp,
     TokenPreProcess.is_imp,
     TokenPreProcess.is_mssp,
@@ -798,10 +807,10 @@ multi_punc = [
     TokenPreProcess.is_num_char_sequence,
     TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
-    # TokenPreProcess.is_math,
+    TokenPreProcess.is_multi_punc,
+    TokenPreProcess.is_math,
     TokenPreProcess.is_non_latin,
 ]
-
 
 
 class TokenProcessor:
@@ -835,18 +844,17 @@ class TokenProcessor:
             return result
 
         # Step 3: Single punctuation checks
-        result = TokenProcessor.process_single_punc(token, output_format)
+        result = TokenProcessor.process_multi_punc(token, output_format)
         if not TokenProcessor.is_oov(result):
             return result
 
         # Step 4: Multi-punctuation checks
-        result = TokenProcessor.process_multi_punc(token, output_format)
+        result = TokenProcessor.process_single_punc(token, output_format)
         if not TokenProcessor.is_oov(result):
             return result
 
         # Step 5: Default case - return OOV if no checks matched
         return [(token, "OOV")]
-
 
     @staticmethod
     def process_lexicon_based(token: str, output_format: str = 'tuple') -> list:
@@ -854,7 +862,6 @@ class TokenProcessor:
             result = CHECK(token)
             if result:
                 return result
-        return [(token, "OOV")]
 
     @staticmethod
     def process_regex(token: str, output_format: str = 'tuple') -> list:
@@ -862,44 +869,20 @@ class TokenProcessor:
             result = CHECK(token)
             if result:
                 return result
-        return [(token, "OOV")]
 
     @staticmethod
     def process_single_punc(token: str, output_format: str = 'tuple') -> list:
         for CHECK in single_punc:
             result = CHECK(token)
             if result:
-                processed_parts = []
-                for part, tag in result:
-                    if tag == "Punc":
-                        processed_parts.append((part, "Punc"))
-                    else:
-                        processed_parts.extend(TokenProcessor.process_token(part, output_format))
-                return processed_parts
-        return [(token, "OOV")]
+                return result
 
     @staticmethod
     def process_multi_punc(token: str, output_format: str = 'tuple') -> list:
         for CHECK in multi_punc:
             result = CHECK(token)
             if result:
-                processed_parts = []
-                for part, tag in result:
-                    if tag == "Punc":
-                        processed_parts.append((part, "Punc"))
-                    else:
-                        processed_parts.extend(TokenProcessor.process_token(part, output_format))
-                return processed_parts
-        return [(token, "OOV")]
-
-    @staticmethod
-    def validate_result(result, token, output_format):
-        """
-        Ensures that the result is a valid list of tuples. If not, returns [(token, "OOV")].
-        """
-        if not isinstance(result, list) or any(not isinstance(item, tuple) or len(item) != 2 for item in result):
-            return [(token, "OOV")]
-        return result
+                return result
 
     @staticmethod
     def is_oov(result):
