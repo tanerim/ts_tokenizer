@@ -36,10 +36,9 @@ REGEX_PATTERNS = {
     "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"^([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)'([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)$"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$"),
-
     "url_pattern": re.compile(r'^((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
+    "url": re.compile(r'^((www)\.)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
-
 }
 
 def check_regex(word, pattern):
@@ -62,7 +61,7 @@ def main():
                 # Split the line into words and check each word
                 words = line.split()
                 for word in words:
-                    match= check_regex(word, "url_pattern")
+                    match= check_regex(word, "url")
                     if match:
                         print(CharFix.fix(word))
     except FileNotFoundError:
