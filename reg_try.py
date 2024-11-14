@@ -19,10 +19,11 @@ REGEX_PATTERNS = {
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]$"),
     "hour_suffix": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)$"),
     "hour_12": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]([AP]M)$"),
-    "percentage_numbers_initial": re.compile(r'^%\d{1,3}(?:[.,]\d+)$'),
+    "percentage_numbers_initial": re.compile(r'^%\d{1,3}(?:[.,]\d+)?$'),
     "percentage_numbers_final": re.compile(r'^\d{1,3}(?:[.,]\d+)*%$'),
     "percentage_numbers_chars": re.compile(r'^%\d{1,3}(?:[.,]\d+)*\D.*$'),
     "single_hyphen": re.compile(r'^(?!-)\w+-\w+(?!-)$'),
+    "multi_hyphen": re.compile(r'^(?!-)(\w+-)+\w+(?!-)$'),
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[(\[{]{1,}[^()\[\]{}]*[)\]}]{1,}$'),
@@ -61,7 +62,7 @@ def main():
                 # Split the line into words and check each word
                 words = line.split()
                 for word in words:
-                    match= check_regex(word, "url")
+                    match= check_regex(word, "multi_hyphen")
                     if match:
                         print(CharFix.fix(word))
     except FileNotFoundError:

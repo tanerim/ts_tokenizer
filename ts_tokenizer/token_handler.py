@@ -24,10 +24,11 @@ REGEX_PATTERNS = {
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]$"),
     "hour_suffix": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)$"),
     "hour_12": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]([AP]M)$"),
-    "percentage_numbers_initial": re.compile(r'^%\d{1,3}(?:[.,]\d+)$'),
+    "percentage_numbers_initial": re.compile(r'^%\d{1,3}(?:[.,]\d+)?$'),
     "percentage_numbers_final": re.compile(r'^\d{1,3}(?:[.,]\d+)*%$'),
     "percentage_numbers_chars": re.compile(r'^%\d{1,3}(?:[.,]\d+)*\D.*$'),
     "single_hyphen": re.compile(r'^(?!-)\w+-\w+(?!-)$'),
+    "multi_hyphen": re.compile(r'^(?!-)(\w+-)+\w+(?!-)$'),
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
     "in_parenthesis": re.compile(r'^[(\[{]{1,}[^()\[\]{}]*[)\]}]{1,}$'),
@@ -41,8 +42,8 @@ REGEX_PATTERNS = {
     "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"^([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)'([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)$"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$"),
-    "url_pattern": re.compile(r'^((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
-    "url": re.compile(r'^((www)\.)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
+    "full_url": re.compile(r'^((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
+    "web_url": re.compile(r'^((www)\.)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
 }
 
@@ -188,13 +189,11 @@ class TokenPreProcess:
 
     @staticmethod
     def is_percentage_numbers(word: str) -> list:
-        p_count = PuncMatcher.punc_count(word)
-        if p_count == 1:
-            result_initial = check_regex(word, "percentage_numbers_initial")
-            result_final = check_regex(word, "percentage_numbers_final")
-            result = result_initial or result_final
-            if result:
-                return [(word, "Percentage_Numbers")]
+        result_initial = check_regex(word, "percentage_numbers_initial")
+        result_final = check_regex(word, "percentage_numbers_final")
+        result = result_initial or result_final
+        if result:
+            return [(word, "Percentage_Numbers")]
         return None
 
     @staticmethod
@@ -264,14 +263,24 @@ class TokenPreProcess:
             return [(result, "Email")] if result else None
 
     @staticmethod
-    def is_url(word: str) -> list:
+    def is_full_url(word: str) -> list:
         if any(dne in word for dne in LocalData.domains()) and "@" not in word and word[0] not in puncs and word[-1] not in [")", "(", "[", "]"]:
-            result = check_regex(word, "url_pattern")
+            result = check_regex(word, "full_url")
             if "'" in word:
                 # word.split("'")
                 return [(result, "URL_Suffix")] if result else None
             else:
-                return [(result, "URL")] if result else None
+                return [(result, "Full_URL")] if result else None
+
+    @staticmethod
+    def is_web_url(word: str) -> list:
+        if any(dne in word for dne in LocalData.domains()) and "@" not in word and word[0] not in puncs and word[-1] not in [")", "(", "[", "]"]:
+            result = check_regex(word, "web_url")
+            if "'" in word:
+                # word.split("'")
+                return [(result, "URL_Suffix")] if result else None
+            else:
+                return [(result, "Web_URL")] if result else None
 
     @staticmethod
     def is_copyright(word: str) -> tuple:
@@ -332,16 +341,15 @@ class TokenPreProcess:
     # Lexicon Based Tokens
     @staticmethod
     @apply_charfix
-    def is_abbr(word: str) -> list:
-        # Use lower_word for comparison
-        return [(word, "Abbr")] if word in LocalData.abbrs() else None
+    @tr_lowercase
+    def is_abbr(word: str, lower_word: str) -> list:
+        return [(word, "Abbr")] if lower_word in LocalData.abbrs() else None
 
     @staticmethod
     @apply_charfix
     @tr_lowercase
     def is_in_lexicon(word: str, lower_word: str) -> list:
-        if lower_word in LocalData.word_list():
-            return [(word, "Valid_Word")] if lower_word in LocalData.word_list() else None
+        return [(word, "Valid_Word")] if lower_word in LocalData.word_list() else None
 
     @staticmethod
     @apply_charfix
@@ -353,9 +361,7 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_in_eng_words(word, lower_word: str) -> list:
-        word_fixed = CharFix.fix(word)
-        if lower_word in LocalData.eng_word_list():
-            return [(word_fixed, "English_Word")] if word_fixed else None
+        return [(word, "English_Word")] if lower_word in LocalData.eng_word_list() else None
 
     @staticmethod
     def is_smiley(word: str) -> list:
@@ -442,30 +448,28 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_mssp(word: str, lower_word: str) -> list:
-        if len(word) > 2 and word[0] in puncs and word[-1] in puncs:
-            initial_punc = word[0]
-            final_punc = word[-1]
-            remaining_word = lower_word[1:-1]
+    def is_mssp(word: str) -> list:
+        if punc_count(word) <= 2:
+            if len(word) >= 3 and word[0] in puncs and word[-1] in puncs:
+                initial_punc = word[0]
+                final_punc = word[-1]
+                remaining_word = word[1:-1]
 
-            processed_word = TokenProcessor.process_token(remaining_word)
+                processed_word = TokenProcessor.process_token(remaining_word)
 
-            result = [(initial_punc, "Punc")]
-            if isinstance(processed_word, list):
-                result.extend(processed_word)
-            elif isinstance(processed_word, tuple):
-                result.append(processed_word)
-            result.append((final_punc, "Punc"))
+                result = [(initial_punc, "Punc")]
+                if isinstance(processed_word, list):
+                    result.extend(processed_word)
+                result.append((final_punc, "Punc"))
+                print(f"MSSP {word}")
 
-            return result
+                return result
         return None
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_msp(word: str, lower_word: str) -> list:
-        if len(word) > 2 and word not in exception_list:
+    def is_msp(word: str) -> list:
+        if len(word) >= 3 and word not in exception_list:
             start_punc_count = 0
             end_punc_count = 0
             # Count starting punctuation
@@ -481,18 +485,16 @@ class TokenPreProcess:
                 else:
                     break
             # Ensure word has both starting and ending punctuations and valid middle part
-            if start_punc_count >= 1 and end_punc_count >= 1 and all(
-                    char not in puncs for char in word[start_punc_count: -end_punc_count]):
+            if start_punc_count >= 1 and end_punc_count >= 1 and all(char not in puncs for char in word[start_punc_count: -end_punc_count]):
                 initial_punc = word[:start_punc_count]
                 final_punc = word[-end_punc_count:]
-                remaining_word = lower_word[start_punc_count: -end_punc_count]
+                remaining_word = word[start_punc_count: -end_punc_count]
                 if remaining_word == '':
                     return [TokenProcessor.process_token(initial_punc), TokenProcessor.process_token(final_punc)]
                 processed_word = TokenProcessor.process_token(remaining_word)
                 if isinstance(processed_word, tuple):
                     processed_word = [processed_word]
-                return [TokenProcessor.process_token(initial_punc)] + processed_word + [
-                    TokenProcessor.process_token(final_punc)]
+                return [TokenProcessor.process_token(initial_punc)] + processed_word + [TokenProcessor.process_token(final_punc)]
         else:
             return None
 
@@ -521,8 +523,7 @@ class TokenPreProcess:
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_fmp(word: str, lower_word: str):
+    def is_fmp(word: str):
         # Check if the word matches any exception from the exception list
         for exception in exception_list:
             if word.endswith(exception):
@@ -551,7 +552,7 @@ class TokenPreProcess:
 
             # Split the word if it has one or more trailing punctuations
             if end_punc_count == 1:
-                main_word = lower_word[:-end_punc_count]
+                main_word = word[:-end_punc_count]
                 trailing_punc = word[-end_punc_count:]
 
                 # Process the main word if it exists
@@ -617,14 +618,18 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     @tr_lowercase
-    def is_hyphenated(word: str, lower_word: str):
+    def is_single_hyphenated(word: str, lower_word: str):
         if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
-            parts = lower_word.split("-")
-            processed_parts = [TokenProcessor.process_token(part) for part in parts]
-            if all(processed_part[1] == "Valid_Word" for processed_part in processed_parts):
-                return [(word, "Hyphenated")]
-        else:
-            return None
+            result = check_regex(word, "single_hyphen")
+            return [(word, "Single_Hyphenated")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    @tr_lowercase
+    def is_multi_hyphenated(word: str, lower_word: str):
+        if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
+            result = check_regex(word, "multi_hyphen")
+            return [(word, "Multi_Hyphenated")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -757,12 +762,13 @@ lexicon_based = [
     TokenPreProcess.is_abbr,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
+    TokenPreProcess.is_number,
     TokenPreProcess.is_single_punc,
-    TokenPreProcess.is_roman_number,
 ]
 
 regex = [
-    TokenPreProcess.is_url,
+    TokenPreProcess.is_full_url,
+    TokenPreProcess.is_web_url,
     TokenPreProcess.is_email,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
@@ -772,22 +778,25 @@ regex = [
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_currency,
-    TokenPreProcess.is_percentage_numbers,
     TokenPreProcess.is_date_range,
+    TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
     TokenPreProcess.is_trademark,
     TokenPreProcess.is_bullet_list,
+    TokenPreProcess.is_roman_number,
+    TokenPreProcess.is_percentage_numbers_chars,
+    TokenPreProcess.is_percentage_numbers,
+
 ]
 
 single_punc = [
     TokenPreProcess.is_isp,
     TokenPreProcess.is_fsp,
     TokenPreProcess.is_apostrophed,
-    TokenPreProcess.is_hyphenated,
-    TokenPreProcess.is_percentage_numbers_chars,
-    TokenPreProcess.is_percentage_numbers,
+    TokenPreProcess.is_single_hyphenated,
+    TokenPreProcess.is_multi_hyphenated,
     TokenPreProcess.is_underscored,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
@@ -797,12 +806,11 @@ single_punc = [
 ]
 
 multi_punc = [
-    TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_fmp,
     TokenPreProcess.is_imp,
-    TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
+    TokenPreProcess.is_mssp,
     TokenPreProcess.is_midmp,
     TokenPreProcess.is_num_char_sequence,
     TokenPreProcess.is_three_or_more,
