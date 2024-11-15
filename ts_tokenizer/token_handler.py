@@ -13,6 +13,8 @@ extra_puncs = ["–", "°", "—"]
 puncs += re.escape(''.join(extra_puncs))
 domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])
 
+print ("PUNCS:", puncs)
+
 # Create a dict of RegExps
 # noinspection RegExpRedundantEscape
 REGEX_PATTERNS = {
@@ -152,8 +154,8 @@ class TokenPreProcess:
                 initial_parenthesis = word[0]
                 final_parenthesis = word[-1]
                 content = word[1:-1]
-                if all(char.isalpha() or char in ['.', '-'] for char in content):
-                    return [(word[0], "Punc"), TokenProcessor.process_token(content), (word[-1], "Punc")]
+                #if all(char.isalpha() or char in ['.', '-'] for char in content):
+                #    return [(word[0], "Punc"), TokenProcessor.process_token(content), (word[-1], "Punc")]
                 processed_content = TokenProcessor.process_token(content)
                 if isinstance(processed_content, tuple):
                     processed_content = [processed_content]
@@ -204,11 +206,18 @@ class TokenPreProcess:
             if word[-1] in puncs:
                 initial = word[:-1]
                 final = word[-1]
-                processed_word = (initial, final)
-                if isinstance(processed_word, tuple):
-                    return [(TokenProcessor.process_token(initial)), (final, "Punc")] if result else None
+                processed_word = TokenProcessor.process_token(initial)
+
+                # Ensure the processed word is a valid (word, tag) tuple
+                if isinstance(processed_word, list) and len(processed_word) == 1:
+                    processed_word = processed_word[0]
+                if isinstance(processed_word, tuple) and len(processed_word) == 2:
+                    return [(processed_word), (final, "Punc")]
+                else:
+                    raise ValueError(f"Unexpected result format: {processed_word}")
             else:
                 return [(word, "Percentage_Numbers")]
+        return []
 
     @staticmethod
     def is_roman_number(word: str) -> list:
@@ -439,10 +448,12 @@ class TokenPreProcess:
                 result.extend(processed_word)
             elif isinstance(processed_word, tuple):
                 result.append(processed_word)
-            elif processed_word is None:
-                return [(initial_punc, "Punc")]  # Return only the initial punctuation if no match was found
 
-            return result
+            # If processed_word contains a valid token (not OOV), include it in the result
+            if processed_word and processed_word[0][1] != "OOV":
+                return result
+            else:
+                return [(word, "OOV")]
         else:
             return None
 
@@ -461,8 +472,6 @@ class TokenPreProcess:
                 if isinstance(processed_word, list):
                     result.extend(processed_word)
                 result.append((final_punc, "Punc"))
-                print(f"MSSP {word}")
-
                 return result
         return None
 
@@ -526,50 +535,45 @@ class TokenPreProcess:
     def is_fmp(word: str):
         # Check if the word matches any exception from the exception list
         for exception in exception_list:
+            # Case 1: The word ends with an exception
             if word.endswith(exception):
-                # Split the word into the main part and the exception
                 main_word = word[:-len(exception)]
                 exception_token = (exception, "Punc")
 
-                # Process the main part if it exists
                 if main_word:
                     processed_main_word = TokenProcessor.process_token(main_word)
                     if isinstance(processed_main_word, tuple):
                         processed_main_word = [processed_main_word]
                     return processed_main_word + [exception_token]
                 else:
-                    # Return only the exception if no main word exists
                     return [exception_token]
 
-        # Check for two or more trailing punctuations
-        if len(word) > 1 and word not in exception_list:
-            end_punc_count = 0
-            for char in reversed(word):
-                if char in puncs:
-                    end_punc_count += 1
-                else:
-                    break
+            else:
 
-            # Split the word if it has one or more trailing punctuations
-            if end_punc_count == 1:
-                main_word = word[:-end_punc_count]
-                trailing_punc = word[-end_punc_count:]
+                # New condition: Extract consecutive final punctuations
+                trailing_punc_pattern = r"(\W+)$"
+                match = re.search(trailing_punc_pattern, word)
+                if match:
+                    trailing_punc = match.group(0)
+                    main_word = word[:match.start()]
 
-                # Process the main word if it exists
-                processed_main_word = TokenProcessor.process_token(main_word) if main_word else None
-                final_punc_token = (trailing_punc, "Punc")
+                    tokens = []
+                    # Process the main part of the word
+                    if main_word:
+                        processed_main_word = TokenProcessor.process_token(main_word)
+                        if isinstance(processed_main_word, tuple):
+                            tokens.append(processed_main_word)
+                        else:
+                            tokens.extend(processed_main_word)
 
-                result = []
-                if processed_main_word:
-                    if isinstance(processed_main_word, tuple):
-                        result.extend([processed_main_word])
-                    else:
-                        result.extend(processed_main_word)
-                result.append(final_punc_token)
-                return result
+                    # Process each punctuation mark in the trailing punctuation separately
+                    for char in trailing_punc:
+                        tokens.append((char, "Punc"))
 
-        # If no conditions are met, return None
-        return None
+                    return tokens
+
+                # If no conditions are met, return None
+                return None
 
     @staticmethod
     @apply_charfix
@@ -588,9 +592,11 @@ class TokenPreProcess:
 
     @staticmethod
     def is_multi_punc(word: str) -> list:
+        # Check if the word is in the exception list directly
         if word in exception_list:
             return [(word, "Punc")]
 
+        # Check for exceptions at both the beginning and end of the word
         for exception in exception_list:
             if word.endswith(exception):
                 split_part = word[:-len(exception)]
@@ -599,9 +605,47 @@ class TokenPreProcess:
                     if isinstance(processed_split_part, tuple):
                         processed_split_part = [processed_split_part]
                     return processed_split_part + [(exception, "Punc")]
+                return [(exception, "Punc")]
 
-        else:
-            return [(word, "Punc")] if all(char in puncs for char in word) else None
+            if word.startswith(exception):
+                split_part = word[len(exception):]
+                if split_part:
+                    processed_split_part = TokenProcessor.process_token(split_part)
+                    if isinstance(processed_split_part, tuple):
+                        processed_split_part = [processed_split_part]
+                    return [(exception, "Punc")] + processed_split_part
+                return [(exception, "Punc")]
+
+        # Enhanced trailing punctuation handling
+        trailing_punc_pattern = r"(\W+)$"
+        match = re.search(trailing_punc_pattern, word)
+
+        if match:
+            trailing_punc = match.group(0)
+            main_word = word[:match.start()]
+
+            # Split trailing punctuation into individual marks
+            split_punc = re.findall(r'\W+', trailing_punc)
+
+            result = []
+            if main_word:
+                processed_main_word = TokenProcessor.process_token(main_word)
+                if isinstance(processed_main_word, tuple):
+                    processed_main_word = [processed_main_word]
+                result.extend(processed_main_word)
+
+            # Add each trailing punctuation mark as a separate token
+            for punc in split_punc:
+                if punc in exception_list:
+                    result.append((punc, "Punc"))
+                else:
+                    for char in punc:
+                        result.append((char, "Punc"))
+
+            return result
+
+        # If no conditions are met, return None
+        return None
 
     @staticmethod
     @apply_charfix
@@ -671,15 +715,29 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_midsp(word: str, lower_word: str):
-        if len(word) >= 3 and word not in exception_list and word[0] not in puncs and word[-1] not in puncs and "_" not in word and "-" not in word:
+        if (
+                len(word) >= 3
+                and word not in exception_list
+                and word[0] not in puncs
+                and word[-1] not in puncs
+                and "_" not in word
+                and "-" not in word
+        ):
+            # Find the positions of middle punctuation marks
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
 
+            # If there is exactly one middle punctuation mark
             if len(mid_punc_pos) == 1:
                 mid_punc_idx = mid_punc_pos[0]
                 initial_part = lower_word[:mid_punc_idx]
                 mid_punc = word[mid_punc_idx]
                 remaining_part = lower_word[mid_punc_idx + 1:]
 
+                # Check if all non-punctuation characters are numbers
+                if initial_part.replace(".", "").isdigit() and remaining_part.replace(".", "").isdigit():
+                    return [(word, "Number")]  # Return the word as a whole if it consists of numbers
+
+                # Otherwise, process and split the word
                 processed_initial = TokenProcessor.process_token(initial_part)
                 processed_remaining = TokenProcessor.process_token(remaining_part)
 
@@ -689,10 +747,8 @@ class TokenPreProcess:
                     processed_remaining = [processed_remaining]
 
                 return processed_initial + [(mid_punc, "Punc")] + processed_remaining
-            else:
-                return None
-        else:
-            return None
+
+        return None
 
     @staticmethod
     @apply_charfix
@@ -711,10 +767,16 @@ class TokenPreProcess:
         ):
             mid_punc_pos = [i for i in range(1, len(word) - 1) if word[i] in puncs]
 
+            # Check if all non-punctuation characters are numeric
+            non_punc_parts = re.split(r"[{}]".format(re.escape(puncs)), word)
+            if all(part.replace(".", "").isdigit() for part in non_punc_parts if part):
+                return [(word, "Number")]
+
             if mid_punc_pos:
                 tokens_with_puncs = []
                 start_idx = 0
 
+                # Iterate through the punctuation positions
                 for punc_idx in mid_punc_pos:
                     initial_part = lower_word[start_idx:punc_idx]
                     mid_punc = word[punc_idx]
@@ -730,6 +792,7 @@ class TokenPreProcess:
 
                     start_idx = punc_idx + 1
 
+                # Process the remaining part of the word
                 remaining_part = lower_word[start_idx:]
                 if remaining_part:
                     processed_remaining = TokenProcessor.process_token(remaining_part)
@@ -739,10 +802,8 @@ class TokenPreProcess:
                         tokens_with_puncs.extend(processed_remaining)
 
                 return tokens_with_puncs
-            else:
-                return None
-        else:
-            return None
+
+        return None
 
     @staticmethod
     def is_math(word: str) -> tuple:
@@ -788,7 +849,8 @@ regex = [
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_percentage_numbers_chars,
     TokenPreProcess.is_percentage_numbers,
-
+    TokenPreProcess.is_multiple_smiley_in,
+    TokenPreProcess.is_multiple_smiley,
 ]
 
 single_punc = [
@@ -803,19 +865,20 @@ single_punc = [
     TokenPreProcess.is_trademark,
     TokenPreProcess.is_bullet_list,
     TokenPreProcess.is_midsp,
+    TokenPreProcess.is_midmp,
+
 ]
 
 multi_punc = [
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_fmp,
     TokenPreProcess.is_imp,
-    TokenPreProcess.is_msp,
+    TokenPreProcess.is_multi_punc,
     TokenPreProcess.is_mssp,
-    TokenPreProcess.is_midmp,
+    TokenPreProcess.is_msp,
     TokenPreProcess.is_num_char_sequence,
     TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
-    TokenPreProcess.is_multi_punc,
     TokenPreProcess.is_math,
     TokenPreProcess.is_non_latin,
 ]
@@ -851,12 +914,12 @@ class TokenProcessor:
         if not TokenProcessor.is_oov(result):
             return result
 
-        # Step 3: Single punctuation checks
+        # Step 3: Multi punctuation checks
         result = TokenProcessor.process_multi_punc(token, output_format)
         if not TokenProcessor.is_oov(result):
             return result
 
-        # Step 4: Multi-punctuation checks
+        # Step 4: Single punctuation checks
         result = TokenProcessor.process_single_punc(token, output_format)
         if not TokenProcessor.is_oov(result):
             return result
@@ -898,3 +961,6 @@ class TokenProcessor:
         Helper method to check if the result is Out-Of-Vocabulary (OOV).
         """
         return not result or all(tag == "OOV" for _, tag in result)
+
+
+print(TokenPreProcess.is_fmp(".@taner"))
