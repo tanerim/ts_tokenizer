@@ -513,14 +513,21 @@ class TokenPreProcess:
     def is_imp(word: str, lower_word: str) -> list:
         if len(word) > 1 and word not in exception_list:
             start_punc_count = 0
+            # Count initial punctuation characters
             for char in word:
                 if char in puncs:
                     start_punc_count += 1
                 else:
                     break
+
             if start_punc_count > 0:
                 initial_punc = [(word[:start_punc_count], "Punc")]
                 remaining_word = lower_word[start_punc_count:]
+                if TokenPreProcess.is_three_or_more(remaining_word):
+                    # split repeating puncs and non-rpearetgn
+
+
+                # Process the remaining word normally
                 if remaining_word:
                     processed_word = TokenProcessor.process_token(remaining_word)
                     if isinstance(processed_word, tuple):
@@ -528,6 +535,7 @@ class TokenPreProcess:
                     return initial_punc + processed_word
                 else:
                     return initial_punc
+
         return None
 
     @staticmethod
@@ -814,6 +822,23 @@ class TokenPreProcess:
         if operator_count >= 2:
             return [(word, "Math_Operator")]
         return None
+
+    # This is an idea for next version.
+    # Besides TS Corpus Word List,
+    # https://data.tdd.ai/#/16e5fbcf-a658-424d-b50c-4454a4b367dc
+    # for any possible missing words
+    # A root + suffix possibilties might be used
+    # @staticmethod
+    # @apply_charfix
+    # @tr_lowercase
+    # def is_compound_word(word: str, lower_word: str) -> list:
+    #    known_roots = ["kitap", "evrak", "çanta", "su"]
+    #    for root in known_roots:
+    #        if lower_word.startswith(root):
+    #            suffix = lower_word[len(root):]
+    #            if suffix and suffix in LocalData.suffixes():
+    #                return [(root, "Root"), (suffix, "Suffix")]
+    #    return None
 
 
 lexicon_based = [
