@@ -45,8 +45,8 @@ REGEX_PATTERNS = {
     "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"^([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)'([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)$"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$"),
-    "full_url": re.compile(r'^((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
-    "web_url": re.compile(r'^((www)\.)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z0-9\&\/\?\:@\-_=#])+'),
+    "full_url": re.compile(r'^((http|https)\:\/\/)[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\.\/\?\:@\-_=#]+\.([a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\&\/\?\:@\-_=#])+'),
+    "web_url": re.compile(r'^((www)\.)[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\.\/\?\:@\-_=#]+\.([a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\&\/\?\:@\-_=#])+'),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
 }
 
