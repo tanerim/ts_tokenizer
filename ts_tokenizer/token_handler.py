@@ -1,5 +1,6 @@
 import re
 import string
+import unicodedata
 
 from .data import LocalData
 from .char_fix import CharFix
@@ -420,7 +421,9 @@ class TokenPreProcess:
         return [(word, "Smiley")] if word in LocalData.smileys() else None
 
     @staticmethod
-    def is_emoticon(word):
+    def is_emoticon(word: str):
+        word = unicodedata.normalize('NFC', word)
+        word = word.replace(" ", "")
         return [(word, "Emotion")] if word in LocalData.emoticons() else None
 
     # Multi-Unit Tokens
