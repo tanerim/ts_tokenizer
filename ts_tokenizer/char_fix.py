@@ -62,8 +62,13 @@ class CharFix:
     _compiled_pattern_quote = re.compile("|".join(map(re.escape, dict(REPLACEMENTS_QUOTE).keys())))
 
     @staticmethod
-    def batch_replace(word: str, compiled_pattern, replacements: dict) -> str:
-        return compiled_pattern.sub(lambda match: replacements[match.group(0)], word)
+    def batch_replace(word: str, compiled_pattern, replacements: dict, max_iterations=10) -> str:
+        for _ in range(max_iterations):
+            new_word = compiled_pattern.sub(lambda match: replacements[match.group(0)], word)
+            if new_word == word:
+                break  # Exit early if no changes are made
+            word = new_word
+        return word
 
     @staticmethod
     def char_check(word: str) -> str:

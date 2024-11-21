@@ -62041,7 +62041,6 @@ dhurrie
 dhurries
 dhuti
 dhutis
-di
 diabase
 diabases
 diabasic
@@ -102601,7 +102600,6 @@ halibut
 halibuts
 halicore
 halicores
-halid
 halides
 halidom
 halidome
@@ -128786,7 +128784,6 @@ lapwings
 lapwork
 lapworks
 laquearia
-lar
 larboard
 larboards
 larcener
