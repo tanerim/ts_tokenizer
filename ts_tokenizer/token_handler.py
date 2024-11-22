@@ -33,7 +33,7 @@ REGEX_PATTERNS = {
     "multi_underscore": re.compile(rf'^[^{puncs}]+(_[^{puncs}]+)+$'),
     "date_range": re.compile(r'^\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}$'),
     "year_range": re.compile(r'^\d{4}-\d{4}$'),
-    "in_parenthesis": re.compile(r'^[(\[{]{1,}[^()\[\]{}]*[)\]}]{1,}$'),
+    "in_parenthesis": re.compile(r'^[(\[{]+[^()\[\]{}]*[)\]}]+}$'),
     "numbered_title": re.compile(r'^\((\d{1,2})\)|^\[(\d{1,2})\]|^{(\d{1,2})\}'),
 
     # "numbered_title": re.compile(r'^\((\d{1,2})\)$|^\[(\d{1,2})\]$|^{(\d{1,2})}$'),
@@ -147,7 +147,7 @@ class TokenPreProcess:
         result = check_regex(word, "numbered_title")
         if result:
             # Extract the numbered title using regex
-            match = re.match(r'^\((\d{1,2})\)|^\[(\d{1,2})\]|^{(\d{1,2})\}', word)
+            match = re.match(r'^\((\d{1,2})\)|^\[(\d{1,2})]|^{(\d{1,2})}', word)
             if match:
                 # Get the numbered part (e.g., `(12)`, `[6]`, `{3}`)
                 numbered_title = match.group(0)
@@ -177,7 +177,7 @@ class TokenPreProcess:
                 initial_parenthesis = word[0]
                 final_parenthesis = word[-1]
                 content = word[1:-1]
-                #if all(char.isalpha() or char in ['.', '-'] for char in content):
+                # if all(char.isalpha() or char in ['.', '-'] for char in content):
                 #    return [(word[0], "Punc"), TokenProcessor.process_token(content), (word[-1], "Punc")]
                 processed_content = TokenProcessor.process_token(content)
                 if isinstance(processed_content, tuple):
@@ -698,45 +698,37 @@ class TokenPreProcess:
                 else:
                     for char in punc:
                         result.append((char, "Punc"))
-
             return result
-
         # If no conditions are met, return None
         return None
 
-
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_single_hyphenated(word: str, lower_word: str):
+    def is_single_hyphenated(word: str):
         if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
             result = check_regex(word, "single_hyphen")
             return [(word, "Single_Hyphenated")] if result else None
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_multi_hyphenated(word: str, lower_word: str):
+    def is_multi_hyphenated(word: str):
         if "-" in word and len(word) > 3 and word[0] != "-" and word[-1] != "-":
             result = check_regex(word, "multi_hyphen")
             return [(word, "Multi_Hyphenated")] if result else None
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_single_underscored(word: str, lower_word: str):
+    def is_single_underscored(word: str):
         if "_" in word and len(word) > 3 and word[0] != "_" and word[-1] != "_":
             result = check_regex(word, "single_underscore")
             return [(word, "Single_Underscored")] if result else None
 
     @staticmethod
     @apply_charfix
-    @tr_lowercase
-    def is_multi_underscored(word: str, lower_word: str):
+    def is_multi_underscored(word: str):
         if "_" in word and len(word) > 3 and word[0] != "_" and word[-1] != "_":
             result = check_regex(word, "multi_underscore")
             return [(word, "Multi_Underscored")] if result else None
-
 
     @staticmethod
     @apply_charfix
@@ -757,9 +749,10 @@ class TokenPreProcess:
         sum_punc = PuncMatcher.punc_count(word)
         has_digit = any(char.isdigit() for char in word)
         hyphen_check = PuncMatcher.hyphen_in(word)
-        underscore_check = TokenPreProcess.is_underscored(word)
+        single_underscore_check = TokenPreProcess.is_single_underscored(word)
+        multi_underscore_check = TokenPreProcess.is_multi_underscored(word)
         multiple_emoticon = TokenPreProcess.is_multiple_emoticon(word)
-        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon and not underscore_check:
+        if sum_foreign_char >= 1 and sum_punc == 0 and not has_digit and not hyphen_check and not multiple_emoticon and not single_underscore_check and not multi_underscore_check:
             return [(word, "Non_Latin")]
         return None
 
