@@ -13,7 +13,7 @@ puncs = re.escape(string.punctuation)
 extra_puncs = ["–", "°", "—"]
 puncs += re.escape(''.join(extra_puncs))
 domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domains()])
-
+print(puncs)
 # Create a dict of RegExps
 # noinspection RegExpRedundantEscape
 REGEX_PATTERNS = {
@@ -755,12 +755,12 @@ class TokenPreProcess:
         return None
 
     @staticmethod
-    @tr_lowercase
-    def is_one_char_fixable(word: str, lower_word: str):
-        extra_chars = ["¬", "º", "0", "1"]
+    def is_one_char_fixable(word: str):
+        extra_chars = ["¬", "º", "0", "1", "-"]
+        # Think a solution for "-"
         for extra in extra_chars:
             if PuncMatcher.punc_pos(extra) != [0] or PuncMatcher.punc_pos(word) != [-1]:
-                fixed_word = lower_word.replace(extra, "")
+                fixed_word = word.replace(extra, "")
                 if TokenPreProcess.is_in_lexicon(fixed_word):
                     return [(fixed_word, "One_Char_Fixed")]
         return None
@@ -877,7 +877,7 @@ class TokenPreProcess:
     # @staticmethod
     # @apply_charfix
     # @tr_lowercase
-    # def is_compound_word(word: str, lower_word: str) -> list:
+    # def is_root_plus_suffix(word: str, lower_word: str) -> list:
     #    known_roots = ["kitap", "evrak", "çanta", "su"]
     #    for root in known_roots:
     #        if lower_word.startswith(root):
@@ -938,13 +938,15 @@ single_punc = [
     TokenPreProcess.is_bullet_list,
     TokenPreProcess.is_midsp,
     TokenPreProcess.is_midmp,
-
 ]
 
 multi_punc = [
+    TokenPreProcess.is_one_char_fixable,
+
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_fmp,
     TokenPreProcess.is_imp,
+    TokenPreProcess.is_non_latin,
     TokenPreProcess.is_multi_punc,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_msp,
@@ -952,7 +954,6 @@ multi_punc = [
     TokenPreProcess.is_three_or_more,
     TokenPreProcess.is_complex_punc,
     TokenPreProcess.is_math,
-    TokenPreProcess.is_non_latin,
 ]
 
 

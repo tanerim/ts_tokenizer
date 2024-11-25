@@ -11935,7 +11935,6 @@ aretted
 aretting
 aretts
 arew
-arf
 arfs
 arfvedsonite
 arfvedsonites
@@ -206371,7 +206370,6 @@ sailplaning
 sailroom
 sailrooms
 sails
-saim
 saimin
 saimins
 saimiri
@@ -244906,7 +244904,6 @@ toroid
 toroidal
 toroidally
 toroids
-toros
 torose
 torosities
 torosity
