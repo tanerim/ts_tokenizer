@@ -1126,3 +1126,6 @@ ltd.
 şti
 şti.
 s.s.c.b.
+http
+https
+ftp
