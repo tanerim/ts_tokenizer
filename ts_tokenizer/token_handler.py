@@ -453,10 +453,17 @@ class TokenPreProcess:
 
     @staticmethod
     def is_number(word: str) -> list:
-
         # Check if the entire word is a number
         if word.isdigit():
             return [(word, "Number")]
+
+        if punc_count(word) == 1 and word.endswith("."):
+            if all(char.isdigit() for char in word[:-1]):
+                return [(word, "Ordinal_Number")]
+
+        if punc_count(word) == 1 and "," or "." in word:
+            if all(char.isdigit() for char in word if char not in {",", "."}):
+                return [(word, "Number")]
 
         # Check for patterns like number+characters
         # Ensure it's not mixed with complex formats like number+char+number
@@ -464,7 +471,16 @@ class TokenPreProcess:
         if match:
             number_part = match.group(1)  # Extract the numeric part
             char_part = match.group(2)  # Extract the character part
-            return [(number_part, "Number"), (char_part, "Word")]
+
+            # Process the character part
+            processed_word = TokenProcessor.process_token(char_part)
+            if isinstance(processed_word, tuple):
+                processed_word = [processed_word]  # Wrap tuple into a list for consistency
+            elif not isinstance(processed_word, list):
+                processed_word = [(char_part, "OOV")]  # Handle unexpected cases
+
+            # Combine the numeric and processed character parts
+            return [(number_part, "Number")] + processed_word
 
         # Check for standard patterns like numbers ending with specific suffixes
         if punc_count(word) == 1 and word[0:-1].isdigit():
@@ -506,13 +522,17 @@ class TokenPreProcess:
             initial_punc = word[0]
             remaining_word = word[1:]  # Extract the part after the punctuation
 
+            # Avoid infinite recursion: Stop if the remaining word is the same as input
+            if remaining_word == word:
+                return [(initial_punc, "Punc"), (remaining_word, "OOV")]
+
             # Process the remaining part of the word
             processed_word = TokenProcessor.process_token(remaining_word)
 
             # Initialize the result with the punctuation token
             result = [(initial_punc, "Punc")]
 
-            # Processed word handling: separate cases based on return type
+            # Add processed word handling: separate cases based on return type
             if isinstance(processed_word, list):
                 result.extend(processed_word)
             elif isinstance(processed_word, tuple):
@@ -543,14 +563,10 @@ class TokenPreProcess:
                 rest = word[match.end():]  # Remaining part of the word after the match
 
                 # Process the matched part
-                matched_tokens = TokenPreProcess.is_in_parenthesis(matched_part)
+                matched_tokens = TokenPreProcess.is_in_parenthesis(matched_part) or []
 
                 # Process the remaining part (if any)
-                rest_tokens = []
-                if rest:
-                    rest_tokens = TokenProcessor.process_token(rest)
-                    if isinstance(rest_tokens, tuple):
-                        rest_tokens = [rest_tokens]
+                rest_tokens = TokenProcessor.process_token(rest) if rest else []
 
                 # Combine tokens from matched part and remaining part
                 return matched_tokens + rest_tokens
@@ -561,7 +577,7 @@ class TokenPreProcess:
             remaining_word = word[1:-1]
 
             # Process the content between the punctuations
-            processed_word = TokenProcessor.process_token(remaining_word)
+            processed_word = TokenProcessor.process_token(remaining_word) or []
 
             # Initialize the result with the starting punctuation
             result = [(initial_punc, "Punc")]
@@ -998,6 +1014,7 @@ regex = [
     TokenPreProcess.is_full_url,
     TokenPreProcess.is_web_url,
     TokenPreProcess.is_email,
+    TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_in_quotes,
@@ -1006,7 +1023,6 @@ regex = [
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_currency,
-    TokenPreProcess.is_number,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
@@ -1118,12 +1134,26 @@ class TokenProcessor:
             if result:
                 return result
 
+   # @staticmethod
+    # def process_multi_punc(token: str, output_format: str = 'tuple') -> list:
+    #    for CHECK in multi_punc:
+    #        result = CHECK(token)
+    #        if result:
+    #            return result
+
     @staticmethod
     def process_multi_punc(token: str, output_format: str = 'tuple') -> list:
+        # Avoid cyclic recursion by checking for already processed tokens
+        if not token or all(char in puncs for char in token):  # Avoid reprocessing pure punctuation
+            return [(token, "Punc")]
+
+        # Handle exceptions or already processed tokens
         for CHECK in multi_punc:
             result = CHECK(token)
             if result:
                 return result
+
+        return [(token, "OOV")]  # Default fallback
 
     @staticmethod
     def is_oov(result):
