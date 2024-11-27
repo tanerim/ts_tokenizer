@@ -710,10 +710,30 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_apostrophed(word: str) -> list:
-        if punc_count(word) == 1:
+        if punc_count(word) == 1 and "'" in word:
             result = check_regex(word, "apostrophed")
             if result:
-                return [(word, "Apostrophed")] if result else None
+                # Split the word into parts around the apostrophe
+                parts = word.split("'")
+
+                # Validate each part using the lexicon processor
+                part1_result = TokenProcessor.process_lexicon_based(parts[0])
+                part2_result = TokenProcessor.process_lexicon_based(parts[1])
+
+                # Check if both parts are valid words
+                if part1_result and part1_result[0][1] == "Valid_Word" and part2_result and part2_result[0][
+                    1] == "Valid_Word" and len(part2_result) > 3:
+                    return [
+                        part1_result[0],  # First part
+                        ("'", "Punc"),  # Apostrophe
+                        part2_result[0]  # Second part
+                    ]
+
+                # Fallback: If one or both parts are invalid
+                return [(word, "Apostrophed")]
+
+        # If no apostrophe is found or the word does not match the regex
+        return None
 
     @staticmethod
     def is_single_punc(word: str) -> list:
