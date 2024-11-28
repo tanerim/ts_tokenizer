@@ -1009,6 +1009,9 @@ regex = [
     TokenPreProcess.is_web_url,
     TokenPreProcess.is_email,
     TokenPreProcess.is_currency,
+    TokenPreProcess.is_date_range,
+    TokenPreProcess.is_date,
+    TokenPreProcess.is_hour,
     TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
@@ -1017,9 +1020,6 @@ regex = [
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_roman_number,
-    TokenPreProcess.is_date_range,
-    TokenPreProcess.is_date,
-    TokenPreProcess.is_hour,
     TokenPreProcess.is_registered,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_trademark,
@@ -1032,19 +1032,19 @@ regex = [
 ]
 
 single_punc = [
-    TokenPreProcess.is_isp,
-    TokenPreProcess.is_fsp,
-    TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_single_hyphenated,
     TokenPreProcess.is_multi_hyphenated,
     TokenPreProcess.is_single_underscored,
     TokenPreProcess.is_multi_underscored,
+    TokenPreProcess.is_midsp,
+    TokenPreProcess.is_midmp,
+    TokenPreProcess.is_isp,
+    TokenPreProcess.is_fsp,
+    TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_registered,
     TokenPreProcess.is_trademark,
     TokenPreProcess.is_bullet_list,
-    TokenPreProcess.is_midsp,
-    TokenPreProcess.is_midmp,
 ]
 
 multi_punc = [
