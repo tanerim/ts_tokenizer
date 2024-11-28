@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'License :: OSI Approved :: MIT License',
         "Natural Language :: Turkish",
-        "Topic :: Tokenization",
+        "Topic :: Text Processing :: Linguistic",
         'Operating System :: OS Independent',
     ],
     keywords='tokenizer turkish nlp text-processing',
