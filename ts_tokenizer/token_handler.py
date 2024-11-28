@@ -16,8 +16,8 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 # Create a dict of RegExps
 # noinspection RegExpRedundantEscape
 REGEX_PATTERNS = {
-    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,139}$'),
-    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F]{1,15}$'),
+    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F]{1,139}$'),
+    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F]{1,15}$'),
     "email": re.compile(rf'^[^{puncs}][a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?<![{puncs}])$'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]$"),
@@ -43,8 +43,8 @@ REGEX_PATTERNS = {
     "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
     "apostrophed": re.compile(r"^([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)'([a-zA-ZıiİüÜçÇöÖşŞğĞ]+)$"),
     "currency": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])$"),
-    "full_url": re.compile(r'^((http|https)\:\/\/)[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\.\/\?\:@\-_=#]+\.([a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\&\/\?\:@\-_=#])+'),
-    "web_url": re.compile(r'^((www)\.)[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\.\/\?\:@\-_=#]+\.([a-zA-ZıiİüÜçÇöÖşŞğĞ0-9__\uFE0F\&\/\?\:@\-_=#])+'),
+    "full_url": re.compile(r'^((http|https)\:\/\/)[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F\.\/\?\:@\-=#]+\.([a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F\&\/\?\:@\-=#])+'),
+    "web_url": re.compile(r'^((www)\.)[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F\.\/\?\:@\-=#]+\.([a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F\&\/\?\:@\-=#])+'),
     "num_char_sequence": re.compile(r'\d+[\w\s]*'),
 }
 
@@ -506,7 +506,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str) -> list:
-        if len(word) > 1 and word[-1] in puncs:
+        if len(word) > 1 and word[-1] in puncs and punc_count(word) == 1:
             final_punc = word[-1]
             remaining_word = word[:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -518,21 +518,17 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_isp(word: str) -> list:
-        if len(word) > 1 and word[0] in puncs and (word[0] != "@" and word[0] != "#"):
+        if len(word) > 1 and word[0] in puncs and (word[0] != "@" and word[0] != "#") and punc_count(word) <= 2:
             initial_punc = word[0]
-            remaining_word = word[1:]  # Extract the part after the punctuation
+            remaining_word = word[1:]
 
-            # Avoid infinite recursion: Stop if the remaining word is the same as input
             if remaining_word == word:
                 return [(initial_punc, "Punc"), (remaining_word, "OOV")]
 
-            # Process the remaining part of the word
             processed_word = TokenProcessor.process_token(remaining_word)
 
-            # Initialize the result with the punctuation token
             result = [(initial_punc, "Punc")]
 
-            # Add processed word handling: separate cases based on return type
             if isinstance(processed_word, list):
                 result.extend(processed_word)
             elif isinstance(processed_word, tuple):
@@ -543,10 +539,8 @@ class TokenPreProcess:
 
             return result
         elif len(word) == 1 and word in puncs:
-            # Single punctuation character handling
             return [(word, "Punc")]
         else:
-            # For words without leading punctuation
             return [(word, "OOV")]
 
     @staticmethod
@@ -986,7 +980,7 @@ class TokenPreProcess:
     # Besides TS Corpus Word List,
     # https://data.tdd.ai/#/16e5fbcf-a658-424d-b50c-4454a4b367dc
     # for any possible missing words
-    # A root + suffix possibilties might be used
+    # A root + suffix possibilities might be used
     # @staticmethod
     # @apply_charfix
     # @tr_lowercase
@@ -1014,6 +1008,7 @@ regex = [
     TokenPreProcess.is_full_url,
     TokenPreProcess.is_web_url,
     TokenPreProcess.is_email,
+    TokenPreProcess.is_currency,
     TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
@@ -1022,7 +1017,6 @@ regex = [
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_roman_number,
-    TokenPreProcess.is_currency,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
@@ -1054,11 +1048,11 @@ single_punc = [
 ]
 
 multi_punc = [
+    TokenPreProcess.is_fmp,
+    TokenPreProcess.is_imp,
     TokenPreProcess.is_mssp,
     TokenPreProcess.is_one_char_fixable,
     TokenPreProcess.is_in_parenthesis,
-    TokenPreProcess.is_fmp,
-    TokenPreProcess.is_imp,
     TokenPreProcess.is_non_latin,
     TokenPreProcess.is_multi_punc,
     TokenPreProcess.is_msp,
