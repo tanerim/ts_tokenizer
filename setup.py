@@ -28,7 +28,7 @@ setup(
         'Source Code': 'https://github.com/tanerim/ts_tokenizer',
     },
     classifiers=[
-        'Development Status :: 1 - Beta',
+        'Development Status :: 4 - Beta',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
