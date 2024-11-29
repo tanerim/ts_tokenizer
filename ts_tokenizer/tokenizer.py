@@ -194,8 +194,7 @@ if __name__ == "__main__":
         default='tokenized',
         help="Specify the output format"
     )
-    parser.add_argument(
-        '-j', '--json', action='store_true', help="Return the output as JSON")
+
     parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
     parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
 

@@ -22,6 +22,9 @@ You can install the ts-tokenizer package using pip.
 
 Ensure you have Python 3.9 or higher installed on your system.
 
+You can update current version using pip
+
+    pip install --upgrade ts-tokenizer
 ---
 
 ## Command line tool
@@ -30,6 +33,10 @@ You can use TS Tokenizer directly from the command line for both file inputs and
 ## Tokenize from a File:
 
     $ ts-tokenizer input.txt
+
+or
+    
+    $ cat input.txt | ts-tokenizer
 
 ## Tokenizing with Piped Input:
 

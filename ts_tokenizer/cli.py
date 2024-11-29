@@ -15,12 +15,7 @@ def main():
         default='tokenized',
         help="Specify the output format"
     )
-    parser.add_argument(
-        '-s', '--string', action='store_true', default=True, help="Return the output as a string (default)"
-    )
-    parser.add_argument(
-        '-j', '--json', action='store_true', help="Return the output as JSON"
-    )
+
     parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
     parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
 
