@@ -73,7 +73,7 @@ input_text = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera a
     değiştirdi
     .
 
-Note that tags are not part-of-speech tags but they define the given string.
+Note that **tags are not part-of-speech tags** but they define the given string.
     
     $ ts-tokenizer -o tagged input.txt
 
@@ -111,9 +111,9 @@ The "tagged_lines" parameter reads input file line-by-line and returns a list of
 ---
 
 ## Parallel Processing
-Use the -j option to set the number of parallel workers:
+Use the -n option to set the number of parallel workers:
 
-    $ ts-tokenizer -j 2 -o tagged input_file
+    $ ts-tokenizer -n 2 -o tagged input_file
 
 By default, TS Tokenizer uses [number of CPU cores - 1].
 
@@ -168,18 +168,22 @@ To find a specific tag following command could be used.
 Get detailed help for available options using:
     
     $ ts-tokenizer --help
-
-    usage: main.py [-h] [-o {tokenized,lines,tagged,tagged_lines}] [-w] [-v] [-j JOBS] filename
-
+    
+    usage: main.py [-h] [-o {tokenized,lines,tagged,tagged_lines}] [-v] [-n NUM_WORKERS]
+                   [filename]
+    
+    Tokenizer Script
+    
     positional arguments:
-      filename              Name of the file to process
+      filename              Name of the file to process (optional if input is piped)
     
     options:
       -h, --help            show this help message and exit
       -o {tokenized,lines,tagged,tagged_lines}, --output {tokenized,lines,tagged,tagged_lines}
                             Specify the output format
       -v, --verbose         Enable verbose mode
-      -j JOBS, --jobs JOBS  Number of parallel workers
+      -n NUM_WORKERS, --num-workers NUM_WORKERS
+                            Number of parallel workers
 
 ---
 
