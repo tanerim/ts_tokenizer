@@ -399,6 +399,7 @@ class TokenPreProcess:
     @apply_charfix
     @tr_lowercase
     def is_in_lexicon(word: str, lower_word: str) -> list:
+        # print(lower_word)
         return [(word, "Valid_Word")] if lower_word in LocalData.word_list() else None
 
     @staticmethod
