@@ -462,9 +462,11 @@ class TokenPreProcess:
             if all(char.isdigit() for char in word[:-1]):
                 return [(word, "Ordinal_Number")]
 
-        if PuncMatcher.punc_count(word) == 1 and "," or "." in word:
+        if PuncMatcher.punc_count(word) == 1 and ("," in word or "." in word):
             if all(char.isdigit() for char in word if char not in {",", "."}):
-                return [(word, "Number")]
+                # Ensure the word has at least one digit
+                if any(char.isdigit() for char in word):
+                    return [(word, "Number")]
 
         # Check for patterns like number+characters
         # Ensure it's not mixed with complex formats like number+char+number
