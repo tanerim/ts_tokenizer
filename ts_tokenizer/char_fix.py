@@ -125,7 +125,7 @@ class CharFix:
     @staticmethod
     def replace_all(word: str) -> str:
         word = CharFix.remove_unicode_controls(word)  # Remove control characters
-        #word = CharFix.replace_diacritics(word)
+        # word = CharFix.replace_diacritics(word)
         word = CharFix.fix_quote(word)
         word = CharFix.char_check(word)  # Apply character fixes
         word = CharFix.html_entity_replace(word)  # Replace HTML entities

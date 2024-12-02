@@ -422,7 +422,7 @@ class TokenPreProcess:
     def is_emoticon(word: str):
         word = unicodedata.normalize('NFC', word)
         word = word.replace(" ", "")
-        return [(word, "Emotion")] if word in LocalData.emoticons() else None
+        return [(word, "Emoticon")] if word in LocalData.emoticons() else None
 
     # Multi-Unit Tokens
     @staticmethod
@@ -458,11 +458,11 @@ class TokenPreProcess:
         if word.isdigit():
             return [(word, "Number")]
 
-        if punc_count(word) == 1 and word.endswith("."):
+        if PuncMatcher.punc_count(word) == 1 and word.endswith("."):
             if all(char.isdigit() for char in word[:-1]):
                 return [(word, "Ordinal_Number")]
 
-        if punc_count(word) == 1 and "," or "." in word:
+        if PuncMatcher.punc_count(word) == 1 and "," or "." in word:
             if all(char.isdigit() for char in word if char not in {",", "."}):
                 return [(word, "Number")]
 
@@ -484,7 +484,7 @@ class TokenPreProcess:
             return [(number_part, "Number")] + processed_word
 
         # Check for standard patterns like numbers ending with specific suffixes
-        if punc_count(word) == 1 and word[0:-1].isdigit():
+        if PuncMatcher.punc_count(word) == 1 and word[0:-1].isdigit():
             if word[-1] == "K":
                 return [(word[0:-1], "Number"), ("K", "Kelvin")]
             elif word.endswith("°C"):
@@ -507,7 +507,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fsp(word: str) -> list:
-        if len(word) > 1 and word[-1] in puncs and punc_count(word) == 1:
+        if len(word) > 1 and word[-1] in puncs and PuncMatcher.punc_count(word) == 1:
             final_punc = word[-1]
             remaining_word = word[:-1]
             processed_word = TokenProcessor.process_token(remaining_word)
@@ -519,7 +519,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_isp(word: str) -> list:
-        if len(word) > 1 and word[0] in puncs and (word[0] != "@" and word[0] != "#") and punc_count(word) <= 2:
+        if len(word) > 1 and word[0] in puncs and (word[0] != "@" and word[0] != "#") and PuncMatcher.punc_count(word) <= 2:
             initial_punc = word[0]
             remaining_word = word[1:]
 
@@ -721,7 +721,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_apostrophed(word: str) -> list:
-        if punc_count(word) == 1 and "'" in word:
+        if PuncMatcher.punc_count(word) == 1 and "'" in word:
             result = check_regex(word, "apostrophed")
             if result:
                 # Split the word into parts around the apostrophe
@@ -923,7 +923,7 @@ class TokenPreProcess:
                 and word not in LocalData.abbrs()
                 and word[0] not in puncs
                 and word[-1] not in puncs
-                and punc_count(word) >= 2
+                and PuncMatcher.punc_count(word) >= 2
                 and "_" not in word
                 and "-" not in word
         ):
