@@ -38,7 +38,7 @@ setup(
         "Topic :: Text Processing :: Linguistic",
         'Operating System :: OS Independent',
     ],
-    keywords='tokenizer turkish nlp text-processing',
+    keywords=['tokenizer', 'turkish', 'nlp', 'text-processing', 'language-processing'],
     license='MIT',
     python_requires='>=3.9',
     repository='https://github.com/tanerim/ts_tokenizer'
