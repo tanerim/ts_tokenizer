@@ -345,7 +345,7 @@ class TokenPreProcess:
     @staticmethod
     def is_trademark(word: str) -> list:
         result = check_regex(word, "trade_mark")
-        return [(result, "Trade_Mark")] if result else None
+        return [(result, "Trademark")] if result else None
 
     @staticmethod
     def is_currency(word: str) -> list:
