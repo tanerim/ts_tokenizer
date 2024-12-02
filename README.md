@@ -288,6 +288,7 @@ from ts_tokenizer.token_handler import TokenPreProcess
 | 14 | is_email                    | tanersezerr@gmail.com        | Yes            | Email              |
 | 15 | is_email_punc               | tanersezerr@gmail.com.       | No             | -----              |
 | 16 | is_full_url                 | https://tscorpus.com         | Yes            | Full_URL           |
+| -- | is_full_url                 | www.example.com'un           | Yes            | URL_Suffix         |
 | 17 | is_web_url                  | www.tscorpus.com             | Yes            | Web_URL            |
 | 18 | is_copyright                | ©tscorpus                    | Yes            | Copyright          |
 | 19 | is_registered               | tscorpus®                    | Yes            | Registered         |
@@ -321,7 +322,7 @@ from ts_tokenizer.token_handler import TokenPreProcess
 | 48 | is_mssp                     | -bilgisayar-                 | No             | -----              |
 | 49 | is_midsp                    | okul,öğrenci                 | No             | -----              |
 | 50 | is_midmmp                   | okul,öğrenci, öğretmen       | No             | -----              |
-| 51 | is_non_latin                | 한국드                        | No              | Non_Latin          |
+| 51 | is_non_latin                | 한국드                          | No             | Non_Latin          |
 
 
 
