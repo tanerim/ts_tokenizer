@@ -20,7 +20,7 @@ def tokenize(line, return_format, output=False):
     # Skip processing if the line is empty or contains only invisible characters
     if not line:
         logging.debug("Empty or whitespace-only line encountered. Skipping.")
-        return None
+        pass
 
     # Updated regex patterns to capture the tag name
     xml_open_tag = re.match(r'^<\s*/?\s*(\w+)(?:\s+\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'))*\s*/?>$', line)
@@ -140,6 +140,8 @@ class TSTokenizer:
 
                         if line:  # Only process non-empty lines. Do not change
                             batch.append(line)
+                        else:
+                            pass
 
                         # When the batch size is reached, process the batch in parallel
                         if len(batch) >= batch_size:

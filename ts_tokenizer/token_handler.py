@@ -1071,7 +1071,7 @@ class TokenProcessor:
     @staticmethod
     def format_output(output, output_format):
         if output_format == 'tuple':
-            return output
+            return tuple(output)
         elif output_format == 'list':
             return list(output)
         elif output_format == 'string':
