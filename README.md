@@ -56,6 +56,7 @@ cat input.txt | ts-tokenizer
 or
 ```bash
 zcat input.txt.gz | ts-tokenizer
+```
 ---
 
 ## Help
