@@ -300,8 +300,29 @@ from ts_tokenizer.token_handler import TokenPreProcess
 | 50 | is_midmp                   | okul,öğrenci, öğretmen       | No             | -----              |
 | 51 | is_non_latin               | 한국드                          | No             | Non_Latin          |
 
+----------------------
 
+## Performance
 
+ts-tokenizer is optimized for efficient tokenization and takes advantage of multi-core processing for large-scale text. By default, the script utilizes all available CPU cores minus one, ensuring your system remains responsive while processing large datasets.
+
+### Performance Benchmarks:
+
+The following benchmarks were conducted on a machine with the following specifications:
+
+    Processor: AMD Ryzen 7 5800H with Radeon Graphics
+    Cores: 8 physical cores (16 threads)
+    RAM: 16GB DDR4
+
+#### Multi-Core Performance:
+
+    1 Million Tokens: Processed in approximately 170 seconds using multi-core processing.
+    Throughput: ~5,800 tokens/second (on average).
+
+#### Single-Core Performance:
+
+    1 Million Tokens: Processed in approximately 715 seconds on a single core.
+    Throughput: ~1,400 tokens/second.
 
 
 
