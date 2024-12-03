@@ -6,6 +6,7 @@ import sys
 import argparse
 from ts_tokenizer.tokenizer import TSTokenizer
 
+
 def main():
     parser = argparse.ArgumentParser(description="Tokenizer Script")
     parser.add_argument(
@@ -19,7 +20,6 @@ def main():
         default='tokenized',
         help="Specify the output format"
     )
-
     parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
     parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
 

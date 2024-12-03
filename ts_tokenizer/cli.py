@@ -1,9 +1,14 @@
 import sys
 import argparse
 from ts_tokenizer.tokenizer import TSTokenizer
+from ts_tokenizer import __version__
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Tokenizer Script")
+    parser = argparse.ArgumentParser(
+        description="TS Tokenizer is a hybrid (lexicon-based and rule-based) tokenizer designed specifically for tokenizing Turkish texts.",
+        epilog= "tanersezerr@gmail.com"
+    )
     parser.add_argument(
         'filename',
         nargs='?',
@@ -15,9 +20,16 @@ def main():
         default='tokenized',
         help="Specify the output format"
     )
-
     parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
     parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
+
+    # Add version argument
+    parser.add_argument(
+        '-V', '--version',
+        action='version',
+        version=f'ts-tokenizer {__version__}',
+        help="Show program version and exit"
+    )
 
     args = parser.parse_args()
 
@@ -45,7 +57,7 @@ def main():
 
     # Case 3: No input provided
     else:
-        print("Usage: ts-tokenizer <filename> or pipe input via stdin (e.g., cat file.txt | ts-tokenizer)")
+        print("Usage: ts-tokenizer [arguments] <filename> or pipe input via stdin (e.g., cat file.txt | ts-tokenizer)")
         sys.exit(1)
 
 

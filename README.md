@@ -5,9 +5,13 @@ It uses a hybrid (lexicon-based and rule-based) approach to split text into toke
 
 
 ### Key Features:
-- **Hybrid Approach**: Uses a hybrid (lexicon-based and rule-based approach) for tokenization.
-- **Handling of Special Tokens**: Recognizes special tokens like mentions, hashtags, emails, URLs, numbers, smiley, emoticons, etc.
-- **Highly Configurable**: Provides multiple output formats to suit different NLP processing needs, including plain tokens, tagged tokens, and token-tag pairs in list or line formats.
+- **Hybrid Tokenization**: Combines lexicon-based and rule-based techniques to tokenize complex Turkish texts with precision.
+- **Special Token Handling**: Detects and processes mentions, hashtags, emails, URLs, dates, numbers, smileys, emoticons, and more.
+- **Configurable Outputs**: Offers multiple output formats, including plain tokens, tagged tokens, tokenized lines, and tagged lines, to suit diverse NLP workflows.
+- **Multi-core Processing**: Speeds up tokenization for large files with parallel processing.
+- **Preprocess Handling**: Handles corrupted Turkish text and punctuation gracefully using built-in fixes.
+- **Command-Line Friendly**: Use it directly from the terminal for file-based or piped input workflows.
+
 
 On natural language processing (NLP), information retrieval, or text mining for Turkish, **TS Tokenizer** offers
 a reliable solution for tokenization.
@@ -17,54 +21,55 @@ a reliable solution for tokenization.
 ## Installation
 
 You can install the ts-tokenizer package using pip.
-
-    pip install ts-tokenizer
-
+```bash
+pip install ts-tokenizer
+```
 Ensure you have Python 3.9 or higher installed on your system.
 
 You can update current version using pip
-
-    pip install --upgrade ts-tokenizer
+```bash
+pip install --upgrade ts-tokenizer
+```
 ---
+
+To remove package, use:
+```bash
+pip uninstall ts-tokenizer
+```
+---
+
+## License
+```markdown
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+```
 
 ## Command line tool
 
 You can use TS Tokenizer directly from the command line for both file inputs and pipeline processing:
 ## Tokenize from a File:
-
-    $ ts-tokenizer input.txt
-
+```bash
+ts-tokenizer input.txt
+```
 or
-    
-    $ cat input.txt | ts-tokenizer
-
-## Tokenizing with Piped Input:
-
-    $ zcat input.txt.gz | ts-tokenizer
-
+```bash
+cat input.txt | ts-tokenizer
+```
+or
+```bash
+zcat input.txt.gz | ts-tokenizer
 ---
 
 ## Help
 
 Get detailed help for available options using:
-    
-    $ ts-tokenizer --help
-    
-    usage: main.py [-h] [-o {tokenized,lines,tagged,tagged_lines}] [-v] [-n NUM_WORKERS]
-                   [filename]
-    
-    Tokenizer Script
-    
-    positional arguments:
-      filename              Name of the file to process (optional if input is piped)
-    
-    options:
-      -h, --help            show this help message and exit
-      -o {tokenized,lines,tagged,tagged_lines}, --output {tokenized,lines,tagged,tagged_lines}
-                            Specify the output format
-      -v, --verbose         Enable verbose mode
-      -n NUM_WORKERS, --num-workers NUM_WORKERS
-                            Number of parallel workers
+
+| Argument             | Short | Description                                                                                     | Default       |
+|----------------------|-------|-------------------------------------------------------------------------------------------------|---------------|
+| `--output`           | `-o`  | Specify the output format: `tokenized`, `lines`, `tagged`, `tagged_lines`.                      | `tokenized`   |
+| `--num-workers`      | `-n`  | Set the number of parallel workers for processing.                                              | `CPU cores-1` |
+| `--verbose`          | `-v`  | Enable verbose mode to display additional processing details.                                   | Disabled      |
+| `--version`          | `-V`  | Display the current version of `ts-tokenizer`.                                                 | N/A           |
+| `--help`             | `-h`  | Show the help message and exit.   
 
 ---
 
@@ -119,13 +124,13 @@ Note that **tags are not part-of-speech tags** but they define the given string.
 
 
 The other two arguments are "lines" and "tagged_lines".
-The "lines" parameter reads input file line-by-line and returns a list for each line.
+The "lines" parameter reads input file line-by-line and returns a list for each line. Note that each line is defined by end-of-line markers in the given text.
 
     $ ts-tokenizer -o lines input.txt
 
     ['Queen', ',', '31.10.1975', 'tarihinde', 'çıkardığı', 'A', 'Night', 'at', 'the', 'Opera', 'albümüyle', 'dünya', 'müziğini', 'değiştirdi', '.']
 
-The "tagged_lines" parameter reads input file line-by-line and returns a list of tuples for each line.
+The "tagged_lines" parameter reads input file line-by-line and returns a list of tuples for each line. Note that each line is defined by end-of-line markers in the given text.
 
 
     $ ts-tokenizer -o tagged_lines input.txt
