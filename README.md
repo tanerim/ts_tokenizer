@@ -82,67 +82,70 @@ You can specify the output format using the -o option:
 - **lines:** Returns tokenized lines as lists.
 - **tagged_lines:** Returns tokenized lines as a list of tuples (token, tag).
 
+```bash
 input_text = "Queen , 31.10.1975 tarihinde çıkardıðı A Night at the Opera albÃ¼mÃ¼yle dÃ¼nya mÃ¼ziðini deðiåÿtirdi ."
 
-    $ ts-tokenizer input text
+$ ts-tokenizer input_text
 
-    Queen
-    ,
-    31.10.1975
-    tarihinde
-    çıkardığı
-    A
-    Night
-    at
-    the
-    Opera
-    albümüyle
-    dünya
-    müziğini
-    değiştirdi
-    .
+Queen
+,
+31.10.1975
+tarihinde
+çıkardığı
+A
+Night
+at
+the
+Opera
+albümüyle
+dünya
+müziğini
+değiştirdi
+.
+```
 
 Note that **tags are not part-of-speech tags** but they define the given string.
-    
-    $ ts-tokenizer -o tagged input.txt
+```bash
+$ ts-tokenizer -o tagged input.txt
 
-    Queen	English_Word
-    ,	Punc
-    31.10.1975	Date
-    tarihinde	Valid_Word
-    çıkardığı	Valid_Word
-    A	OOV
-    Night	English_Word
-    at	Valid_Word
-    the	English_Word
-    Opera	Valid_Word
-    albümüyle	Valid_Word
-    dünya	Valid_Word
-    müziğini	Valid_Word
-    değiştirdi	Valid_Word
-    .	Punc
-
+Queen	English_Word
+,	Punc
+31.10.1975	Date
+tarihinde	Valid_Word
+çıkardığı	Valid_Word
+A	OOV
+Night	English_Word
+at	Valid_Word
+the	English_Word
+Opera	Valid_Word
+albümüyle	Valid_Word
+dünya	Valid_Word
+müziğini	Valid_Word
+değiştirdi	Valid_Word
+.	Punc
+```
 
 The other two arguments are "lines" and "tagged_lines".
 The "lines" parameter reads input file line-by-line and returns a list for each line. Note that each line is defined by end-of-line markers in the given text.
+```bash
+$ ts-tokenizer -o lines input.txt
 
-    $ ts-tokenizer -o lines input.txt
-
-    ['Queen', ',', '31.10.1975', 'tarihinde', 'çıkardığı', 'A', 'Night', 'at', 'the', 'Opera', 'albümüyle', 'dünya', 'müziğini', 'değiştirdi', '.']
+['Queen', ',', '31.10.1975', 'tarihinde', 'çıkardığı', 'A', 'Night', 'at', 'the', 'Opera', 'albümüyle', 'dünya', 'müziğini', 'değiştirdi', '.']
+```
 
 The "tagged_lines" parameter reads input file line-by-line and returns a list of tuples for each line. Note that each line is defined by end-of-line markers in the given text.
+```bash
+$ ts-tokenizer -o tagged_lines input.txt
 
-
-    $ ts-tokenizer -o tagged_lines input.txt
-
-    [('Queen', 'English_Word'), (',', 'Punc'), ('31.10.1975', 'Date'), ('tarihinde', 'Valid_Word'), ('çıkardığı', 'Valid_Word'), ('A', 'OOV'), ('Night', 'English_Word'), ('at', 'Valid_Word'), ('the', 'English_Word'), ('Opera', 'Valid_Word'), ('albümüyle', 'Valid_Word'), ('dünya', 'Valid_Word'), ('müziğini', 'Valid_Word'), ('değiştirdi', 'Valid_Word'), ('.', 'Punc')]
-
+ [('Queen', 'English_Word'), (',', 'Punc'), ('31.10.1975', 'Date'), ('tarihinde', 'Valid_Word'), ('çıkardığı', 'Valid_Word'), ('A', 'OOV'), ('Night', 'English_Word'), ('at', 'Valid_Word'), ('the', 'English_Word'), ('Opera', 'Valid_Word'), ('albümüyle', 'Valid_Word'), ('dünya', 'Valid_Word'), ('müziğini', 'Valid_Word'), ('değiştirdi', 'Valid_Word'), ('.', 'Punc')]
+```
 ---
 
 ## Parallel Processing
 Use the -n option to set the number of parallel workers:
-
-    $ ts-tokenizer -n 2 -o tagged input_file
+```bash
+$ ts-tokenizer -n 2 -o tagged input_file
+```
 
 By default, TS Tokenizer uses [number of CPU cores - 1].
 
@@ -153,39 +156,41 @@ By default, TS Tokenizer uses [number of CPU cores - 1].
 You can use TS Tokenizer in bash pipelines, such as counting word frequencies:
 
 Following sample returns calculated  frequencies for the given file:
-
-    $ ts-tokenizer input.txt | sort | uniq -c | sort -n
+```bash
+$ ts-tokenizer input.txt | sort | uniq -c | sort -n
+```
 
 ---
 
 To count tags:
+```bash
+$ ts-tokenizer -o tagged input.txt | cut -f2 | sort | uniq -c
 
-    $ts-tokenizer -o tagged input.txt | cut -f2 | sort | uniq -c
-        1 Date
-        3 English_Word
-        2 Hashtag
-        2 Mention
-        1 Multi_Hyphenated
-        3 Numbered_Title
-        1 OOV
-        9 Punc
-        1 Single_Hyphenated
-        17 Valid_Word
-
+1 Date
+3 English_Word
+2 Hashtag
+2 Mention
+1 Multi_Hyphenated
+3 Numbered_Title
+1 OOV
+9 Punc
+1 Single_Hyphenated
+17 Valid_Word
+```
 
 To find a specific tag following command could be used.
+```bash
+$ ts-tokenizer -o tagged input.txt | cut -f1,2 | grep "Web_URL"
 
-    $ ts-tokenizer -o tagged input.txt | cut -f1,2 | grep "Web_URL"
-    www.wikipedia.org	Web_URL
-    www.wim-wenders.com	Web_URL
-    www.winterwar.com.	Web_URL
-    www.wissenschaft.de:	Web_URL
-    www.wittingen.de	Web_URL
-    www.wlmqradio.com	Web_URL
-    www.worldstadiums.com	Web_URL
-    www.worldstatesmen.org	Web_URL
-
-
+www.wikipedia.org	Web_URL
+www.wim-wenders.com	Web_URL
+www.winterwar.com.	Web_URL
+www.wissenschaft.de:	Web_URL
+www.wittingen.de	Web_URL
+www.wlmqradio.com	Web_URL
+www.worldstadiums.com	Web_URL
+www.worldstatesmen.org	Web_URL
+```
 ---
 
 # Classes
@@ -201,7 +206,9 @@ from ts_tokenizer.char_fix import CharFix
 
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
 print(CharFix.fix(line))  # Fixes corrupted characters
-
+```
+```bash
+$ Parça ve bütün ilişkisi her zaman işlevsel değildir.
 ```
 ### Lowercase
 
@@ -211,8 +218,9 @@ from ts_tokenizer.char_fix import CharFix
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 print(CharFix.tr_lowercase(line))
 ```
-    $istanbul ve ığdır ''arası'' 1528 km'dir.
-
+```bash
+$ istanbul ve ığdır ''arası'' 1528 km'dir.
+```
 ### Fix Quotes
 
 ```python
