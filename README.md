@@ -231,49 +231,12 @@ print(CharFix.fix_quote(line))
 ```
     $ İstanbul ve Iğdır "arası" 1528 km'dir.
 
-
-## Punctuation Check
-This method returns information about the punctuations in given word.
-
-## PuncMatcher Class
-
-This class has 6 methods. They return information about punctuations in given string.
-
-### punc_count
-This method returns number of punctuations in given string as list
-
-```python
-from ts_tokenizer.punctuation_process import PuncMatcher
-
-sample_one = "ornek,"
-sample_two = "kalem,kitap,defter"
-
-print(PuncMatcher.punc_count(sample_one))
-$1
-print(PuncMatcher.punc_count(sample_two))
-$3
-```
----
-
-### punc_pos
-This method returns indexes of punctuations in given string as list
-
-```python
-from ts_tokenizer.punctuation_process import PuncMatcher
-
-sample_one = "ornek,"
-sample_two = "kalem,kitap,defter"
-
-print(PuncMatcher.punc_pos(sample_one))
-$[5]
-print(PuncMatcher.punc_pos(sample_two))
-$[5, 11]
-```
-
 ---
 ## TokenHandler
 
-
+TokenHandler gets each given string and process it using methods defined under TokenPreProcess class.
+This process follows a strictly defined order and it is recursive.
+Each method could be called 
 ```python
 from ts_tokenizer.token_handler import TokenPreProcess
 
@@ -285,7 +248,7 @@ from ts_tokenizer.token_handler import TokenPreProcess
 
 | #  | Function                    | Sample                       | Used As Output | Tag                |
 |----|-----------------------------|------------------------------|----------------|--------------------|
-| 01 | is_mention                  | tanersezerr@gmail.com        | Yes            | Mention            |
+| 01 | is_mention                  | @ts-tokenizer                | Yes            | Mention            |
 | 02 | is_hashtag                  | #ts-tokenizer                | Yes            | Hashtag            |
 | 03 | is_in_quotes                | "ts-tokenizer"               | No             | -----              |
 | 04 | is_numbered_title           | (1)                          | Yes            | Numbered_Title     |
@@ -297,12 +260,12 @@ from ts_tokenizer.token_handler import TokenPreProcess
 | 10 | is_percentage_numbers       | %75                          | Yes            | Percentage_Numbers |
 | 11 | is_percentage_numbers_chars | %75'lik                      | Yes            | Percentage_Numbers |
 | 12 | is_roman_number             | XI                           | Yes            | Roman_Number       |
-| 13 | is_bullet_list              | •Giriş                       | Yes            | BUllet_List        |
+| 13 | is_bullet_list              | •Giriş                       | Yes            | Bullet_List        |
 | 14 | is_email                    | tanersezerr@gmail.com        | Yes            | Email              |
 | 15 | is_email_punc               | tanersezerr@gmail.com.       | No             | -----              |
 | 16 | is_full_url                 | https://tscorpus.com         | Yes            | Full_URL           |
-| -- | is_full_url                 | www.example.com'un           | Yes            | URL_Suffix         |
 | 17 | is_web_url                  | www.tscorpus.com             | Yes            | Web_URL            |
+| -- | is_full_url                 | www.example.com'un           | Yes            | URL_Suffix         |
 | 18 | is_copyright                | ©tscorpus                    | Yes            | Copyright          |
 | 19 | is_registered               | tscorpus®                    | Yes            | Registered         |
 | 20 | is_trademark                | tscorpus™                    | Yes            | Trademark          |
