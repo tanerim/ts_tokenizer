@@ -208,6 +208,10 @@ class TokenPreProcess:
     def is_hour(word: str) -> tuple:
         result = check_regex(word, "hour")
         return [(result, "Hour")] if result else None
+    @staticmethod
+    def is_hour_suffix(word: str) -> tuple:
+        result = check_regex(word, "hour_suffix")
+        return [(result, "Hour_Suffix")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -1015,6 +1019,7 @@ regex = [
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
+    TokenPreProcess.is_hour_suffix,
     TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
