@@ -310,9 +310,9 @@ ts-tokenizer is optimized for efficient tokenization and takes advantage of mult
 
 The following benchmarks were conducted on a machine with the following specifications:
 
-| **Processor**                   | **Cores**                 | **RAM**      | **1 Million Tokens (Multi-Core)** | **Throughput (Multi-Core)** | **1 Million Tokens (Single-Core)** | **Throughput (Single-Core)** |
-|----------------------------------|---------------------------|--------------|-----------------------------------|-----------------------------|------------------------------------|------------------------------|
-| AMD Ryzen 7 5800H with Radeon Graphics (Laptop) | 8 physical cores (16 threads) | 16GB DDR4   | ~170 seconds                    | ~5,800 tokens/second        | ~715 seconds                     | ~1,400 tokens/second         |
-| AMD Ryzen 9 7950X3D with Radeon Graphics        | 16 physical cores (32 threads)| 96GB DDR5   | ~13 seconds                     | ~76,923 tokens/second       | ~110 seconds                    | ~9,090 tokens/second         |
+| **Processor**                                      | **Cores**                 | **RAM**      | **1 Million Tokens (Multi-Core)** | **Throughput (Multi-Core)** | **1 Million Tokens (Single-Core)** | **Throughput (Single-Core)** |
+|----------------------------------------------------|---------------------------|--------------|-----------------------------------|-----------------------------|------------------------------------|------------------------------|
+| AMD Ryzen 7 5800H with Radeon Graphics (Laptop)    | 8 physical cores (16 threads) | 16GB DDR4   | ~170 seconds                    | ~5,800 tokens/second        | ~715 seconds                     | ~1,400 tokens/second         |
+| AMD Ryzen 9 7950X3D with Radeon Graphics (Desktop) | 16 physical cores (32 threads)| 96GB DDR5   | ~13 seconds                     | ~76,923 tokens/second       | ~110 seconds                    | ~9,090 tokens/second         |
 
 
