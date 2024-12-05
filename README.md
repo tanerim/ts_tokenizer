@@ -316,4 +316,3 @@ The following benchmarks were conducted on a machine with the following specific
 | AMD Ryzen 9 7950X3D with Radeon Graphics        | 16 physical cores (32 threads)| 96GB DDR5   | ~13 seconds                     | ~76,923 tokens/second       | ~110 seconds                    | ~9,090 tokens/second         |
 
 
-
