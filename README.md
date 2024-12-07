@@ -35,6 +35,14 @@ To remove package, use:
 ```bash
 pip uninstall ts-tokenizer
 ```
+You can also clone the repo locally.
+```bash
+git clone https://github.com/tanerim/ts_tokenizer.git
+cd ts-tokenizer
+pip install -e .
+
+```
+
 ---
 
 ## License
