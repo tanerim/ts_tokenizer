@@ -1,4 +1,3 @@
-# TS Tokenizer
 
 **TS Tokenizer** is a hybrid tokenizer designed specifically for tokenizing Turkish texts.
 It uses a hybrid (lexicon-based and rule-based) approach to split text into tokens.
@@ -308,7 +307,7 @@ ts-tokenizer is optimized for efficient tokenization and takes advantage of mult
 
 ### Performance Benchmarks:
 
-The following benchmarks were conducted on a machine with the following specifications:
+The following benchmarks were conducted on different machines with the following specifications:
 
 | **Processor**                                                            | **Cores**                 | **RAM**      | **1 Million Tokens (Multi-Core)** | **Throughput (Multi-Core)** | **1 Million Tokens (Single-Core)** | **Throughput (Single-Core)** |
 |--------------------------------------------------------------------------|---------------------------|--------------|-----------------------------------|-----------------------------|------------------------------------|------------------------------|
