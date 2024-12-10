@@ -283,6 +283,22 @@ else:
     for token in line_tokens:
         print(token)
 ```
+Generated output is as follows:
+```bash
+ATATÜRK'ün GENÇLİĞE HİTABESİ
+Ey Türk gençliği ! Birinci vazifen , Türk istiklâlini , Türk Cumhuriyet'ini , ilelebet , muhafaza ve müdafaa etmektir .
+Mevcudiyetinin ve istikbalinin yegâne temeli budur .
+Bu temel , senin , en kıymetli hazinendir .
+İstikbalde dahi , seni bu hazineden mahrum etmek isteyecek , dahilî ve haricî bedhahların olacaktır .
+Bir gün , istiklâl ve cumhuriyeti müdafaa mecburiyetine düşersen , vazifeye atılmak için , içinde bulunacağın vaziyetin imkân ve şeraitini düşünmeyeceksin !
+Bu imkân ve şerait , çok nâmüsait bir mahiyette tezahür edebilir .
+İstiklâl ve cumhuriyetine kastedecek düşmanlar , bütün dünyada emsali görülmemiş bir galibiyetin mümessili olabilirler .
+Cebren ve hile ile aziz vatanın , bütün kaleleri zaptedilmiş , bütün tersanelerine girilmiş , bütün orduları dağıtılmış ve memleketin her köşesi bilfiil işgal edilmiş olabilir .
+Bütün bu şeraitten daha elîm ve daha vahim olmak üzere , memleketin dahilinde , iktidara sahip olanlar gaflet ve dalâlet ve hattâ hıyanet içinde bulunabilirler .
+Hatta bu iktidar sahipleri şahsî menfaatlerini , müstevlilerin siyasî emelleriyle tevhit edebilirler .
+Millet , fakr u zaruret içinde harap ve bîtap düşmüş olabilir . Ey Türk istikbalinin evladı ! İşte , bu ahval ve şerait içinde dahi , vazifen ; Türk istiklâl ve cumhuriyetini kurtarmaktır !
+Muhtaç olduğun kudret , damarlarındaki asil kanda , mevcuttur !
+```
 
 **tagged_lines**: Same as lines but includes tags for each token.
 
@@ -294,7 +310,22 @@ else:
     for token in tagged_line_tokens:
         print(token)
 ```
-
+Generated output is as follows:
+```bash
+[("ATATÜRK'ün", 'Apostrophed'), ('GENÇLİĞE', 'Valid_Word'), ('HİTABESİ', 'Valid_Word')]
+[('Ey', 'Valid_Word'), ('Türk', 'Valid_Word'), ('gençliği', 'Valid_Word'), ('!', 'Punc'), ('Birinci', 'Valid_Word'), ('vazifen', 'Valid_Word'), (',', 'Punc'), ('Türk', 'Valid_Word'), ('istiklâlini', 'Valid_Word'), (',', 'Punc'), ('Türk', 'Valid_Word'), ("Cumhuriyet'ini", 'Apostrophed'), (',', 'Punc'), ('ilelebet', 'Valid_Word'), (',', 'Punc'), ('muhafaza', 'Valid_Word'), ('ve', 'Valid_Word'), ('müdafaa', 'Valid_Word'), ('etmektir', 'Valid_Word'), ('.', 'Punc')]
+[('Mevcudiyetinin', 'Valid_Word'), ('ve', 'Valid_Word'), ('istikbalinin', 'Valid_Word'), ('yegâne', 'Valid_Word'), ('temeli', 'Valid_Word'), ('budur', 'Valid_Word'), ('.', 'Punc')]
+[('Bu', 'Valid_Word'), ('temel', 'Valid_Word'), (',', 'Punc'), ('senin', 'Valid_Word'), (',', 'Punc'), ('en', 'Valid_Word'), ('kıymetli', 'Valid_Word'), ('hazinendir', 'Valid_Word'), ('.', 'Punc')]
+[('İstikbalde', 'Valid_Word'), ('dahi', 'Valid_Word'), (',', 'Punc'), ('seni', 'Valid_Word'), ('bu', 'Valid_Word'), ('hazineden', 'Valid_Word'), ('mahrum', 'Valid_Word'), ('etmek', 'Valid_Word'), ('isteyecek', 'Valid_Word'), (',', 'Punc'), ('dahilî', 'Valid_Word'), ('ve', 'Valid_Word'), ('haricî', 'Valid_Word'), ('bedhahların', 'Valid_Word'), ('olacaktır', 'Valid_Word'), ('.', 'Punc')]
+[('Bir', 'Valid_Word'), ('gün', 'Valid_Word'), (',', 'Punc'), ('istiklâl', 'Valid_Word'), ('ve', 'Valid_Word'), ('cumhuriyeti', 'Valid_Word'), ('müdafaa', 'Valid_Word'), ('mecburiyetine', 'Valid_Word'), ('düşersen', 'Valid_Word'), (',', 'Punc'), ('vazifeye', 'Valid_Word'), ('atılmak', 'Valid_Word'), ('için', 'Valid_Word'), (',', 'Punc'), ('içinde', 'Valid_Word'), ('bulunacağın', 'Valid_Word'), ('vaziyetin', 'Valid_Word'), ('imkân', 'Valid_Word'), ('ve', 'Valid_Word'), ('şeraitini', 'Valid_Word'), ('düşünmeyeceksin', 'Valid_Word'), ('!', 'Punc')]
+[('Bu', 'Valid_Word'), ('imkân', 'Valid_Word'), ('ve', 'Valid_Word'), ('şerait', 'Valid_Word'), (',', 'Punc'), ('çok', 'Valid_Word'), ('nâmüsait', 'Valid_Word'), ('bir', 'Valid_Word'), ('mahiyette', 'Valid_Word'), ('tezahür', 'Valid_Word'), ('edebilir', 'Valid_Word'), ('.', 'Punc')]
+[('İstiklâl', 'Valid_Word'), ('ve', 'Valid_Word'), ('cumhuriyetine', 'Valid_Word'), ('kastedecek', 'Valid_Word'), ('düşmanlar', 'Valid_Word'), (',', 'Punc'), ('bütün', 'Valid_Word'), ('dünyada', 'Valid_Word'), ('emsali', 'Valid_Word'), ('görülmemiş', 'Valid_Word'), ('bir', 'Valid_Word'), ('galibiyetin', 'Valid_Word'), ('mümessili', 'Valid_Word'), ('olabilirler', 'Valid_Word'), ('.', 'Punc')]
+[('Cebren', 'Valid_Word'), ('ve', 'Valid_Word'), ('hile', 'Valid_Word'), ('ile', 'Valid_Word'), ('aziz', 'Valid_Word'), ('vatanın', 'Valid_Word'), (',', 'Punc'), ('bütün', 'Valid_Word'), ('kaleleri', 'Valid_Word'), ('zaptedilmiş', 'OOV'), (',', 'Punc'), ('bütün', 'Valid_Word'), ('tersanelerine', 'Valid_Word'), ('girilmiş', 'Valid_Word'), (',', 'Punc'), ('bütün', 'Valid_Word'), ('orduları', 'Valid_Word'), ('dağıtılmış', 'Valid_Word'), ('ve', 'Valid_Word'), ('memleketin', 'Valid_Word'), ('her', 'Valid_Word'), ('köşesi', 'Valid_Word'), ('bilfiil', 'Valid_Word'), ('işgal', 'Valid_Word'), ('edilmiş', 'Valid_Word'), ('olabilir', 'Valid_Word'), ('.', 'Punc')]
+[('Bütün', 'Valid_Word'), ('bu', 'Valid_Word'), ('şeraitten', 'Valid_Word'), ('daha', 'Valid_Word'), ('elîm', 'Valid_Word'), ('ve', 'Valid_Word'), ('daha', 'Valid_Word'), ('vahim', 'Valid_Word'), ('olmak', 'Valid_Word'), ('üzere', 'Valid_Word'), (',', 'Punc'), ('memleketin', 'Valid_Word'), ('dahilinde', 'Valid_Word'), (',', 'Punc'), ('iktidara', 'Valid_Word'), ('sahip', 'Valid_Word'), ('olanlar', 'Valid_Word'), ('gaflet', 'Valid_Word'), ('ve', 'Valid_Word'), ('dalâlet', 'Valid_Word'), ('ve', 'Valid_Word'), ('hattâ', 'Valid_Word'), ('hıyanet', 'Valid_Word'), ('içinde', 'Valid_Word'), ('bulunabilirler', 'Valid_Word'), ('.', 'Punc')]
+[('Hatta', 'Valid_Word'), ('bu', 'Valid_Word'), ('iktidar', 'Valid_Word'), ('sahipleri', 'Valid_Word'), ('şahsî', 'Valid_Word'), ('menfaatlerini', 'Valid_Word'), (',', 'Punc'), ('müstevlilerin', 'Valid_Word'), ('siyasî', 'Valid_Word'), ('emelleriyle', 'Valid_Word'), ('tevhit', 'Valid_Word'), ('edebilirler', 'Valid_Word'), ('.', 'Punc')]
+[('Millet', 'Valid_Word'), (',', 'Punc'), ('fakr', 'Valid_Word'), ('u', 'OOV'), ('zaruret', 'Valid_Word'), ('içinde', 'Valid_Word'), ('harap', 'Valid_Word'), ('ve', 'Valid_Word'), ('bîtap', 'Valid_Word'), ('düşmüş', 'Valid_Word'), ('olabilir', 'Valid_Word'), ('.', 'Punc'), ('Ey', 'Valid_Word'), ('Türk', 'Valid_Word'), ('istikbalinin', 'Valid_Word'), ('evladı', 'Valid_Word'), ('!', 'Punc'), ('İşte', 'Valid_Word'), (',', 'Punc'), ('bu', 'Valid_Word'), ('ahval', 'Valid_Word'), ('ve', 'Valid_Word'), ('şerait', 'Valid_Word'), ('içinde', 'Valid_Word'), ('dahi', 'Valid_Word'), (',', 'Punc'), ('vazifen', 'Valid_Word'), (';', 'Punc'), ('Türk', 'Valid_Word'), ('istiklâl', 'Valid_Word'), ('ve', 'Valid_Word'), ('cumhuriyetini', 'Valid_Word'), ('kurtarmaktır', 'Valid_Word'), ('!', 'Punc')]
+[('Muhtaç', 'Valid_Word'), ('olduğun', 'Valid_Word'), ('kudret', 'Valid_Word'), (',', 'Punc'), ('damarlarındaki', 'Valid_Word'), ('asil', 'Valid_Word'), ('kanda', 'Valid_Word'), (',', 'Punc'), ('mevcuttur', 'Valid_Word'), ('!', 'Punc')]
+```
 
 ## CharFix
 
