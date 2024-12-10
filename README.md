@@ -202,19 +202,16 @@ www.worldstatesmen.org	Web_URL
 
 # Classes
 
-## TSTokenizer
-
 Below are samples to implement ts-tokenizer in Python
+
+## TSTokenizer
 
 **tokenized** : Outputs a list of plain tokens extracted from the input text.
 
 ```python
 from ts_tokenizer.tokenizer import TSTokenizer
 Single_Line_Sample = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-
-#  tokenized is the default value for output_format
 simple_tokens = TSTokenizer.ts_tokenize(Single_Line_Sample, output_format="tokenized")
-
 if simple_tokens is None:
     pass
 else:
@@ -260,6 +257,7 @@ değildir	Valid_Word
 ```
 
 **lines** : Maintains the structure of the input text, with each line's tokens grouped together.
+Please note that "line" is defined with end-of-line markers.
 
 ```python
 from ts_tokenizer.tokenizer import TSTokenizer
@@ -278,9 +276,6 @@ Hatta bu iktidar sahipleri þahsî menfaatlerini, müstevlilerin siyasî emeller
 Millet, fakr u zaruret içinde harap ve bîtap düþmüþ olabilir. Ey Türk istikbalinin evladý! Ýþte, bu ahval ve þerait içinde dahi, vazifen; Türk istiklâl ve cumhuriyetini kurtarmaktýr! 
 Muhtaç olduðun kudret, damarlarýndaki asil kanda, mevcuttur!
 """
-
-# lines format keeps the structure of given input.
-# Note that line refers to end-of-line markers. 
 line_tokens = TSTokenizer.ts_tokenize(Multi_Line_Sample, output_format="lines")
 if line_tokens is None:
     pass
@@ -291,9 +286,7 @@ else:
 
 **tagged_lines**: Same as lines but includes tags for each token.
 
-```python
-        
-# lines format also supports tagged tokens
+```python 
 tagged_line_tokens = TSTokenizer.ts_tokenize(Multi_Line_Sample, output_format="tagged_lines")
 if tagged_line_tokens is None:
     pass
