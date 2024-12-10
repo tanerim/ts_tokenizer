@@ -284,7 +284,7 @@ else:
         print(token)
 ```
 Generated output is as follows:
-```bash
+```text
 ATATÜRK'ün GENÇLİĞE HİTABESİ
 Ey Türk gençliği ! Birinci vazifen , Türk istiklâlini , Türk Cumhuriyet'ini , ilelebet , muhafaza ve müdafaa etmektir .
 Mevcudiyetinin ve istikbalinin yegâne temeli budur .
