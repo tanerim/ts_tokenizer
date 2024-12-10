@@ -202,6 +202,107 @@ www.worldstatesmen.org	Web_URL
 
 # Classes
 
+## TSTokenizer
+
+Below are samples to implement ts-tokenizer in Python
+
+**tokenized** : Outputs a list of plain tokens extracted from the input text.
+
+```python
+from ts_tokenizer.tokenizer import TSTokenizer
+Single_Line_Sample = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
+
+#  tokenized is the default value for output_format
+simple_tokens = TSTokenizer.ts_tokenize(Single_Line_Sample, output_format="tokenized")
+
+if simple_tokens is None:
+    pass
+else:
+    for token in simple_tokens:
+        print(token)
+```
+Generated output is as follows:
+
+```bash
+Parça
+ve
+bütün
+ilişkisi
+her
+zaman
+işlevsel
+değildir
+```
+**tagged** : Outputs tokens with associated tags. Please note that these are not POSTags.
+Check TokenHandler below for tag set.
+
+```python
+tagged_tokens = TSTokenizer.ts_tokenize(Single_Line_Sample, output_format="tagged")
+if tagged_tokens is None:
+    pass
+else:
+    for token in tagged_tokens:
+        print(token)
+```
+Generated output is as follows:
+
+```bash
+Parça	Valid_Word
+ve	Valid_Word
+bütün	Valid_Word
+ilişkisi	Valid_Word
+her	Valid_Word
+zaman	Valid_Word
+işlevsel	Valid_Word
+değildir	Valid_Word
+.	Punc
+
+```
+
+**lines** : Maintains the structure of the input text, with each line's tokens grouped together.
+
+```python
+from ts_tokenizer.tokenizer import TSTokenizer
+Multi_Line_Sample = """
+ATATÜRK'ün GENÇLÝÐE HÝTABESÝ 
+Ey Türk gençliði! Birinci vazifen, Türk istiklâlini, Türk Cumhuriyet'ini, ilelebet, muhafaza ve müdafaa etmektir. 
+Mevcudiyetinin ve istikbalinin yegâne temeli budur. 
+Bu temel, senin, en kýymetli hazinendir.
+Ýstikbalde dahi, seni bu hazineden mahrum etmek isteyecek, dahilî ve haricî bedhahlarýn olacaktýr. 
+Bir gün, istiklâl ve cumhuriyeti müdafaa mecburiyetine düþersen, vazifeye atýlmak için, içinde bulunacaðýn vaziyetin imkân ve þeraitini düþünmeyeceksin! 
+Bu imkân ve þerait, çok nâmüsait bir mahiyette tezahür edebilir. 
+Ýstiklâl ve cumhuriyetine kastedecek düþmanlar, bütün dünyada emsali görülmemiþ bir galibiyetin mümessili olabilirler. 
+Cebren ve hile ile aziz vatanýn, bütün kaleleri zaptedilmiþ, bütün tersanelerine girilmiþ, bütün ordularý daðýtýlmýþ ve memleketin her köþesi bilfiil iþgal edilmiþ olabilir. 
+Bütün bu þeraitten daha elîm ve daha vahim olmak üzere, memleketin dahilinde, iktidara sahip olanlar gaflet ve dalâlet ve hattâ hýyanet içinde bulunabilirler.
+Hatta bu iktidar sahipleri þahsî menfaatlerini, müstevlilerin siyasî emelleriyle tevhit edebilirler.
+Millet, fakr u zaruret içinde harap ve bîtap düþmüþ olabilir. Ey Türk istikbalinin evladý! Ýþte, bu ahval ve þerait içinde dahi, vazifen; Türk istiklâl ve cumhuriyetini kurtarmaktýr! 
+Muhtaç olduðun kudret, damarlarýndaki asil kanda, mevcuttur!
+"""
+
+# lines format keeps the structure of given input.
+# Note that line refers to end-of-line markers. 
+line_tokens = TSTokenizer.ts_tokenize(Multi_Line_Sample, output_format="lines")
+if line_tokens is None:
+    pass
+else:
+    for token in line_tokens:
+        print(token)
+```
+
+**tagged_lines**: Same as lines but includes tags for each token.
+
+```python
+        
+# lines format also supports tagged tokens
+tagged_line_tokens = TSTokenizer.ts_tokenize(Multi_Line_Sample, output_format="tagged_lines")
+if tagged_line_tokens is None:
+    pass
+else:
+    for token in tagged_line_tokens:
+        print(token)
+```
+
+
 ## CharFix
 
 CharFix offers methods to correct corrupted Turkish text:
