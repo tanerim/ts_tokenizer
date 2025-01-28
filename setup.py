@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ts_tokenizer',
-    version='0.1.18',
+    version='0.1.19',
     packages=find_packages(),
     include_package_data=True,
     package_data={
@@ -33,6 +33,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'License :: OSI Approved :: MIT License',
         "Natural Language :: Turkish",
         "Topic :: Text Processing :: Linguistic",
