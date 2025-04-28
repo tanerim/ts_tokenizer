@@ -62,6 +62,10 @@ def check_regex(word, pattern):
 def punc_count(word: str) -> int:
     return sum(1 for char in word if char in puncs)
 
+def social_media_punc_count(word: str) -> int:
+    return sum(1 for char in word if char in puncs and char != '_')
+
+
 
 def punc_pos(word: str) -> list:
     return [i for i, char in enumerate(word) if char in puncs]
@@ -96,7 +100,7 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_mention(word: str) -> list:
-        p_count = PuncMatcher.punc_count(word)
+        p_count = social_media_punc_count(word)
         if p_count == 2:
             punc = word[-1]
             word_parts = word.rsplit(word[-1], 1)
@@ -112,7 +116,8 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_hashtag(word: str) -> list:
-        p_count = PuncMatcher.punc_count(word)
+        p_count = social_media_punc_count(word)
+        # As # symbol is also a punc we set
         if p_count == 2:
             punc = word[-1]
             word_parts = word.rsplit(word[-1], 1)
