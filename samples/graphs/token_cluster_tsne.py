@@ -55,7 +55,7 @@ scaler = StandardScaler()
 features_scaled = scaler.fit_transform(all_features)
 
 # Kümeleme
-n_clusters = 7
+n_clusters = 8
 kmeans = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, batch_size=batch_size)
 labels = kmeans.fit_predict(features_scaled)
 

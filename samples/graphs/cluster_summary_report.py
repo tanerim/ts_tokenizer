@@ -45,6 +45,6 @@ for i in range(n_clusters):
 table_df = pd.DataFrame(table_rows)
 
 # Save as CSV
-table_df.to_csv("tablo7.csv", index=False)
+table_df.to_csv("tablo.csv", index=False)
 
 print(table_df.to_string(index=False))
