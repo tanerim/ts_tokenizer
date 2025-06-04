@@ -11,7 +11,7 @@ import plotly.express as px
 import re
 
 # Türkçe dışı karakter kontrolü için uygun karakter kümesi
-TURKISH_CHARS = set("abcçdefgğhıijklmnoöprsştuüvyzABCDEFGHIJKLMNOPQRSTUVWXYZÇĞİÖŞÜ")
+TURKISH_CHARS = set("abcçdefgğhıijklmnoöprsştuüvyzABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ")
 PUNCS = set(string.punctuation)
 
 # Öznitelik çıkarımı
