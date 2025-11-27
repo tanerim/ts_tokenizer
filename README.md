@@ -209,14 +209,10 @@ Below are samples to implement ts-tokenizer in Python
 **tokenized** : Outputs a list of plain tokens extracted from the input text.
 
 ```python
-from ts_tokenizer.tokenizer import TSTokenizer
+from ts_tokenizer import tokenize
 Single_Line_Sample = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-simple_tokens = TSTokenizer.ts_tokenize(Single_Line_Sample, output_format="tokenized")
-if simple_tokens is None:
-    pass
-else:
-    for token in simple_tokens:
-        print(token)
+tokens = tokenize(Single_Line_Sample, "tokenized")
+print(tokens)
 ```
 Generated output is as follows:
 
@@ -234,12 +230,10 @@ değildir
 Check TokenHandler below for tag set.
 
 ```python
-tagged_tokens = TSTokenizer.ts_tokenize(Single_Line_Sample, output_format="tagged")
-if tagged_tokens is None:
-    pass
-else:
-    for token in tagged_tokens:
-        print(token)
+from ts_tokenizer import tokenize
+Single_Line_Sample = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
+tagged_tokens = tokenize(Single_Line_Sample, "tagged")
+print(tokens)
 ```
 Generated output is as follows:
 
@@ -260,7 +254,7 @@ değildir	Valid_Word
 Please note that "line" is defined with end-of-line markers.
 
 ```python
-from ts_tokenizer.tokenizer import TSTokenizer
+from ts_tokenizer import tokenize
 Multi_Line_Sample = """
 ATATÜRK'ün GENÇLÝÐE HÝTABESÝ 
 Ey Türk gençliði! Birinci vazifen, Türk istiklâlini, Türk Cumhuriyet'ini, ilelebet, muhafaza ve müdafaa etmektir. 
@@ -276,12 +270,8 @@ Hatta bu iktidar sahipleri þahsî menfaatlerini, müstevlilerin siyasî emeller
 Millet, fakruzaruret içinde harap ve bîtap düþmüþ olabilir. Ey Türk istikbalinin evladý! Ýþte, bu ahval ve þerait içinde dahi, vazifen; Türk istiklâl ve cumhuriyetini kurtarmaktýr! 
 Muhtaç olduðun kudret, damarlarýndaki asil kanda, mevcuttur!
 """
-line_tokens = TSTokenizer.ts_tokenize(Multi_Line_Sample, output_format="lines")
-if line_tokens is None:
-    pass
-else:
-    for token in line_tokens:
-        print(token)
+lines = tokenize(Multi_Line_Sample, "lines")
+print(lines)
 ```
 Generated output is as follows:
 ```text
@@ -303,12 +293,24 @@ Muhtaç olduğun kudret , damarlarındaki asil kanda , mevcuttur !
 **tagged_lines**: Same as lines but includes tags for each token.
 
 ```python 
-tagged_line_tokens = TSTokenizer.ts_tokenize(Multi_Line_Sample, output_format="tagged_lines")
-if tagged_line_tokens is None:
-    pass
-else:
-    for token in tagged_line_tokens:
-        print(token)
+from ts_tokenizer import tokenize
+Multi_Line_Sample = """
+ATATÜRK'ün GENÇLÝÐE HÝTABESÝ 
+Ey Türk gençliði! Birinci vazifen, Türk istiklâlini, Türk Cumhuriyet'ini, ilelebet, muhafaza ve müdafaa etmektir. 
+Mevcudiyetinin ve istikbalinin yegâne temeli budur. 
+Bu temel, senin, en kýymetli hazinendir.
+Ýstikbalde dahi, seni bu hazineden mahrum etmek isteyecek, dahilî ve haricî bedhahlarýn olacaktýr. 
+Bir gün, istiklâl ve cumhuriyeti müdafaa mecburiyetine düþersen, vazifeye atýlmak için, içinde bulunacaðýn vaziyetin imkân ve þeraitini düþünmeyeceksin! 
+Bu imkân ve þerait, çok nâmüsait bir mahiyette tezahür edebilir. 
+Ýstiklâl ve cumhuriyetine kastedecek düþmanlar, bütün dünyada emsali görülmemiþ bir galibiyetin mümessili olabilirler. 
+Cebren ve hile ile aziz vatanýn, bütün kaleleri zaptedilmiþ, bütün tersanelerine girilmiþ, bütün ordularý daðýtýlmýþ ve memleketin her köþesi bilfiil iþgal edilmiþ olabilir. 
+Bütün bu þeraitten daha elîm ve daha vahim olmak üzere, memleketin dahilinde, iktidara sahip olanlar gaflet ve dalâlet ve hattâ hýyanet içinde bulunabilirler.
+Hatta bu iktidar sahipleri þahsî menfaatlerini, müstevlilerin siyasî emelleriyle tevhit edebilirler.
+Millet, fakruzaruret içinde harap ve bîtap düþmüþ olabilir. Ey Türk istikbalinin evladý! Ýþte, bu ahval ve þerait içinde dahi, vazifen; Türk istiklâl ve cumhuriyetini kurtarmaktýr! 
+Muhtaç olduðun kudret, damarlarýndaki asil kanda, mevcuttur!
+"""
+tagged_lines = tokenize(Multi_Line_Sample, "tagged_lines")
+print(tagged_lines)
 ```
 Generated output is as follows:
 ```bash
@@ -334,7 +336,7 @@ CharFix offers methods to correct corrupted Turkish text:
 ### Fix Characters
 
 ```python
-from ts_tokenizer.char_fix import CharFix
+from ts_tokenizer import CharFix
 
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
 print(CharFix.fix(line))  # Fixes corrupted characters
@@ -345,7 +347,7 @@ $ Parça ve bütün ilişkisi her zaman işlevsel değildir.
 ### Lowercase
 
 ```python
-from ts_tokenizer.char_fix import CharFix
+from ts_tokenizer import CharFix
 
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 print(CharFix.tr_lowercase(line))
@@ -356,7 +358,7 @@ $ istanbul ve ığdır ''arası'' 1528 km'dir.
 ### Fix Quotes
 
 ```python
-from ts_tokenizer.char_fix import CharFix
+from ts_tokenizer import CharFix
 
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
 print(CharFix.fix_quote(line))
@@ -370,7 +372,7 @@ TokenHandler gets each given string and process it using methods defined under T
 This process follows a strictly defined order and it is recursive.
 Each method could be called 
 ```python
-from ts_tokenizer.token_handler import TokenPreProcess
+from ts_tokenizer import TokenPreProcess
 
 ```
 
