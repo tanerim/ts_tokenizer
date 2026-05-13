@@ -3,26 +3,45 @@ from .data import LocalData
 
 class SmileyParser:
     @classmethod
+    def sorted_smileys(cls):
+        return sorted(LocalData.smileys(), key=lambda smiley: (-len(smiley), smiley))
+
+    @classmethod
     def smiley_count(cls, text):
         smiley_count = 0
-        for smiley in LocalData.smileys():
+        for smiley in cls.sorted_smileys():
             smiley_count += text.count(smiley)
         return smiley_count
 
     @classmethod
-    def smiley_tokenize(cls, text):
-        tokenized = []
+    def smiley_split(cls, text):
+        segments = []
         i = 0
         while i < len(text):
-            found_smiley = False
-            for smiley in LocalData.smileys():
-                if text[i:i+len(smiley)] == smiley:
-                    tokenized.append(smiley)
-                    i += len(smiley)
-                    found_smiley = True
+            matched_smiley = None
+            for smiley in cls.sorted_smileys():
+                if text.startswith(smiley, i):
+                    matched_smiley = smiley
                     break
-            if not found_smiley:
+
+            if matched_smiley:
+                segments.append((matched_smiley, True))
+                i += len(matched_smiley)
+                continue
+
+            start = i
+            i += 1
+            while i < len(text):
+                if any(text.startswith(smiley, i) for smiley in cls.sorted_smileys()):
+                    break
                 i += 1
+            segments.append((text[start:i], False))
+
+        return segments
+
+    @classmethod
+    def smiley_tokenize(cls, text):
+        tokenized = [segment for segment, is_smiley in cls.smiley_split(text) if is_smiley]
         return "\n".join(tokenized)
 
     @classmethod
@@ -30,21 +49,5 @@ class SmileyParser:
         if not text:
             return False
 
-        found_smileys = []
-        i = 0
-        while i < len(text):
-            for smiley in LocalData.smileys():
-                if text[i:i + len(smiley)] == smiley:
-                    found_smileys.append((i, smiley))
-                    i += len(smiley) - 1  # Adjust index to continue after the current smiley
-                    break
-            i += 1
-
-        if len(found_smileys) <= 1:
-            return False
-
-        for i in range(1, len(found_smileys)):
-            # Check if the current smiley starts immediately after the previous one
-            if found_smileys[i][0] != found_smileys[i - 1][0] + len(found_smileys[i - 1][1]):
-                return False
-        return True
+        segments = cls.smiley_split(text)
+        return len(segments) > 1 and all(is_smiley for _, is_smiley in segments)
