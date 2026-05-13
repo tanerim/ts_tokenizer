@@ -444,19 +444,33 @@ class TokenPreProcess:
         return None
 
     @staticmethod
+    def is_smiley_in(word: str) -> list:
+        if not any(char.isalnum() for char in word):
+            return None
+
+        segments = SmileyParser.smiley_split(word)
+        if not any(is_smiley for _, is_smiley in segments):
+            return None
+
+        tokens = []
+        for segment, is_smiley in segments:
+            if is_smiley:
+                tokens.append((segment, "Smiley"))
+                continue
+
+            processed_segment = TokenProcessor.process_token(segment)
+            if isinstance(processed_segment, tuple):
+                tokens.append(processed_segment)
+            elif isinstance(processed_segment, list):
+                tokens.extend(processed_segment)
+            else:
+                tokens.append((segment, "OOV"))
+
+        return tokens
+
+    @staticmethod
     def is_multiple_smiley_in(word: str) -> list:
-        if SmileyParser.consecutive_smiley(word) and any(char.isalnum() for char in word):
-            for i, char in enumerate(word):
-                if char in puncs:
-                    initial_part = word[:i]
-                    smileys = word[i:]
-                    processed_word = TokenProcessor.process_token(initial_part)
-                    if isinstance(processed_word, tuple):
-                        processed_word = [processed_word]
-                    smiley_tokens = SmileyParser.smiley_tokenize(smileys).split("\n")
-                    smiley_list = [(smiley, "Smiley") for smiley in smiley_tokens]
-                    return processed_word + smiley_list
-        return None
+        return TokenPreProcess.is_smiley_in(word)
 
     @staticmethod
     def is_multiple_emoticon(word):
@@ -1041,7 +1055,7 @@ regex = [
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_percentage_numbers_chars,
     TokenPreProcess.is_percentage_numbers,
-    TokenPreProcess.is_multiple_smiley_in,
+    TokenPreProcess.is_smiley_in,
     TokenPreProcess.is_multiple_smiley,
 ]
 

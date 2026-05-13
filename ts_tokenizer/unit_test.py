@@ -1,14 +1,13 @@
 import unittest
-from ts_tokenizer.tokenizer import TSTokenizer
-from ts_tokenizer.char_fix import CharFix
+from ts_tokenizer.tokenizer import tokenize
 
 
 class TestTSTokenizer(unittest.TestCase):
 
     def test_tokenize_simple(self):
         input_text = "Parça ve bütün ilişkisi."
-        expected_output = ["Parça", "ve", "bütün", "ilişkisi", "."]
-        result = TSTokenizer.ts_tokenize(input_text, output_format="tokenized")
+        expected_output = "Parça\nve\nbütün\nilişkisi\n."
+        result = tokenize(input_text, return_format="tokenized")
 
         # Debugging output
         print("Generated:", result)
