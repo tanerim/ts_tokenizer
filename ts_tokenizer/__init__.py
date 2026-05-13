@@ -1,4 +1,4 @@
-__version__ = '0.1.22'
+__version__ = '0.1.23'
 
 # Public API exports
 from .tokenizer import tokenize, TSTokenizer
