@@ -1,5 +1,5 @@
 
-**TS Tokenizer** is a hybrid tokenizer designed specifically for tokenizing Turkish texts.
+**TS Tokenizer** is a foundational lexical processing engine for Turkish Natural Language Processing. It is a hybrid tokenizer designed specifically for tokenizing Turkish texts.
 It uses a hybrid (lexicon-based and rule-based) approach to split text into tokens.
 
 
