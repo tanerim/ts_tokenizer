@@ -22,3 +22,12 @@ def test_smiley_attached_to_word_with_trailing_punctuation():
         (":))", "Smiley"),
         ("!", "Punc"),
     ]
+
+
+def test_emoticon_attached_to_word_start():
+    assert tagged_lines("🚨🚨🚨ADIYAMAN") == [
+        ("🚨", "Emoticon"),
+        ("🚨", "Emoticon"),
+        ("🚨", "Emoticon"),
+        ("ADIYAMAN", "Valid_Word"),
+    ]

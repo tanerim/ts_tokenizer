@@ -16,12 +16,13 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 # Create a dict of RegExps
 # noinspection RegExpRedundantEscape
 REGEX_PATTERNS = {
-    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F]{1,139}$'),
-    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\uFE0F]{1,15}$'),
+    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,139}$'),
+    "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,15}$'),
     "email": re.compile(rf'^[^{puncs}][a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?<![{puncs}])$'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]$"),
     "hour_suffix": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)$"),
+    "number_suffix": re.compile(r"^\d+(?:[.,]\d+)*'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
     #"hour_12": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]([AP]M)$"),
     "hour_12": re.compile(r"^(0[1-9]|1[0-2])[:.][0-5][0-9](AM|PM)$"),
     "percentage_numbers_initial": re.compile(r'^%\d{1,3}(?:[.,]\d+)?$'),
@@ -101,6 +102,10 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_mention(word: str) -> list:
+        result = check_regex(word, "mention")
+        if result:
+            return [(result, "Mention")] if result else None
+
         p_count = social_media_punc_count(word)
         if p_count == 2:
             punc = word[-1]
@@ -117,6 +122,10 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_hashtag(word: str) -> list:
+        result = check_regex(word, "hashtag")
+        if result:
+            return [(result, "Hashtag")] if result else None
+
         p_count = social_media_punc_count(word)
         # As # symbol is also a punc we set
         if p_count == 2:
@@ -218,6 +227,19 @@ class TokenPreProcess:
     def is_hour_suffix(word: str) -> tuple:
         result = check_regex(word, "hour_suffix")
         return [(result, "Hour_Suffix")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    def is_number_suffix(word: str) -> list:
+        result = check_regex(word, "number_suffix")
+        if not result:
+            return None
+
+        number_part, suffix_part = word.rsplit("'", 1)
+        if TokenPreProcess.is_number(number_part) and suffix_part:
+            return [(word, "Number")]
+
+        return None
 
     @staticmethod
     @apply_charfix
@@ -475,6 +497,31 @@ class TokenPreProcess:
     @staticmethod
     def is_multiple_emoticon(word):
         return (word, "Multiple_Emoticon") if EmoticonParser.emoticon_count(word) >= 2 else None
+
+    @staticmethod
+    def is_emoticon_in(word: str) -> list:
+        if EmoticonParser.emoticon_count(word) == 0:
+            return None
+
+        segments = EmoticonParser.emoticon_tokenize(word).split("\n")
+        if len(segments) <= 1:
+            return None
+
+        tokens = []
+        for segment in segments:
+            if segment in LocalData.emoticons():
+                tokens.append((segment, "Emoticon"))
+                continue
+
+            processed_segment = TokenProcessor.process_token(segment)
+            if isinstance(processed_segment, tuple):
+                tokens.append(processed_segment)
+            elif isinstance(processed_segment, list):
+                tokens.extend(processed_segment)
+            else:
+                tokens.append((segment, "OOV"))
+
+        return tokens
 
     @staticmethod
     def is_number(word: str) -> list:
@@ -1040,6 +1087,7 @@ regex = [
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_hour_suffix,
+    TokenPreProcess.is_number_suffix,
     TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
@@ -1055,6 +1103,7 @@ regex = [
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_percentage_numbers_chars,
     TokenPreProcess.is_percentage_numbers,
+    TokenPreProcess.is_emoticon_in,
     TokenPreProcess.is_smiley_in,
     TokenPreProcess.is_multiple_smiley,
 ]
