@@ -138,3 +138,18 @@ class CharFix:
     @staticmethod
     def fix(word: str) -> str:
         return CharFix.replace_all(word)
+
+
+def fix(word: str) -> str:
+    return CharFix.fix(word)
+
+
+def tr_lowercase(word: str) -> str:
+    return CharFix.tr_lowercase(word)
+
+
+def fix_quote(word: str) -> str:
+    return CharFix.fix_quote(word)
+
+
+__all__ = ["CharFix", "fix", "tr_lowercase", "fix_quote"]

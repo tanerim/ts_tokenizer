@@ -326,13 +326,19 @@ Generated output is as follows:
 
 CharFix offers methods to correct corrupted Turkish text:
 
+You can use these helpers either through `CharFix` or as direct package-level functions:
+
+```python
+from ts_tokenizer import fix, tr_lowercase, fix_quote
+```
+
 ### Fix Characters
 
 ```python
-from ts_tokenizer import CharFix
+from ts_tokenizer import fix
 
 line = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-print(CharFix.fix(line))  # Fixes corrupted characters
+print(fix(line))  # Fixes corrupted characters
 ```
 ```bash
 $ Parça ve bütün ilişkisi her zaman işlevsel değildir.
@@ -340,10 +346,10 @@ $ Parça ve bütün ilişkisi her zaman işlevsel değildir.
 ### Lowercase
 
 ```python
-from ts_tokenizer import CharFix
+from ts_tokenizer import tr_lowercase
 
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
-print(CharFix.tr_lowercase(line))
+print(tr_lowercase(line))
 ```
 ```bash
 $ istanbul ve ığdır ''arası'' 1528 km'dir.
@@ -351,12 +357,49 @@ $ istanbul ve ığdır ''arası'' 1528 km'dir.
 ### Fix Quotes
 
 ```python
-from ts_tokenizer import CharFix
+from ts_tokenizer import fix_quote
 
 line = "İstanbul ve Iğdır ''arası'' 1528 km'dir."
-print(CharFix.fix_quote(line))
+print(fix_quote(line))
 ```
     $ İstanbul ve Iğdır "arası" 1528 km'dir.
+
+---
+## Local Data
+
+Bundled lexical resources can also be accessed directly from the package.
+
+Generic accessor:
+
+```python
+from ts_tokenizer import get_data
+
+smileys = get_data("smileys")
+print(":)" in smileys)
+```
+
+Named helpers:
+
+```python
+from ts_tokenizer import smileys_data, word_list_data
+
+print(":)" in smileys_data())
+print("istanbul" in word_list_data())
+```
+
+Available dataset names for `get_data(...)`:
+
+- `emoticons`
+- `smileys`
+- `abbrs`
+- `word_list`
+- `correction_mark`
+- `exception_words`
+- `eng_word_list`
+- `domains`
+- `currency_symbols`
+
+Returned values are `frozenset[str]`, so they are safe to inspect without mutating the tokenizer's in-memory resources.
 
 ---
 ## TokenHandler
