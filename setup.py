@@ -19,9 +19,9 @@ setup(
     name='ts_tokenizer',
     version=read_version(),
     packages=find_packages(),
-    include_package_data=True,
+    include_package_data=False,
     package_data={
-    'ts_tokenizer': ['data/*.txt'],
+        'ts_tokenizer': ['data/*.txt'],
     },
     install_requires=[
         'tqdm~=4.66.4'
@@ -50,13 +50,12 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
-        'License :: OSI Approved :: MIT License',
         "Natural Language :: Turkish",
         "Topic :: Text Processing :: Linguistic",
         'Operating System :: OS Independent',
     ],
     keywords=['turkish tokenizer', 'tokenizer', 'turkish', 'nlp', 'text-processing', 'language-processing'],
     license='MIT',
+    license_files=('LICENSE',),
     python_requires='>=3.9',
-    repository='https://github.com/tanerim/ts_tokenizer'
 )
