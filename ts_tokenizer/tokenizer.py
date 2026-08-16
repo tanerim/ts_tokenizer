@@ -182,53 +182,6 @@ class TSTokenizer:
 
 
 if __name__ == "__main__":
-    import argparse
+    from ts_tokenizer.cli import main
 
-    parser = argparse.ArgumentParser(description="Tokenizer Script")
-    parser.add_argument(
-        'filename',
-        nargs='?',
-        help="Name of the file to process (optional if input is piped)"
-    )
-    parser.add_argument(
-        '-o', '--output',
-        choices=['tokenized', 'lines', 'tagged', 'tagged_lines'],
-        default='tokenized',
-        help="Specify the output format"
-    )
-
-    parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
-    parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
-
-    args = parser.parse_args()
-
-    # Configure logging
-    logging_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(level=logging_level, format='%(asctime)s %(levelname)s: %(message)s')
-
-    json_output = args.json  # Use the flag from args directly
-
-    if not sys.stdin.isatty():
-        input_text = sys.stdin.read().strip()
-        if input_text:
-            TSTokenizer.ts_tokenize(
-                input_file=input_text,
-                output_format=args.output,
-                num_workers=args.num_workers,
-                verbose=args.verbose,
-                output=json_output  # Pass the correct json_output value
-            )
-        else:
-            logging.error("No input received from stdin.")
-            sys.exit(1)
-    elif args.filename:
-        TSTokenizer.ts_tokenize(
-            filename=args.filename,
-            output_format=args.output,
-            num_workers=args.num_workers,
-            verbose=args.verbose,
-            output=json_output  # Pass the correct json_output value
-        )
-    else:
-        parser.print_help()
-        sys.exit(1)
+    raise SystemExit(main())

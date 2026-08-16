@@ -200,94 +200,87 @@ www.worldstatesmen.org	Web_URL
 ```
 ---
 
-# Classes
+# Python API
 
-Below are samples to implement ts-tokenizer in Python
+For simple Python usage, import `tokenize` from the package root:
+
+```python
+from ts_tokenizer import tokenize
+
+text = "Merhaba dünya. Bugün 16.08.2026."
+result = tokenize(text, "tokenized")
+
+print(result)
+```
+
+Output:
+
+```text
+Merhaba
+dünya
+.
+Bugün
+16.08.2026
+.
+```
+
+Supported `return_format` values:
+
+- `tokenized`: returns a newline-delimited `str` of tokens.
+- `tagged`: returns a newline-delimited `str` of `token<TAB>tag` pairs.
+- `lines`: returns a single `str` containing one tokenized line.
+- `tagged_lines`: returns a Python list of `(token, tag)` tuples.
+
+Tagged example:
+
+```python
+from ts_tokenizer import tokenize
+
+text = "Merhaba dünya."
+result = tokenize(text, "tagged")
+
+print(result)
+```
+
+Output:
+
+```text
+Merhaba	Valid_Word
+dünya	Valid_Word
+.	Punc
+```
+
+Line-preserving examples:
+
+```python
+from ts_tokenizer import tokenize
+
+text = "Merhaba dünya."
+print(tokenize(text, "lines"))
+print(tokenize(text, "tagged_lines"))
+```
+
+Output:
+
+```text
+Merhaba dünya .
+[('Merhaba', 'Valid_Word'), ('dünya', 'Valid_Word'), ('.', 'Punc')]
+```
 
 ## TSTokenizer
 
-**tokenized** : Outputs a list of plain tokens extracted from the input text.
+`TSTokenizer.ts_tokenize(...)` is intended for CLI-style workflows. It writes results to standard output and does not return token data to the caller.
 
 ```python
-from ts_tokenizer import tokenize
-Single_Line_Sample = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-tokens = tokenize(Single_Line_Sample, "tokenized")
-print(tokens)
-```
-Generated output is as follows:
+from ts_tokenizer import TSTokenizer
 
-```bash
-Parça
-ve
-bütün
-ilişkisi
-her
-zaman
-işlevsel
-değildir
-```
-**tagged** : Outputs tokens with associated tags. Please note that these are not POSTags.
-Check TokenHandler below for tag set.
-
-```python
-from ts_tokenizer import tokenize
-Single_Line_Sample = "ParÃ§a ve bÃ¼tÃ¼n iliåÿkisi her zaman iåÿlevsel deðildir."
-tagged_tokens = tokenize(Single_Line_Sample, "tagged")
-print(tokens)
-```
-Generated output is as follows:
-
-```bash
-Parça	Valid_Word
-ve	Valid_Word
-bütün	Valid_Word
-ilişkisi	Valid_Word
-her	Valid_Word
-zaman	Valid_Word
-işlevsel	Valid_Word
-değildir	Valid_Word
-.	Punc
-
+TSTokenizer.ts_tokenize(
+    input_file="Merhaba dünya.\nİkinci satır.",
+    output_format="tokenized",
+)
 ```
 
-**lines** : Maintains the structure of the input text, with each line's tokens grouped together.
-Please note that "line" is defined with end-of-line markers.
-
-```python
-from ts_tokenizer import tokenize
-Multi_Line_Sample = """
-ATATÜRK'ün GENÇLÝÐE HÝTABESÝ 
-Ey Türk gençliði! Birinci vazifen, Türk istiklâlini, Türk Cumhuriyet'ini, ilelebet, muhafaza ve müdafaa etmektir. 
-Mevcudiyetinin ve istikbalinin yegâne temeli budur. 
-Bu temel, senin, en kýymetli hazinendir.
-Ýstikbalde dahi, seni bu hazineden mahrum etmek isteyecek, dahilî ve haricî bedhahlarýn olacaktýr. 
-Bir gün, istiklâl ve cumhuriyeti müdafaa mecburiyetine düþersen, vazifeye atýlmak için, içinde bulunacaðýn vaziyetin imkân ve þeraitini düþünmeyeceksin! 
-Bu imkân ve þerait, çok nâmüsait bir mahiyette tezahür edebilir. 
-Ýstiklâl ve cumhuriyetine kastedecek düþmanlar, bütün dünyada emsali görülmemiþ bir galibiyetin mümessili olabilirler. 
-Cebren ve hile ile aziz vatanýn, bütün kaleleri zaptedilmiþ, bütün tersanelerine girilmiþ, bütün ordularý daðýtýlmýþ ve memleketin her köþesi bilfiil iþgal edilmiþ olabilir. 
-Bütün bu þeraitten daha elîm ve daha vahim olmak üzere, memleketin dahilinde, iktidara sahip olanlar gaflet ve dalâlet ve hattâ hýyanet içinde bulunabilirler.
-Hatta bu iktidar sahipleri þahsî menfaatlerini, müstevlilerin siyasî emelleriyle tevhit edebilirler.
-Millet, fakruzaruret içinde harap ve bîtap düþmüþ olabilir. Ey Türk istikbalinin evladý! Ýþte, bu ahval ve þerait içinde dahi, vazifen; Türk istiklâl ve cumhuriyetini kurtarmaktýr! 
-Muhtaç olduðun kudret, damarlarýndaki asil kanda, mevcuttur!
-"""
-lines = tokenize(Multi_Line_Sample, "lines")
-print(lines)
-```
-Generated output is as follows:
-```text
-ATATÜRK'ün GENÇLİĞE HİTABESİ
-Ey Türk gençliği ! Birinci vazifen , Türk istiklâlini , Türk Cumhuriyet'ini , ilelebet , muhafaza ve müdafaa etmektir .
-Mevcudiyetinin ve istikbalinin yegâne temeli budur .
-Bu temel , senin , en kıymetli hazinendir .
-İstikbalde dahi , seni bu hazineden mahrum etmek isteyecek , dahilî ve haricî bedhahların olacaktır .
-Bir gün , istiklâl ve cumhuriyeti müdafaa mecburiyetine düşersen , vazifeye atılmak için , içinde bulunacağın vaziyetin imkân ve şeraitini düşünmeyeceksin !
-Bu imkân ve şerait , çok nâmüsait bir mahiyette tezahür edebilir .
-İstiklâl ve cumhuriyetine kastedecek düşmanlar , bütün dünyada emsali görülmemiş bir galibiyetin mümessili olabilirler .
-Cebren ve hile ile aziz vatanın , bütün kaleleri zaptedilmiş , bütün tersanelerine girilmiş , bütün orduları dağıtılmış ve memleketin her köşesi bilfiil işgal edilmiş olabilir .
-Bütün bu şeraitten daha elîm ve daha vahim olmak üzere , memleketin dahilinde , iktidara sahip olanlar gaflet ve dalâlet ve hattâ hıyanet içinde bulunabilirler .
-Hatta bu iktidar sahipleri şahsî menfaatlerini , müstevlilerin siyasî emelleriyle tevhit edebilirler .
-Millet , fakruzaruret içinde harap ve bîtap düşmüş olabilir . Ey Türk istikbalinin evladı ! İşte , bu ahval ve şerait içinde dahi , vazifen ; Türk istiklâl ve cumhuriyetini kurtarmaktır !
-Muhtaç olduğun kudret , damarlarındaki asil kanda , mevcuttur !
+Use `tokenize(...)` when you want a value back inside Python code.
 ```
 
 **tagged_lines**: Same as lines but includes tags for each token.
@@ -448,5 +441,3 @@ The following benchmarks were conducted on different machines with the following
 |--------------------------------------------------------------------------|---------------------------|--------------|-----------------------------------|-----------------------------|------------------------------------|------------------------------|
 | AMD Ryzen 7 5800H with Radeon Graphics (Laptop) <br/>3.2 GHz / 4.4 Ghz   | 8 physical cores (16 threads) | 16GB DDR4   | ~170 seconds                      | ~5,800 tokens/second        | ~715 seconds                     | ~1,400 tokens/second         |
 | AMD Ryzen 9 7950X3D with Radeon Graphics (Desktop)<br/>4.2 Ghz / 5.7 Ghz | 16 physical cores (32 threads)| 96GB DDR5   | ~14 seconds                       | ~71,500 tokens/second       | ~110 seconds                    | ~9,090 tokens/second         |
-
-

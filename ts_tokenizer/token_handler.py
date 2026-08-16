@@ -198,6 +198,23 @@ class TokenPreProcess:
         return None
 
     @staticmethod
+    @apply_charfix
+    def is_parenthesized_with_trailing_colon(word: str):
+        if len(word) > 3 and word[0] == "(" and word.endswith("):"):
+            content = word[1:-2]
+            if not content:
+                return None
+
+            processed_content = TokenProcessor.process_token(content)
+            if isinstance(processed_content, tuple):
+                processed_content = [processed_content]
+            elif not isinstance(processed_content, list):
+                processed_content = [(content, "OOV")]
+
+            return [("(", "Punc")] + processed_content + [(")", "Punc"), (":", "Punc")]
+        return None
+
+    @staticmethod
     def is_date_range(word: str) -> list:
         result = check_regex(word, "date_range") or check_regex(word, "year_range")
         if result:
@@ -1094,6 +1111,7 @@ regex = [
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_numbered_title,
+    TokenPreProcess.is_parenthesized_with_trailing_colon,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_registered,

@@ -4,11 +4,14 @@ from ts_tokenizer.tokenizer import TSTokenizer
 from ts_tokenizer import __version__
 
 
-def main():
-    parser = argparse.ArgumentParser(
+def build_parser():
+    return argparse.ArgumentParser(
         description="TS Tokenizer is a hybrid (lexicon-based and rule-based) tokenizer designed specifically for tokenizing Turkish texts.",
         epilog= "tanersezerr@gmail.com"
     )
+
+
+def configure_parser(parser):
     parser.add_argument(
         'filename',
         nargs='?',
@@ -31,21 +34,28 @@ def main():
         help="Show program version and exit"
     )
 
-    args = parser.parse_args()
+    return parser
 
+
+def create_parser():
+    parser = build_parser()
+    return configure_parser(parser)
+
+
+def run(args):
     # Case 1: Piped input detected
     if not sys.stdin.isatty():
         input_text = sys.stdin.read().strip()
         if not input_text:
             print("Error: No input received from stdin.", file=sys.stderr)
-            sys.exit(1)
+            return 1
 
         try:
             # Tokenize the input text from stdin
             TSTokenizer.ts_tokenize(input_file=input_text, output_format=args.output, num_workers=args.num_workers)
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
-            sys.exit(1)
+            return 1
 
     # Case 2: Filename provided
     elif args.filename:
@@ -53,13 +63,21 @@ def main():
             TSTokenizer.ts_tokenize(filename=args.filename, output_format=args.output, num_workers=args.num_workers)
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
-            sys.exit(1)
+            return 1
 
     # Case 3: No input provided
     else:
         print("Usage: ts-tokenizer [arguments] <filename> or pipe input via stdin (e.g., cat file.txt | ts-tokenizer)")
-        sys.exit(1)
+        return 1
+
+    return 0
+
+
+def main(argv=None):
+    parser = create_parser()
+    args = parser.parse_args(argv)
+    return run(args)
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())
