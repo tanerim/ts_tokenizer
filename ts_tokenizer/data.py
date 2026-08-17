@@ -1,6 +1,8 @@
 import os
 from typing import FrozenSet
 
+from .char_fix import CharFix
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(base_dir, 'data')
 
@@ -8,7 +10,8 @@ data_dir = os.path.join(base_dir, 'data')
 
 emoticons = set(line.strip() for line in open(os.path.join(data_dir, 'emoticons.txt')))
 smileys = set(line.strip() for line in open(os.path.join(data_dir, 'smileys.txt')))
-abbrs = set(line.strip() for line in open(os.path.join(data_dir, 'abbr_list.txt')))
+abbrs = set(CharFix.tr_lowercase(line.strip()) for line in open(os.path.join(data_dir, 'abbr_list.txt')))
+candidate_abbrs = set(line.strip() for line in open(os.path.join(data_dir, 'cand_abbr_list.txt')))
 word_list = set(line.strip() for line in open(os.path.join(data_dir, 'TS_Corpus_Turkish_Word_List.txt')))
 exception_words = set(line.strip() for line in open(os.path.join(data_dir, 'exceptions.txt')))
 eng_words = set(line.strip() for line in open(os.path.join(data_dir, 'eng_word_list.txt')))
@@ -29,6 +32,10 @@ class LocalData:
     @staticmethod
     def abbrs():
         return abbrs
+
+    @staticmethod
+    def candidate_abbrs():
+        return candidate_abbrs
 
     @staticmethod
     def word_list():

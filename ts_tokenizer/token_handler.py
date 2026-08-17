@@ -23,6 +23,7 @@ REGEX_PATTERNS = {
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]$"),
     "hour_suffix": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9](?:'te|'de|'da|'den|'dan|'ten|'tan|'deki|'daki)$"),
     "number_suffix": re.compile(r"^\d+(?:[.,]\d+)*'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
+    "currency_suffix": re.compile(rf"^(?:[{re.escape(''.join(LocalData.currency_symbols()))}]\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?|\d{{1,3}}(?:[.,]\d{{3}})*([.,]\d+)?[{re.escape(''.join(LocalData.currency_symbols()))}])'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
     #"hour_12": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]([AP]M)$"),
     "hour_12": re.compile(r"^(0[1-9]|1[0-2])[:.][0-5][0-9](AM|PM)$"),
     "percentage_numbers_initial": re.compile(r'^%\d{1,3}(?:[.,]\d+)?$'),
@@ -37,9 +38,9 @@ REGEX_PATTERNS = {
     "in_parenthesis": re.compile(r'^[(\[{]+[^()\[\]{}]*[)\]}]+}$'),
     "numbered_title": re.compile(r'^\((\d{1,2})\)|^\[(\d{1,2})\]|^{(\d{1,2})\}'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
-    "copyright": re.compile(r'(^©[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+$)|(^[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+©$)'),
-    "registered": re.compile(r'(^®[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+$)|(^[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+®$)'),
-    "trade_mark": re.compile(r'(^™[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+$)|(^[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+™$)'),
+    "copyright": re.compile(r'(^©[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_-]+$)|(^[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_-]+©$)'),
+    "registered": re.compile(r'(^®[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_-]+$)|(^[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_-]+®$)'),
+    "trade_mark": re.compile(r'(^™[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_-]+$)|(^[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_-]+™$)'),
     "bullet_list": re.compile(r'^•[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9]+$'),
     "three_or_more": re.compile(r'^([{}])\1{{2,}}$'.format(re.escape(string.punctuation))),
     "roman_number": re.compile(r'^(M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))\.?$'),
@@ -188,6 +189,31 @@ class TokenPreProcess:
         return None
 
     @staticmethod
+    @apply_charfix
+    def is_abbr_with_apostrophe_suffix(word: str) -> list:
+        match = re.fullmatch(r"([A-Za-zÇĞİÖŞÜçğıöşü]+\.?)'([A-Za-zÇĞİÖŞÜçğıöşü]+)", word)
+        if not match:
+            return None
+
+        abbr_part = match.group(1)
+        suffix_part = match.group(2)
+        normalized_abbr = CharFix.tr_lowercase(abbr_part)
+
+        if not abbr_part.endswith("."):
+            return None
+
+        if normalized_abbr not in LocalData.abbrs() and abbr_part not in LocalData.candidate_abbrs():
+            return None
+
+        processed_suffix = TokenProcessor.process_token(suffix_part)
+        if isinstance(processed_suffix, tuple):
+            processed_suffix = [processed_suffix]
+        elif not isinstance(processed_suffix, list):
+            processed_suffix = [(suffix_part, "OOV")]
+
+        return [(abbr_part, "Abbr"), ("'", "Punc")] + processed_suffix
+
+    @staticmethod
     def is_numbered_title(word: str) -> list:
         # Check if the word matches the "numbered_title" regex pattern
         result = check_regex(word, "numbered_title")
@@ -289,6 +315,19 @@ class TokenPreProcess:
         number_part, suffix_part = word.rsplit("'", 1)
         if TokenPreProcess.is_number(number_part) and suffix_part:
             return [(word, "Number")]
+
+        return None
+
+    @staticmethod
+    @apply_charfix
+    def is_currency_suffix(word: str) -> list:
+        result = check_regex(word, "currency_suffix")
+        if not result:
+            return None
+
+        currency_part, suffix_part = word.rsplit("'", 1)
+        if TokenPreProcess.is_currency(currency_part) and suffix_part:
+            return [(word, "Currency")]
 
         return None
 
@@ -429,6 +468,27 @@ class TokenPreProcess:
     def is_trademark(word: str) -> list:
         result = check_regex(word, "trade_mark")
         return [(result, "Trademark")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    def is_marked_with_trailing_punc(word: str) -> list:
+        for suffix_len in range(1, len(word)):
+            trailing_punc = word[-suffix_len:]
+            core = word[:-suffix_len]
+
+            if not core or not all(char in puncs for char in trailing_punc):
+                continue
+
+            for checker in (
+                TokenPreProcess.is_copyright,
+                TokenPreProcess.is_registered,
+                TokenPreProcess.is_trademark,
+            ):
+                marked = checker(core)
+                if marked:
+                    return marked + [(char, "Punc") for char in trailing_punc]
+
+        return None
 
     @staticmethod
     def is_currency(word: str) -> list:
@@ -1166,6 +1226,7 @@ regex = [
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_hour_suffix,
+    TokenPreProcess.is_currency_suffix,
     TokenPreProcess.is_number_suffix,
     TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
@@ -1173,6 +1234,7 @@ regex = [
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_escaped_opening_quote,
     TokenPreProcess.is_opening_quote,
+    TokenPreProcess.is_abbr_with_apostrophe_suffix,
     TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_parenthesized_with_trailing_colon,
@@ -1181,6 +1243,7 @@ regex = [
     TokenPreProcess.is_registered,
     TokenPreProcess.is_copyright,
     TokenPreProcess.is_trademark,
+    TokenPreProcess.is_marked_with_trailing_punc,
     TokenPreProcess.is_bullet_list,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_percentage_numbers_chars,
