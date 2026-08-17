@@ -31,6 +31,12 @@ pip install --upgrade ts-tokenizer
 ```
 ---
 
+To force upgrade:
+```bash
+pip install --upgrade --no-cache-dir --force-reinstall ts-tokenizer
+```
+---
+
 To remove package, use:
 ```bash
 pip uninstall ts-tokenizer

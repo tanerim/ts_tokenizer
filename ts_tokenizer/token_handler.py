@@ -154,6 +154,40 @@ class TokenPreProcess:
             return [(initial_quotes, "Punc")] + processed_content + [(final_quotes, "Punc")] if result else None
 
     @staticmethod
+    @apply_charfix
+    def is_opening_quote(word: str) -> list:
+        if len(word) > 1 and word[0] in {'"', "'"}:
+            content = word[1:]
+            if not content:
+                return None
+
+            processed_content = TokenProcessor.process_token(content)
+            if isinstance(processed_content, tuple):
+                processed_content = [processed_content]
+            elif not isinstance(processed_content, list):
+                processed_content = [(content, "OOV")]
+
+            return [(word[0], "Punc")] + processed_content
+        return None
+
+    @staticmethod
+    @apply_charfix
+    def is_escaped_opening_quote(word: str) -> list:
+        if len(word) > 2 and word[0] == "\\" and word[1] in {'"', "'"}:
+            content = word[2:]
+            if not content:
+                return None
+
+            processed_content = TokenProcessor.process_token(content)
+            if isinstance(processed_content, tuple):
+                processed_content = [processed_content]
+            elif not isinstance(processed_content, list):
+                processed_content = [(content, "OOV")]
+
+            return [("\\", "Punc"), (word[1], "Punc")] + processed_content
+        return None
+
+    @staticmethod
     def is_numbered_title(word: str) -> list:
         # Check if the word matches the "numbered_title" regex pattern
         result = check_regex(word, "numbered_title")
@@ -491,8 +525,36 @@ class TokenPreProcess:
         if not any(is_smiley for _, is_smiley in segments):
             return None
 
+        filtered_segments = []
+        for index, (segment, is_smiley) in enumerate(segments):
+            if not is_smiley:
+                filtered_segments.append((segment, False))
+                continue
+
+            if segment.isalnum():
+                filtered_segments.append((segment, False))
+                continue
+
+            prev_char = segments[index - 1][0][-1] if index > 0 and segments[index - 1][0] else ""
+            next_char = segments[index + 1][0][0] if index + 1 < len(segments) and segments[index + 1][0] else ""
+
+            if prev_char.isalnum() and next_char.isalnum():
+                filtered_segments.append((segment, False))
+            else:
+                filtered_segments.append((segment, True))
+
+        if not any(is_smiley for _, is_smiley in filtered_segments):
+            return None
+
+        merged_segments = []
+        for segment, is_smiley in filtered_segments:
+            if merged_segments and not is_smiley and not merged_segments[-1][1]:
+                merged_segments[-1] = (merged_segments[-1][0] + segment, False)
+            else:
+                merged_segments.append((segment, is_smiley))
+
         tokens = []
-        for segment, is_smiley in segments:
+        for segment, is_smiley in merged_segments:
             if is_smiley:
                 tokens.append((segment, "Smiley"))
                 continue
@@ -1109,6 +1171,8 @@ regex = [
     TokenPreProcess.is_mention,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_in_quotes,
+    TokenPreProcess.is_escaped_opening_quote,
+    TokenPreProcess.is_opening_quote,
     TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_parenthesized_with_trailing_colon,
