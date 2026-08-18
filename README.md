@@ -426,8 +426,8 @@ from ts_tokenizer import TokenPreProcess
 |----|-----------------------------|------------------------------|----------------|--------------------|
 | 01 | is_mention                  | @ts-tokenizer                | Yes            | Mention            |
 | 02 | is_hashtag                  | #ts-tokenizer                | Yes            | Hashtag            |
-| 03 | is_mention_suffix           | @SerkanÇayoğlu'ndan          | Yes            | Mention_Suffix     |
-| 04 | is_hashtag_suffix           | #Şanlıurfa'da                | Yes            | Hashtag_Suffix     |
+| 03 | is_mention_suffix           | @defne'den                   | Yes            | Mention_Suffix     |
+| 04 | is_hashtag_suffix           | #haber'ler                   | Yes            | Hashtag_Suffix     |
 | 05 | is_in_quotes                | "ts-tokenizer"               | No             | -----              |
 | 06 | is_numbered_title           | (1)                          | Yes            | Numbered_Title     |
 | 07 | is_in_paranthesis           | (bilgisayar)                 | No             | -----              |
@@ -443,7 +443,7 @@ from ts_tokenizer import TokenPreProcess
 | 17 | is_email_punc               | tanersezerr@gmail.com.       | No             | -----              |
 | 18 | is_full_url                 | https://tscorpus.com         | Yes            | Full_URL           |
 | 19 | is_web_url                  | www.tscorpus.com             | Yes            | Web_URL            |
-| 20 | is_full_url                 | www.example.com'un           | Yes            | URL_Suffix         |
+| 20 | is_full_url                 | www.tscorpus.com'un           | Yes            | URL_Suffix         |
 | 21 | is_copyright                | ©tscorpus                    | Yes            | Copyright          |
 | 22 | is_registered               | tscorpus®                    | Yes            | Registered         |
 | 23 | is_trademark                | tscorpus™                    | Yes            | Trademark          |
