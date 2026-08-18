@@ -1,6 +1,6 @@
 from importlib import import_module
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 _EXPORT_MAP = {
     "tokenize": (".tokenizer", "tokenize"),

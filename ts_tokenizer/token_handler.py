@@ -1,6 +1,7 @@
 import re
 import string
 import unicodedata
+import ipaddress
 
 from .data import LocalData
 from .char_fix import CharFix
@@ -18,6 +19,9 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 REGEX_PATTERNS = {
     "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,139}$'),
     "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,15}$'),
+    "hashtag_suffix": re.compile(r"^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,139}'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
+    "mention_suffix": re.compile(r"^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,15}'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
+    "numeric_hyphenated_suffix": re.compile(r"^(?=.*\d)[A-Za-zÇĞİÖŞÜçğıöşü0-9]+(?:-[A-Za-zÇĞİÖŞÜçğıöşü0-9]+)+'[A-Za-zÇĞİÖŞÜçğıöşü]+$"),
     "email": re.compile(rf'^[^{puncs}][a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?<![{puncs}])$'),
     "email_punc": re.compile(r'\b[' + re.escape(string.punctuation) + r']*[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+[' + re.escape(string.punctuation) + r']*\b'),
     "hour": re.compile(r"^(0[0-9]|1[0-9]|2[0-3])[:.][0-5][0-9]$"),
@@ -35,6 +39,7 @@ REGEX_PATTERNS = {
     "multi_underscore": re.compile(rf'^[^{puncs}]+(_[^{puncs}]+)+$'),
     "date_range": re.compile(r'^(?:(?:0[1-9]|[1-2][0-9]|3[0-1])\.(?:0[1-9]|1[0-2])\.\d{4})-(?:(?:0[1-9]|[1-2][0-9]|3[0-1])\.(?:0[1-9]|1[0-2])\.\d{4})$'),
     "year_range": re.compile(r'^(?:[1-9]\d{3})-(?:[1-9]\d{3})$'),
+    "date_range_suffix": re.compile(r"^(?:(?:0[1-9]|[1-2][0-9]|3[0-1])\.(?:0[1-9]|1[0-2])\.\d{4})-(?:(?:0[1-9]|[1-2][0-9]|3[0-1])\.(?:0[1-9]|1[0-2])\.\d{4})'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
     "in_parenthesis": re.compile(r'^[(\[{]+[^()\[\]{}]*[)\]}]+}$'),
     "numbered_title": re.compile(r'^\((\d{1,2})\)|^\[(\d{1,2})\]|^{(\d{1,2})\}'),
     "in_quotes": re.compile(r'^[\'"][^\'"]*[\'"]$'),
@@ -55,6 +60,22 @@ exception_list = ["(!)", "..."]
 
 MATH_OPERATORS = {'+', '-', '*', '/', '%', '^', '**', '=', '!=', '==', '>', '<', '>=', '<=', '+=', '-=', '*=', '/=',
                   '%=', '√', '∑', 'π', '∞', '∩', '∪', '⊆', '⊂', '∈', '∉', '∧', '∨', '¬', '|', '!'}
+
+FORMULA_OPERATORS = ("≤", "≥", "<", ">", "=")
+FORMULA_TERM_RE = re.compile(r"^-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$|^-?\.\d+$|^[A-Za-zΑ-Ωα-ωÇĞİÖŞÜçğıöşü](?:[²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉̄])?$")
+FORMULA_SIMPLE_SYMBOL_RE = re.compile(r"^[A-Za-zΑ-Ωα-ωÇĞİÖŞÜçğıöşü](?:[²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉̄])?$")
+FORMULA_TEST_SYMBOL_RE = re.compile(r"^[A-Za-zΑ-Ωα-ωÇĞİÖŞÜçğıöşü](?:[²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉̄])?$")
+FORMULA_PARENS_RE = re.compile(r"^-?(?:\d+(?:\.\d+)?|\.\d+)(?:,-?(?:\d+(?:\.\d+)?|\.\d+))*$")
+FORMULA_EXPR_RE = re.compile(
+    r"^(?:[A-Za-zΑ-Ωα-ωÇĞİÖŞÜçğıöşü](?:[²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉̄])?|-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|-?\.\d+)"
+    r"(?:[+\-*/^](?:[A-Za-zΑ-Ωα-ωÇĞİÖŞÜçğıöşü](?:[²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉̄])?|-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|-?\.\d+)){1,2}$"
+)
+MARKDOWN_LINK_TARGET_RE = re.compile(
+    r"(?:https?://|www\.)[^()\s]+|mailto:[^()\s]+|[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+)
+DOI_CORE_RE = re.compile(r"^10\.\d{4,9}/[-._;()/:A-Za-z0-9]+$")
+DOI_WITH_PREFIX_RE = re.compile(r"^DOI:10\.\d{4,9}/[-._;()/:A-Za-z0-9]+$", re.IGNORECASE)
+ISBN_HYPHENATED_RE = re.compile(r"^(?:\d-){8}[\dXx]$|^(?:\d{3}-)(?:\d+-){3}[\dXx]$")
 
 
 def check_regex(word, pattern):
@@ -96,9 +117,150 @@ class TokenPreProcess:
     def __init__(self):
         pass
 
+    @staticmethod
+    def _is_formula_term(term: str) -> bool:
+        return bool(FORMULA_TERM_RE.fullmatch(term))
+
+    @staticmethod
+    def _is_formula_expression(expr: str) -> bool:
+        return bool(FORMULA_EXPR_RE.fullmatch(expr))
+
+    @staticmethod
+    def _split_formula_operator(word: str):
+        for operator in ("≤", "≥", "<", ">", "="):
+            if operator in word:
+                left, right = word.split(operator, 1)
+                if left and right:
+                    return left, operator, right
+        return None
+
+    @staticmethod
+    def _is_ip_address(word: str) -> bool:
+        try:
+            ipaddress.ip_address(word)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def _is_bibliographic_abbr(word: str) -> bool:
+        return word in {"ISBN", "DOI"}
+
+    @staticmethod
+    def _split_consecutive_hashtags(word: str):
+        matches = list(re.finditer(r"#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]+", word))
+        if not matches or matches[0].start() != 0:
+            return None
+
+        if "".join(match.group(0) for match in matches) != word or len(matches) < 2:
+            return None
+
+        return [match.group(0) for match in matches]
+
+    @staticmethod
+    def _process_markdown_link_part(link_part: str):
+        if not (len(link_part) > 2 and link_part[0] == "(" and link_part[-1] == ")"):
+            return None
+
+        content = link_part[1:-1]
+        if not content:
+            return None
+
+        if content.startswith("mailto:"):
+            email_part = content[len("mailto:"):]
+            if TokenPreProcess.is_email(email_part):
+                return [("(", "Punc"), (content, "Email"), (")", "Punc")]
+
+        processed_link = TokenPreProcess.is_in_parenthesis(link_part)
+        return processed_link
+
     # Regex Based Tokens
     # These functions get the input token, checks against to regular expressions defined above and
     # return word, tag as tuple
+
+    @staticmethod
+    @apply_charfix
+    def is_ip_address(word: str) -> list:
+        return [(word, "IP_Address")] if TokenPreProcess._is_ip_address(word) else None
+
+    @staticmethod
+    @apply_charfix
+    def is_doi(word: str) -> list:
+        if DOI_WITH_PREFIX_RE.fullmatch(word) or DOI_CORE_RE.fullmatch(word):
+            return [(word, "DOI")]
+        return None
+
+    @staticmethod
+    @apply_charfix
+    def is_isbn(word: str) -> list:
+        return [(word, "ISBN")] if ISBN_HYPHENATED_RE.fullmatch(word) else None
+
+    @staticmethod
+    @apply_charfix
+    def is_bibliographic_abbr(word: str) -> list:
+        return [(word, "Abbr")] if TokenPreProcess._is_bibliographic_abbr(word) else None
+
+    @staticmethod
+    @apply_charfix
+    def is_formula(word: str) -> list:
+        if not word or any(char.isspace() for char in word):
+            return None
+
+        if any(char in word for char in {"@", "#", "'"}):
+            return None
+
+        if word.startswith("±"):
+            return [(word, "Formula")] if TokenPreProcess._is_formula_term(word[1:]) else None
+
+        match = re.fullmatch(r"([A-Za-zΑ-Ωα-ωÇĞİÖŞÜçğıöşü](?:[²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉̄])?)\(([^()]*)\)([=<>≤≥])(.+)", word)
+        if match:
+            symbol, paren_content, operator, right = match.groups()
+            if FORMULA_TEST_SYMBOL_RE.fullmatch(symbol) and FORMULA_PARENS_RE.fullmatch(paren_content) and TokenPreProcess._is_formula_term(right):
+                return [(word, "Formula")]
+            return None
+
+        split_result = TokenPreProcess._split_formula_operator(word)
+        if not split_result:
+            return None
+
+        left, operator, right = split_result
+        if not FORMULA_SIMPLE_SYMBOL_RE.fullmatch(left):
+            return None
+
+        if operator != "=":
+            return [(word, "Formula")] if TokenPreProcess._is_formula_term(right) else None
+
+        if TokenPreProcess._is_formula_term(right) or TokenPreProcess._is_formula_expression(right):
+            return [(word, "Formula")]
+
+        return None
+
+    @staticmethod
+    @apply_charfix
+    def is_multiple_hashtag(word: str) -> list:
+        hashtags = TokenPreProcess._split_consecutive_hashtags(word)
+        if not hashtags:
+            return None
+
+        return [(hashtag, "Hashtag") for hashtag in hashtags]
+
+    @staticmethod
+    @apply_charfix
+    def is_mention_suffix(word: str) -> list:
+        result = check_regex(word, "mention_suffix")
+        return [(result, "Mention_Suffix")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    def is_hashtag_suffix(word: str) -> list:
+        result = check_regex(word, "hashtag_suffix")
+        return [(result, "Hashtag_Suffix")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    def is_numeric_hyphenated_with_apostrophe_suffix(word: str) -> list:
+        result = check_regex(word, "numeric_hyphenated_suffix")
+        return [(result, "Apostrophed")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -214,29 +376,57 @@ class TokenPreProcess:
         return [(abbr_part, "Abbr"), ("'", "Punc")] + processed_suffix
 
     @staticmethod
+    @apply_charfix
+    def is_hyphenated_with_apostrophe_suffix(word: str) -> list:
+        if "'" not in word or "-" not in word:
+            return None
+
+        stem, suffix = word.rsplit("'", 1)
+        if not stem or not suffix:
+            return None
+
+        if any(char.isdigit() for char in stem):
+            return None
+
+        processed_stem = TokenProcessor.process_token(stem)
+        if TokenProcessor.is_oov(processed_stem):
+            return None
+
+        processed_suffix = TokenProcessor.process_token(suffix)
+        if isinstance(processed_suffix, tuple):
+            processed_suffix = [processed_suffix]
+        elif not isinstance(processed_suffix, list):
+            processed_suffix = [(suffix, "OOV")]
+
+        return processed_stem + [("'", "Punc")] + processed_suffix
+
+    @staticmethod
     def is_numbered_title(word: str) -> list:
         # Check if the word matches the "numbered_title" regex pattern
-        result = check_regex(word, "numbered_title")
-        if result:
-            # Extract the numbered title using regex
-            match = re.match(r'^\((\d{1,2})\)|^\[(\d{1,2})]|^{(\d{1,2})}', word)
-            if match:
-                # Get the numbered part (e.g., `(12)`, `[6]`, `{3}`)
-                numbered_title = match.group(0)
-                # Get the remaining text after the numbered title
-                rest = word[len(numbered_title):]
+        match = re.match(r'^(\((\d{1,2}|[IVXLCDM]+)\)|\[(\d{1,2}|[IVXLCDM]+)\]|\{(\d{1,2}|[IVXLCDM]+)\})', word, re.IGNORECASE)
+        if match:
+            numbered_title = match.group(1)
+            inner_value = numbered_title[1:-1]
+            normalized_inner = CharFix.tr_lowercase(inner_value).replace("ı", "i")
+            roman_match = re.fullmatch(
+                r'(m{0,4}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3}))\.?',
+                normalized_inner
+            )
+            is_roman_inner = bool(roman_match) and any(char in "mdclxvi" for char in normalized_inner)
 
-                # Create the result list with the numbered title token
-                tokens = [(numbered_title, "Numbered_Title")]
+            if not (inner_value.isdigit() or is_roman_inner):
+                return None
 
-                # Process the remaining text if it exists
-                if rest:
-                    processed_rest = TokenProcessor.process_token(rest)
-                    if isinstance(processed_rest, tuple):
-                        processed_rest = [processed_rest]
-                    tokens.extend(processed_rest)
+            rest = word[len(numbered_title):]
+            tokens = [(numbered_title, "Numbered_Title")]
 
-                return tokens
+            if rest:
+                processed_rest = TokenProcessor.process_token(rest)
+                if isinstance(processed_rest, tuple):
+                    processed_rest = [processed_rest]
+                tokens.extend(processed_rest)
+
+            return tokens
 
         return None
 
@@ -275,10 +465,51 @@ class TokenPreProcess:
         return None
 
     @staticmethod
+    @apply_charfix
+    def is_markdown_link(word: str):
+        match = re.fullmatch(rf"(\[[^\[\]]+\])\(({MARKDOWN_LINK_TARGET_RE.pattern})\)", word)
+        if not match:
+            return None
+
+        label_part, link_content = match.groups()
+        processed_label = TokenPreProcess.is_in_parenthesis(label_part)
+        processed_link = TokenPreProcess._process_markdown_link_part(f"({link_content})")
+
+        if not processed_label or not processed_link:
+            return None
+
+        return processed_label + processed_link
+
+    @staticmethod
+    @apply_charfix
+    def is_markdown_link_tail(word: str):
+        match = re.fullmatch(rf"(.+)(\])\(({MARKDOWN_LINK_TARGET_RE.pattern})\)", word)
+        if not match:
+            return None
+
+        label_tail, closing_bracket, link_content = match.groups()
+        processed_tail = TokenProcessor.process_token(label_tail)
+        processed_link = TokenPreProcess._process_markdown_link_part(f"({link_content})")
+
+        if isinstance(processed_tail, tuple):
+            processed_tail = [processed_tail]
+
+        if not processed_tail or not processed_link:
+            return None
+
+        return processed_tail + [(closing_bracket, "Punc")] + processed_link
+
+    @staticmethod
     def is_date_range(word: str) -> list:
         result = check_regex(word, "date_range") or check_regex(word, "year_range")
         if result:
             return [(result, "Date_Range")] if result else None
+
+    @staticmethod
+    @apply_charfix
+    def is_date_range_suffix(word: str) -> list:
+        result = check_regex(word, "date_range_suffix")
+        return [(result, "Date_Range_Suffix")] if result else None
 
     @staticmethod
     @apply_charfix
@@ -384,6 +615,8 @@ class TokenPreProcess:
 
     @staticmethod
     def is_roman_number(word: str) -> list:
+        if not word or not any(char.upper() in {"M", "D", "C", "L", "X", "V", "I"} for char in word):
+            return None
         result = check_regex(word, "roman_number")
         if result:
             return [(result, "Roman_Number")] if result else None
@@ -565,7 +798,14 @@ class TokenPreProcess:
     def is_emoticon(word: str):
         word = unicodedata.normalize('NFC', word)
         word = word.replace(" ", "")
-        return [(word, "Emoticon")] if word in LocalData.emoticons() else None
+        if word in LocalData.emoticons():
+            return [(word, "Emoticon")]
+
+        emoticon_segments = EmoticonParser.emoticon_tokenize(word).split("\n")
+        if len(emoticon_segments) == 1 and emoticon_segments[0] == word and EmoticonParser.emoticon_count(word) == 1:
+            return [(word, "Emoticon")]
+
+        return None
 
     # Multi-Unit Tokens
     @staticmethod
@@ -668,15 +908,20 @@ class TokenPreProcess:
         if word.isdigit():
             return [(word, "Number")]
 
+        if re.fullmatch(r"[+-]\d+(?:\.\d+)?", word):
+            return [(word, "Number")]
+
         if PuncMatcher.punc_count(word) == 1 and word.endswith("."):
             if all(char.isdigit() for char in word[:-1]):
                 return [(word, "Ordinal_Number")]
 
         if PuncMatcher.punc_count(word) == 1 and ("," in word or "." in word):
-            if all(char.isdigit() for char in word if char not in {",", "."}):
-                # Ensure the word has at least one digit
-                if any(char.isdigit() for char in word):
-                    return [(word, "Number")]
+            separator_index = max(word.find(","), word.find("."))
+            if 0 < separator_index < len(word) - 1:
+                if all(char.isdigit() for char in word if char not in {",", "."}):
+                    # Ensure the word has at least one digit
+                    if any(char.isdigit() for char in word):
+                        return [(word, "Number")]
 
         # Check for patterns like number+characters
         # Ensure it's not mixed with complex formats like number+char+number
@@ -861,6 +1106,9 @@ class TokenPreProcess:
     @staticmethod
     @apply_charfix
     def is_fmp(word: str):
+        if len(word) >= 3 and word[0] in puncs and word[-1] in puncs:
+            return None
+
         # Check if the word matches any exception from the exception list
         for exception in exception_list:
             # Case 1: The word ends with an exception
@@ -913,16 +1161,29 @@ class TokenPreProcess:
             main_word = word[:match.start()]
 
             tokens = []
-            # Process the main part of the word
+            # Preserve analyzable stems like ordinal numbers before splitting the
+            # remaining trailing punctuation character-by-character.
+            processed_main_word = None
+            remaining_punc = trailing_punc
             if main_word:
-                processed_main_word = TokenProcessor.process_token(main_word)
+                for split_index in range(1, len(trailing_punc)):
+                    candidate = main_word + trailing_punc[:split_index]
+                    processed_candidate = TokenProcessor.process_token(candidate)
+                    if not TokenProcessor.is_oov(processed_candidate):
+                        processed_main_word = processed_candidate
+                        remaining_punc = trailing_punc[split_index:]
+                        break
+
+                if processed_main_word is None:
+                    processed_main_word = TokenProcessor.process_token(main_word)
+
                 if isinstance(processed_main_word, tuple):
                     tokens.append(processed_main_word)
                 else:
                     tokens.extend(processed_main_word)
 
             # Process each punctuation mark in the trailing punctuation separately
-            for char in trailing_punc:
+            for char in remaining_punc:
                 tokens.append((char, "Punc"))
 
             return tokens
@@ -1211,6 +1472,7 @@ lexicon_based = [
     TokenPreProcess.is_in_exceptions,
     TokenPreProcess.is_emoticon,
     TokenPreProcess.is_smiley,
+    TokenPreProcess.is_bibliographic_abbr,
     TokenPreProcess.is_abbr,
     TokenPreProcess.is_in_lexicon,
     TokenPreProcess.is_in_eng_words,
@@ -1218,18 +1480,28 @@ lexicon_based = [
 ]
 
 regex = [
+    TokenPreProcess.is_ip_address,
+    TokenPreProcess.is_doi,
+    TokenPreProcess.is_isbn,
+    TokenPreProcess.is_formula,
+    TokenPreProcess.is_mention_suffix,
+    TokenPreProcess.is_hashtag_suffix,
+    TokenPreProcess.is_numeric_hyphenated_with_apostrophe_suffix,
     TokenPreProcess.is_full_url,
     TokenPreProcess.is_web_url,
     TokenPreProcess.is_email,
     TokenPreProcess.is_currency,
+    TokenPreProcess.is_date_range_suffix,
     TokenPreProcess.is_date_range,
     TokenPreProcess.is_date,
     TokenPreProcess.is_hour,
     TokenPreProcess.is_hour_suffix,
     TokenPreProcess.is_currency_suffix,
+    TokenPreProcess.is_hyphenated_with_apostrophe_suffix,
     TokenPreProcess.is_number_suffix,
     TokenPreProcess.is_number,
     TokenPreProcess.is_mention,
+    TokenPreProcess.is_multiple_hashtag,
     TokenPreProcess.is_hashtag,
     TokenPreProcess.is_in_quotes,
     TokenPreProcess.is_escaped_opening_quote,
@@ -1238,6 +1510,8 @@ regex = [
     TokenPreProcess.is_apostrophed,
     TokenPreProcess.is_numbered_title,
     TokenPreProcess.is_parenthesized_with_trailing_colon,
+    TokenPreProcess.is_markdown_link,
+    TokenPreProcess.is_markdown_link_tail,
     TokenPreProcess.is_in_parenthesis,
     TokenPreProcess.is_roman_number,
     TokenPreProcess.is_registered,

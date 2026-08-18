@@ -426,6 +426,8 @@ from ts_tokenizer import TokenPreProcess
 |----|----------------------------|------------------------------|----------------|--------------------|
 | 01 | is_mention                 | @ts-tokenizer                | Yes            | Mention            |
 | 02 | is_hashtag                 | #ts-tokenizer                | Yes            | Hashtag            |
+| -- | is_mention_suffix          | @SerkanÇayoğlu'ndan          | Yes            | Mention_Suffix     |
+| -- | is_hashtag_suffix          | #Şanlıurfa'da                | Yes            | Hashtag_Suffix     |
 | 03 | is_in_quotes               | "ts-tokenizer"               | No             | -----              |
 | 04 | is_numbered_title          | (1)                          | Yes            | Numbered_Title     |
 | 05 | is_in_paranthesis          | (bilgisayar)                 | No             | -----              |
@@ -441,40 +443,41 @@ from ts_tokenizer import TokenPreProcess
 | 15 | is_email_punc              | tanersezerr@gmail.com.       | No             | -----              |
 | 16 | is_full_url                | https://tscorpus.com         | Yes            | Full_URL           |
 | 17 | is_web_url                 | www.tscorpus.com             | Yes            | Web_URL            |
-| -- | is_full_url                | www.example.com'un           | Yes            | URL_Suffix         |
-| 18 | is_copyright               | ©tscorpus                    | Yes            | Copyright          |
-| 19 | is_registered              | tscorpus®                    | Yes            | Registered         |
-| 20 | is_trademark               | tscorpus™                    | Yes            | Trademark          |
-| 21 | is_currency                | 100$                         | Yes            | Currency           |
-| 22 | is_num_char_sequence       | 380A                         | No             | -----              |
-| 23 | is_abbr                    | TBMM                         | Yes            | Abbr               |
-| 24 | is_in_lexicon              | bilgisayar                   | Yes            | Valid_Word         |
-| 25 | is_in_exceptions           | e-mail                       | Yes            | Exception          |
-| 26 | is_in_eng_words            | computer                     | Yes            | English_Word       |
-| 27 | is_smiley                  | :)                           | Yes            | Smiley             |
-| 28 | is_multiple_smiley         | :):)                         | No             | -----              |
-| 29 | is_emoticon                | 🍻                           | Yes            | Emoticon           |
-| 30 | is_multiple_emoticon       | 🍻🍻                         | No             | -----              |
-| 31 | is_multiple_smiley_in      | hey:):)                      | No             | -----              |
-| 32 | is_number                  | 175.01                       | Yes            | Number             |
-| 33 | is_apostrophed             | Türkiye'nin                  | Yes            | Apostrophed        |
-| 34 | is_single_punc             | !                            | Yes            | Punc               |
-| 35 | is_multi_punc              | !!                           | No             | -----              |
-| 36 | is_single_hyphenated       | sabah-akşam                  | Yes            | Single_Hyphenated  |
-| 37 | is_multi_hyphenated        | çay-su-kahve                 | Yes            | Multi-Hyphenated   |
-| 38 | is_single_underscored      | Gel_Git                      | Yes            | Single_Underscored |
-| 39 | is_multi_underscored       | Yarı_Yapılandırılmış_Mülakat | Yes            | Multi_Underscored  |
-| 40 | is_one_char_fixable        | bilgisa¬yar                  | Yes            | One_Char_Fixed     |
-| 42 | is_three_or_more           | heyyyyy                      | No             | -----              |
-| 43 | is_fsp                     | bilgisayar.                  | No             | -----              |
-| 44 | is_isp                     | .bilgisayar                  | No             | -----              |
-| 45 | is_fmp                     | bilgisayar..                 | No             | -----              |
-| 46 | is_imp                     | ..bilgisayar                 | No             | -----              |
-| 47 | is_msp                     | --bilgisayar--               | No             | -----              |
-| 48 | is_mssp                    | -bilgisayar-                 | No             | -----              |
-| 49 | is_midsp                   | okul,öğrenci                 | No             | -----              |
-| 50 | is_midmp                   | okul,öğrenci, öğretmen       | No             | -----              |
-| 51 | is_non_latin               | 한국드                          | No             | Non_Latin          |
+| 18 | is_full_url                | www.example.com'un           | Yes            | URL_Suffix         |
+| 19 | is_formula                 | F(2,37)=6.42                 | Yes            | Formula            |
+| 20 | is_copyright               | ©tscorpus                    | Yes            | Copyright          |
+| 21 | is_registered              | tscorpus®                    | Yes            | Registered         |
+| 22 | is_trademark               | tscorpus™                    | Yes            | Trademark          |
+| 23 | is_currency                | 100$                         | Yes            | Currency           |
+| 24 | is_num_char_sequence       | 380A                         | No             | -----              |
+| 25 | is_abbr                    | TBMM                         | Yes            | Abbr               |
+| 26 | is_in_lexicon              | bilgisayar                   | Yes            | Valid_Word         |
+| 27 | is_in_exceptions           | e-mail                       | Yes            | Exception          |
+| 28 | is_in_eng_words            | computer                     | Yes            | English_Word       |
+| 29 | is_smiley                  | :)                           | Yes            | Smiley             |
+| 30 | is_multiple_smiley         | :):)                         | No             | -----              |
+| 31 | is_emoticon                | 🍻                           | Yes            | Emoticon           |
+| 32 | is_multiple_emoticon       | 🍻🍻                         | No             | -----              |
+| 33 | is_multiple_smiley_in      | hey:):)                      | No             | -----              |
+| 34 | is_number                  | 175.01                       | Yes            | Number             |
+| 35 | is_apostrophed             | Türkiye'nin                  | Yes            | Apostrophed        |
+| 36 | is_single_punc             | !                            | Yes            | Punc               |
+| 37 | is_multi_punc              | !!                           | No             | -----              |
+| 38 | is_single_hyphenated       | sabah-akşam                  | Yes            | Single_Hyphenated  |
+| 39 | is_multi_hyphenated        | çay-su-kahve                 | Yes            | Multi-Hyphenated   |
+| 40 | is_single_underscored      | Gel_Git                      | Yes            | Single_Underscored |
+| 41 | is_multi_underscored       | Yarı_Yapılandırılmış_Mülakat | Yes            | Multi_Underscored  |
+| 42 | is_one_char_fixable        | bilgisa¬yar                  | Yes            | One_Char_Fixed     |
+| 43 | is_three_or_more           | heyyyyy                      | No             | -----              |
+| 44 | is_fsp                     | bilgisayar.                  | No             | -----              |
+| 45 | is_isp                     | .bilgisayar                  | No             | -----              |
+| 46 | is_fmp                     | bilgisayar..                 | No             | -----              |
+| 47 | is_imp                     | ..bilgisayar                 | No             | -----              |
+| 48 | is_msp                     | --bilgisayar--               | No             | -----              |
+| 49 | is_mssp                    | -bilgisayar-                 | No             | -----              |
+| 50 | is_midsp                   | okul,öğrenci                 | No             | -----              |
+| 51 | is_midmp                   | okul,öğrenci, öğretmen       | No             | -----              |
+| 52 | is_non_latin               | 한국드                          | No             | Non_Latin          |
 
 ----------------------
 

@@ -20,7 +20,7 @@ REPLACEMENTS_CHAR = [
     # Fix Unicoed Chars
     ("і", "i"),
     # Fix Dashes - Need a better solution
-    ("-", "-"), ("–", "-"), ("⁄", "/"), ("-", "-"), ("—-", "-"), ("﴾", "("), ("﴿", ")"), ("-", "-"), ("­","-"), ("−", "-"),
+    ("-", "-"), ("–", "-"), ("⁄", "/"), ("-", "-"), ("—-", "-"), ("﴾", "("), ("﴿", ")"), ("-", "-"), ("­","-"), ("−", "-"), ("—", "-"),
     # punctuation_process.py line 178 - fails if not replaced
     # needs a better solution
     ("°°", "°"), ("_\uFE0F", "_"),
