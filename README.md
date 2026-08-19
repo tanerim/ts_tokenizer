@@ -481,6 +481,14 @@ from ts_tokenizer import TokenPreProcess
 
 ----------------------
 
+## Citation
+
+If you use TS POSTagger in academic work, please cite the associated doctoral dissertation:
+
+> Sezer, T. (2025). [*Dizilerden birimlere: Bilişimsel dilbilim çerçevesinde bir birimlendirici tasarımı*](https://tez.yok.gov.tr/UlusalTezMerkezi/TezGoster?key=Xau5rw3KuCgEuy-FuJQtsNVGSOOMCSQba2T5bZaDSDUTfOiTTVCpuBZPjDrUgB0i) [Doctoral dissertation, Hacettepe University].
+
+----------------------
+
 ## Performance
 
 ts-tokenizer is optimized for efficient tokenization and takes advantage of multi-core processing for large-scale text. By default, the script utilizes all available CPU cores minus one, ensuring your system remains responsive while processing large datasets.
