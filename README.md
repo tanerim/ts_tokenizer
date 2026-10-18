@@ -2,6 +2,8 @@
 **TS Tokenizer** is a foundational lexical processing engine for Turkish Natural Language Processing. It is a hybrid tokenizer designed specifically for tokenizing Turkish texts.
 It uses a hybrid (lexicon-based and rule-based) approach to split text into tokens.
 
+For installation instructions, Python API and CLI usage, and reference documentation, visit the [TS Tokenizer Wiki](https://github.com/tanerim/ts_tokenizer/wiki).
+
 
 ### Key Features:
 - **Hybrid Tokenization**: Combines lexicon-based and rule-based techniques to tokenize complex Turkish texts with precision.
