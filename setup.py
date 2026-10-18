@@ -18,14 +18,12 @@ def read_version():
 setup(
     name='ts_tokenizer',
     version=read_version(),
-    packages=find_packages(),
+    packages=find_packages(include=['ts_tokenizer', 'ts_tokenizer.*']),
     include_package_data=False,
     package_data={
-        'ts_tokenizer': ['data/*.txt'],
+        'ts_tokenizer': ['data/*.txt', 'py.typed'],
     },
-    install_requires=[
-        'tqdm~=4.66.4'
-    ],
+    install_requires=[],
     entry_points={
         'console_scripts': [
             'ts-tokenizer=ts_tokenizer.cli:main',

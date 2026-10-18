@@ -11,7 +11,6 @@
 
 import argparse
 import multiprocessing
-from tqdm import tqdm
 from nltk.tokenize import word_tokenize, wordpunct_tokenize, WhitespaceTokenizer, TreebankWordTokenizer
 
 
@@ -53,7 +52,7 @@ def main():
         num_workers = multiprocessing.cpu_count() - 1
         with multiprocessing.Pool(processes=num_workers) as pool:
             results = pool.imap(process_line, infile, chunksize=100)
-            for tokens in tqdm(results, total=len(infile), desc="Processing lines", unit="lines"):
+            for tokens in results:
                 for token in tokens:
                     print(token)
     except FileNotFoundError:

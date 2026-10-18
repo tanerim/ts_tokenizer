@@ -1,6 +1,35 @@
 from importlib import import_module
+from typing import TYPE_CHECKING
 
-__version__ = "0.2.7"
+from .output_format import OutputFormat as OutputFormat
+
+if TYPE_CHECKING:
+    from .char_fix import (
+        CharFix as CharFix,
+        fix as fix,
+        tr_lowercase as tr_lowercase,
+        fix_quote as fix_quote,
+    )
+    from .data import (
+        LocalData as LocalData,
+        get_data as get_data,
+        emoticons_data as emoticons_data,
+        smileys_data as smileys_data,
+        abbrs_data as abbrs_data,
+        word_list_data as word_list_data,
+        correction_mark_data as correction_mark_data,
+        exception_words_data as exception_words_data,
+        eng_word_list_data as eng_word_list_data,
+        domains_data as domains_data,
+        currency_symbols_data as currency_symbols_data,
+    )
+    from .token_handler import (
+        TokenProcessor as TokenProcessor,
+        TokenPreProcess as TokenPreProcess,
+    )
+    from .tokenizer import TSTokenizer as TSTokenizer, tokenize as tokenize
+
+__version__ = "0.3.0"
 
 _EXPORT_MAP = {
     "tokenize": (".tokenizer", "tokenize"),
@@ -44,6 +73,7 @@ def __dir__():
 __all__ = [
     "__version__",
     "tokenize",
+    "OutputFormat",
     "TSTokenizer",
     "CharFix",
     "fix",

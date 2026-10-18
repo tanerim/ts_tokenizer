@@ -2,17 +2,28 @@ import re
 import sys
 import multiprocessing
 import json
-import tqdm
 import logging
+from typing import List, Optional, Tuple, Union
 from concurrent.futures import ProcessPoolExecutor
 from ts_tokenizer.token_handler import TokenProcessor
 from ts_tokenizer.char_fix import CharFix
+from ts_tokenizer.output_format import OutputFormat, OutputFormatLike
 
 
-def tokenize(line, return_format, output=False):
+def tokenize(
+    line: str,
+    return_format: OutputFormatLike = OutputFormat.TOKENIZED,
+    output: bool = False,
+) -> Union[str, List[Tuple[str, Optional[str]]]]:
     """
-    Tokenizes a single line and returns the result based on the specified return format.
+    Tokenize text using an OutputFormat member or a legacy string value.
+
+    TOKENIZED returns one token per line; LINES returns space-separated tokens;
+    TAGGED returns tab-separated token/tag pairs; TAGGED_LINES returns tuples.
+    XML-only input returns a string. output=True enables JSON for structured
+    formats. Invalid formats raise ValueError.
     """
+    return_format = OutputFormat(return_format)
     processed_tokens = []
     # Strip whitespace and remove any invisible characters
     line = line.strip().replace('\u200b', '').replace('\ufeff', '')
@@ -92,10 +103,6 @@ def tokenize(line, return_format, output=False):
             else:
                 result = [(token[0], token[1] if len(token) > 1 else None) for token in processed_tokens]
 
-        else:
-            logging.error(f"Unknown return_format: {return_format}")
-            result = None
-
         logging.debug(f"Tokenization result: {result}")
         return result
 
@@ -103,7 +110,9 @@ def tokenize(line, return_format, output=False):
 class TSTokenizer:
 
     @staticmethod
-    def ts_tokenize(input_file=None, filename=None, output_format='tokenized', num_workers=None, verbose=False, output=False):
+    def ts_tokenize(input_file=None, filename=None, output_format: OutputFormatLike = OutputFormat.TOKENIZED, num_workers=None, verbose=False, output=False):
+        """Print tokenized input; verbose is retained for compatibility only."""
+        output_format = OutputFormat(output_format)
         if num_workers is None:
             num_workers = multiprocessing.cpu_count() - 1
             logging.debug(f"Number of workers set to {num_workers}")
@@ -121,15 +130,6 @@ class TSTokenizer:
         if filename:
             logging.info(f"Processing file: {filename}")
             with open(filename, 'r', encoding='utf-8') as in_file:
-                # If verbose mode is enabled, initialize progress bar
-                if verbose:
-                    total_lines = sum(1 for _ in in_file)
-                    in_file.seek(0)
-                    logging.debug(f"Total lines in file: {total_lines}")
-                    pbar = tqdm(total=total_lines, desc="Processing File")
-                else:
-                    pbar = None
-
                 with ProcessPoolExecutor(max_workers=num_workers) as executor:
                     batch_size = 100
                     batch = []
@@ -156,10 +156,6 @@ class TSTokenizer:
                                     logging.error(f"Error processing line: {e}", exc_info=True)
                             batch = []  # Clear batch after processing
 
-                        # Update progress bar if verbose mode is enabled
-                        if pbar:
-                            pbar.update(min(len(batch), batch_size))
-
                     # Process remaining lines in the last batch
                     if batch:
                         logging.debug(f"Processing final batch of size {len(batch)}")
@@ -172,13 +168,6 @@ class TSTokenizer:
                             except Exception as e:
                                 logging.error(f"Error processing line: {e}", exc_info=True)
 
-                        # Update progress bar for the remaining lines
-                        if pbar:
-                            pbar.update(len(batch))
-
-                # Close the progress bar if it was initialized
-                if pbar:
-                    pbar.close()
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import os
-from typing import FrozenSet
+from typing import FrozenSet, Set
 
 from .char_fix import CharFix
 
@@ -21,44 +21,46 @@ correction_mark = set(line.strip() for line in open(os.path.join(data_dir, 'core
 
 
 class LocalData:
+    """Access shared mutable resource sets; use *_data() for frozen copies."""
+
     @staticmethod
-    def emoticons():
+    def emoticons() -> Set[str]:
         return emoticons
 
     @staticmethod
-    def smileys():
+    def smileys() -> Set[str]:
         return smileys
 
     @staticmethod
-    def abbrs():
+    def abbrs() -> Set[str]:
         return abbrs
 
     @staticmethod
-    def candidate_abbrs():
+    def candidate_abbrs() -> Set[str]:
         return candidate_abbrs
 
     @staticmethod
-    def word_list():
+    def word_list() -> Set[str]:
         return word_list
 
     @staticmethod
-    def correction_mark():
+    def correction_mark() -> Set[str]:
         return correction_mark
 
     @staticmethod
-    def exception_words():
+    def exception_words() -> Set[str]:
         return exception_words
 
     @staticmethod
-    def eng_word_list():
+    def eng_word_list() -> Set[str]:
         return eng_words
 
     @staticmethod
-    def domains():
+    def domains() -> Set[str]:
         return domains
 
     @staticmethod
-    def currency_symbols():
+    def currency_symbols() -> Set[str]:
         return currencies
 
 
@@ -76,6 +78,7 @@ DATASETS = {
 
 
 def get_data(name: str) -> FrozenSet[str]:
+    """Return a frozen copy of a named resource; unknown names raise ValueError."""
     try:
         dataset = DATASETS[name]()
     except KeyError as exc:

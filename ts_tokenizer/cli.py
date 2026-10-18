@@ -1,7 +1,7 @@
 import sys
 import argparse
 from ts_tokenizer.tokenizer import TSTokenizer
-from ts_tokenizer import __version__
+from ts_tokenizer import OutputFormat, __version__
 
 
 def build_parser():
@@ -19,11 +19,11 @@ def configure_parser(parser):
     )
     parser.add_argument(
         '-o', '--output',
-        choices=['tokenized', 'lines', 'tagged', 'tagged_lines'],
-        default='tokenized',
+        choices=[fmt.value for fmt in OutputFormat],
+        default=OutputFormat.TOKENIZED.value,
         help="Specify the output format"
     )
-    parser.add_argument('-v', '--verbose', action='store_true', help="Enable verbose mode")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Accepted for backward compatibility; has no effect")
     parser.add_argument('-n', '--num-workers', type=int, help="Number of parallel workers", default=None)
 
     # Add version argument

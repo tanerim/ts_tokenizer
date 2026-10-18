@@ -1,2 +1,5 @@
 include README.md
-recursive-include ts_tokenizer/data *
+include LICENSE
+include requirements-release.txt
+include ts_tokenizer/py.typed
+recursive-include ts_tokenizer/data *.txt

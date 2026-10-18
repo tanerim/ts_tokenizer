@@ -17,9 +17,9 @@ domains_pattern = '|'.join([re.escape(domain[1:]) for domain in LocalData.domain
 # Create a dict of RegExps
 # noinspection RegExpRedundantEscape
 REGEX_PATTERNS = {
-    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,139}$'),
+    "hashtag": re.compile(r'^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\/\uFE0F]{1,139}$'),
     "mention": re.compile(r'^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,15}$'),
-    "hashtag_suffix": re.compile(r"^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,139}'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
+    "hashtag_suffix": re.compile(r"^#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\/\uFE0F]{1,139}'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
     "mention_suffix": re.compile(r"^@[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]{1,15}'[a-zA-ZıiİüÜçÇöÖşŞğĞ]+$"),
     "numeric_hyphenated_suffix": re.compile(r"^(?=.*\d)[A-Za-zÇĞİÖŞÜçğıöşü0-9]+(?:-[A-Za-zÇĞİÖŞÜçğıöşü0-9]+)+'[A-Za-zÇĞİÖŞÜçğıöşü]+$"),
     "email": re.compile(rf'^[^{puncs}][a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?<![{puncs}])$'),
@@ -148,7 +148,7 @@ class TokenPreProcess:
 
     @staticmethod
     def _split_consecutive_hashtags(word: str):
-        matches = list(re.finditer(r"#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\uFE0F]+", word))
+        matches = list(re.finditer(r"#[a-zA-ZıiİüÜçÇöÖşŞğĞ0-9_\-\/\uFE0F]+", word))
         if not matches or matches[0].start() != 0:
             return None
 
@@ -156,6 +156,30 @@ class TokenPreProcess:
             return None
 
         return [match.group(0) for match in matches]
+
+    @staticmethod
+    def _split_token_with_embedded_social_media(word: str):
+        for marker in ("#", "@"):
+            start = word.find(marker, 1)
+            if start <= 0:
+                continue
+
+            if word[start - 1] not in puncs:
+                continue
+
+            prefix = word[:start]
+            social = word[start:]
+            processed_social = TokenProcessor.process_regex(social)
+            if not processed_social or TokenProcessor.is_oov(processed_social):
+                continue
+
+            processed_prefix = TokenProcessor.process_token(prefix)
+            if isinstance(processed_prefix, tuple):
+                processed_prefix = [processed_prefix]
+
+            return processed_prefix + processed_social
+
+        return None
 
     @staticmethod
     def _process_markdown_link_part(link_part: str):
@@ -234,6 +258,11 @@ class TokenPreProcess:
             return [(word, "Formula")]
 
         return None
+
+    @staticmethod
+    @apply_charfix
+    def is_embedded_social_media(word: str) -> list:
+        return TokenPreProcess._split_token_with_embedded_social_media(word)
 
     @staticmethod
     @apply_charfix
@@ -1484,6 +1513,7 @@ regex = [
     TokenPreProcess.is_doi,
     TokenPreProcess.is_isbn,
     TokenPreProcess.is_formula,
+    TokenPreProcess.is_embedded_social_media,
     TokenPreProcess.is_mention_suffix,
     TokenPreProcess.is_hashtag_suffix,
     TokenPreProcess.is_numeric_hyphenated_with_apostrophe_suffix,

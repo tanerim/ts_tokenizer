@@ -80,7 +80,6 @@ Get detailed help for available options using:
 |----------------------|-------|-------------------------------------------------------------------------------------------------|---------------|
 | `--output`           | `-o`  | Specify the output format: `tokenized`, `lines`, `tagged`, `tagged_lines`.                      | `tokenized`   |
 | `--num-workers`      | `-n`  | Set the number of parallel workers for processing.                                              | `CPU cores-1` |
-| `--verbose`          | `-v`  | Enable verbose mode to display additional processing details.                                   | Disabled      |
 | `--version`          | `-V`  | Display the current version of `ts-tokenizer`.                                                 | N/A           |
 | `--help`             | `-h`  | Show the help message and exit.   
 
@@ -214,7 +213,7 @@ For simple Python usage, import `tokenize` from the package root:
 from ts_tokenizer import tokenize
 
 text = "Merhaba dünya. Bugün 16.08.2026."
-result = tokenize(text, "tokenized")
+result = tokenize(text)
 
 print(result)
 ```
@@ -230,20 +229,24 @@ Bugün
 .
 ```
 
+`tokenize(text)` defaults to `OutputFormat.TOKENIZED`. Type `OutputFormat.` for
+IDE autocomplete. Existing strings such as `tokenize(text, "tagged")` remain
+supported. Invalid formats raise `ValueError`. CLI options remain unchanged.
+
 Supported `return_format` values:
 
-- `tokenized`: returns a newline-delimited `str` of tokens.
-- `tagged`: returns a newline-delimited `str` of `token<TAB>tag` pairs.
-- `lines`: returns a single `str` containing one tokenized line.
-- `tagged_lines`: returns a Python list of `(token, tag)` tuples.
+- `OutputFormat.TOKENIZED`: returns a newline-delimited `str` of tokens.
+- `OutputFormat.TAGGED`: returns a newline-delimited `str` of `token<TAB>tag` pairs.
+- `OutputFormat.LINES`: returns a single `str` containing one tokenized line.
+- `OutputFormat.TAGGED_LINES`: returns a Python list of `(token, tag)` tuples.
 
 Tagged example:
 
 ```python
-from ts_tokenizer import tokenize
+from ts_tokenizer import OutputFormat, tokenize
 
 text = "Merhaba dünya."
-result = tokenize(text, "tagged")
+result = tokenize(text, OutputFormat.TAGGED)
 
 print(result)
 ```
@@ -259,11 +262,11 @@ dünya	Valid_Word
 Line-preserving examples:
 
 ```python
-from ts_tokenizer import tokenize
+from ts_tokenizer import OutputFormat, tokenize
 
 text = "Merhaba dünya."
-print(tokenize(text, "lines"))
-print(tokenize(text, "tagged_lines"))
+print(tokenize(text, OutputFormat.LINES))
+print(tokenize(text, OutputFormat.TAGGED_LINES))
 ```
 
 Output:
@@ -278,11 +281,11 @@ Merhaba dünya .
 `TSTokenizer.ts_tokenize(...)` is intended for CLI-style workflows. It writes results to standard output and does not return token data to the caller.
 
 ```python
-from ts_tokenizer import TSTokenizer
+from ts_tokenizer import OutputFormat, TSTokenizer
 
 TSTokenizer.ts_tokenize(
     input_file="Merhaba dünya.\nİkinci satır.",
-    output_format="tokenized",
+    output_format=OutputFormat.TOKENIZED,
 )
 ```
 
@@ -292,7 +295,7 @@ Use `tokenize(...)` when you want a value back inside Python code.
 **tagged_lines**: Same as lines but includes tags for each token.
 
 ```python 
-from ts_tokenizer import tokenize
+from ts_tokenizer import OutputFormat, tokenize
 Multi_Line_Sample = """
 ATATÜRK'ün GENÇLÝÐE HÝTABESÝ 
 Ey Türk gençliði! Birinci vazifen, Türk istiklâlini, Türk Cumhuriyet'ini, ilelebet, muhafaza ve müdafaa etmektir. 
@@ -308,7 +311,7 @@ Hatta bu iktidar sahipleri þahsî menfaatlerini, müstevlilerin siyasî emeller
 Millet, fakruzaruret içinde harap ve bîtap düþmüþ olabilir. Ey Türk istikbalinin evladý! Ýþte, bu ahval ve þerait içinde dahi, vazifen; Türk istiklâl ve cumhuriyetini kurtarmaktýr! 
 Muhtaç olduðun kudret, damarlarýndaki asil kanda, mevcuttur!
 """
-tagged_lines = tokenize(Multi_Line_Sample, "tagged_lines")
+tagged_lines = tokenize(Multi_Line_Sample, OutputFormat.TAGGED_LINES)
 print(tagged_lines)
 ```
 Generated output is as follows:
@@ -335,8 +338,16 @@ CharFix offers methods to correct corrupted Turkish text:
 You can use these helpers either through `CharFix` or as direct package-level functions:
 
 ```python
-from ts_tokenizer import fix, tr_lowercase, fix_quote
+from ts_tokenizer import CharFix, fix, tr_lowercase, fix_quote
+
+text = "İSTANBUL"
+assert CharFix.fix(text) == fix(text)
+assert CharFix.tr_lowercase(text) == tr_lowercase(text)
+assert CharFix.fix_quote(text) == fix_quote(text)
 ```
+
+Existing imports from `ts_tokenizer.char_fix` remain supported. Both styles
+accept and return strings; class methods are available through IDE autocomplete.
 
 ### Fix Characters
 
@@ -375,22 +386,25 @@ print(fix_quote(line))
 
 Bundled lexical resources can also be accessed directly from the package.
 
-Generic accessor:
-
-```python
-from ts_tokenizer import get_data
-
-smileys = get_data("smileys")
-print(":)" in smileys)
-```
-
-Named helpers:
+Use named helpers to select a resource through IDE autocomplete without string arguments:
 
 ```python
 from ts_tokenizer import smileys_data, word_list_data
 
 print(":)" in smileys_data())
 print("istanbul" in word_list_data())
+```
+
+Each dataset listed below has a corresponding `<name>_data()` helper, such as
+`abbrs_data()` or `domains_data()`.
+
+The generic string accessor remains supported:
+
+```python
+from ts_tokenizer import get_data
+
+smileys = get_data("smileys")
+print(":)" in smileys)
 ```
 
 Available dataset names for `get_data(...)`:
@@ -405,7 +419,24 @@ Available dataset names for `get_data(...)`:
 - `domains`
 - `currency_symbols`
 
-Returned values are `frozenset[str]`, so they are safe to inspect without mutating the tokenizer's in-memory resources.
+`get_data(...)` and the named `*_data()` helpers return `frozenset[str]`
+copies, so callers cannot mutate the tokenizer's in-memory resources through them.
+Unknown names passed to `get_data(...)` raise `ValueError`.
+
+Existing `LocalData` calls and imports from `ts_tokenizer.data` remain supported:
+
+```python
+from ts_tokenizer import LocalData
+
+print(":)" in LocalData.smileys())
+print("istanbul" in LocalData.word_list())
+```
+
+`LocalData` methods retain their original behavior: they return shared, mutable
+`set[str]` objects. Changing these sets changes the tokenizer's in-memory
+resources. Prefer the frozen helpers when you only need to read data.
+`LocalData.candidate_abbrs()` also remains available; it has no corresponding
+`get_data(...)` entry or named helper.
 
 ---
 ## TokenHandler
@@ -501,3 +532,25 @@ The following benchmarks were conducted on different machines with the following
 |--------------------------------------------------------------------------|---------------------------|--------------|-----------------------------------|-----------------------------|------------------------------------|------------------------------|
 | AMD Ryzen 7 5800H with Radeon Graphics (Laptop) <br/>3.2 GHz / 4.4 Ghz   | 8 physical cores (16 threads) | 16GB DDR4   | ~170 seconds                      | ~5,800 tokens/second        | ~715 seconds                     | ~1,400 tokens/second         |
 | AMD Ryzen 9 7950X3D with Radeon Graphics (Desktop)<br/>4.2 Ghz / 5.7 Ghz | 16 physical cores (32 threads)| 96GB DDR5   | ~14 seconds                       | ~71,500 tokens/second       | ~110 seconds                    | ~9,090 tokens/second         |
+
+
+## Preparing a release
+
+The package version is defined in `ts_tokenizer/__init__.py`; `setup.py` reads
+that value for both the wheel and source distribution.
+
+Build into an empty `dist/` directory so older releases are not uploaded:
+
+```bash
+python -m pip install -r requirements-release.txt
+python -m build
+python -m twine check dist/ts_tokenizer-0.3.0*
+```
+
+After verifying the distributions, publish version 0.3.0 with:
+
+```bash
+python -m twine upload dist/ts_tokenizer-0.3.0-py3-none-any.whl dist/ts_tokenizer-0.3.0.tar.gz
+```
+
+Supply PyPI credentials through Twine's prompt or environment variables.
